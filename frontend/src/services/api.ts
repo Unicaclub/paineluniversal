@@ -451,6 +451,58 @@ export const pdvService = {
     api.get(`/pdv/relatorios/z/${caixaId}`).then(response => response.data),
 };
 
+export const financeiroService = {
+  async criarMovimentacao(movimentacao: any): Promise<any> {
+    const response = await api.post('/financeiro/movimentacoes', movimentacao);
+    return response.data;
+  },
+
+  async listarMovimentacoes(eventoId: number, filtros?: any): Promise<any[]> {
+    const response = await api.get(`/financeiro/movimentacoes/${eventoId}`, { params: filtros });
+    return response.data;
+  },
+
+  async atualizarMovimentacao(movimentacaoId: number, movimentacao: any): Promise<any> {
+    const response = await api.put(`/financeiro/movimentacoes/${movimentacaoId}`, movimentacao);
+    return response.data;
+  },
+
+  async uploadComprovante(movimentacaoId: number, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/financeiro/movimentacoes/${movimentacaoId}/comprovante`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  async obterDashboard(eventoId: number): Promise<any> {
+    const response = await api.get(`/financeiro/dashboard/${eventoId}`);
+    return response.data;
+  },
+
+  async exportarRelatorio(eventoId: number, formato: 'pdf' | 'excel' | 'csv', dataInicio?: string, dataFim?: string): Promise<Blob> {
+    const params = new URLSearchParams();
+    if (dataInicio) params.append('data_inicio', dataInicio);
+    if (dataFim) params.append('data_fim', dataFim);
+    
+    const response = await api.get(`/financeiro/relatorio/${eventoId}/export/${formato}?${params}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  async abrirCaixa(caixa: any): Promise<any> {
+    const response = await api.post('/financeiro/caixa/abrir', caixa);
+    return response.data;
+  },
+
+  async fecharCaixa(caixaId: number, observacoes?: string): Promise<any> {
+    const response = await api.post(`/financeiro/caixa/${caixaId}/fechar`, { observacoes_fechamento: observacoes });
+    return response.data;
+  }
+};
+
 export const checkinService = {
   checkinCPF: (cpf: string, eventoId: number, validacaoCpf: string): Promise<any> =>
     api.post('/checkins/', {

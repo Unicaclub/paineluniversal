@@ -5,6 +5,94 @@ from decimal import Decimal
 from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
 import re
 
+
+class MovimentacaoFinanceiraBase(BaseModel):
+    tipo: str
+    categoria: str
+    descricao: str
+    valor: Decimal
+    promoter_id: Optional[int] = None
+    numero_documento: Optional[str] = None
+    observacoes: Optional[str] = None
+    data_vencimento: Optional[date] = None
+    data_pagamento: Optional[date] = None
+    metodo_pagamento: Optional[str] = None
+
+
+class MovimentacaoFinanceiraCreate(MovimentacaoFinanceiraBase):
+    evento_id: int
+
+
+class MovimentacaoFinanceiraUpdate(BaseModel):
+    categoria: Optional[str] = None
+    descricao: Optional[str] = None
+    valor: Optional[Decimal] = None
+    status: Optional[str] = None
+    promoter_id: Optional[int] = None
+    numero_documento: Optional[str] = None
+    observacoes: Optional[str] = None
+    data_vencimento: Optional[date] = None
+    data_pagamento: Optional[date] = None
+    metodo_pagamento: Optional[str] = None
+
+
+class MovimentacaoFinanceira(MovimentacaoFinanceiraBase):
+    id: int
+    evento_id: int
+    status: str
+    usuario_responsavel_id: int
+    comprovante_url: Optional[str] = None
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    evento_nome: Optional[str] = None
+    usuario_responsavel_nome: Optional[str] = None
+    promoter_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class CaixaEventoBase(BaseModel):
+    saldo_inicial: Decimal = Decimal('0.00')
+    observacoes_abertura: Optional[str] = None
+
+
+class CaixaEventoCreate(CaixaEventoBase):
+    evento_id: int
+
+
+class CaixaEvento(CaixaEventoBase):
+    id: int
+    evento_id: int
+    data_abertura: datetime
+    data_fechamento: Optional[datetime] = None
+    total_entradas: Decimal
+    total_saidas: Decimal
+    total_vendas_pdv: Decimal
+    total_vendas_listas: Decimal
+    saldo_final: Decimal
+    status: str
+    usuario_abertura_id: int
+    usuario_fechamento_id: Optional[int] = None
+    observacoes_fechamento: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class DashboardFinanceiro(BaseModel):
+    evento_id: int
+    saldo_atual: Decimal
+    total_entradas: Decimal
+    total_saidas: Decimal
+    total_vendas: Decimal
+    lucro_prejuizo: Decimal
+    movimentacoes_recentes: List[dict]
+    categorias_despesas: List[dict]
+    repasses_promoters: List[dict]
+    status_caixa: str
+
 class EmpresaBase(BaseModel):
     nome: str
     cnpj: str

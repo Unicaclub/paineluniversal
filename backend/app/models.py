@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -394,3 +394,75 @@ class LogAuditoria(Base):
     
     evento = relationship("Evento")
     promoter = relationship("Usuario")
+
+
+class TipoMovimentacaoFinanceira(enum.Enum):
+    ENTRADA = "entrada"
+    SAIDA = "saida"
+    AJUSTE = "ajuste"
+    REPASSE_PROMOTER = "repasse_promoter"
+    RECEITA_VENDAS = "receita_vendas"
+    RECEITA_LISTAS = "receita_listas"
+
+
+class StatusMovimentacaoFinanceira(enum.Enum):
+    PENDENTE = "pendente"
+    APROVADA = "aprovada"
+    CANCELADA = "cancelada"
+
+
+class MovimentacaoFinanceira(Base):
+    __tablename__ = "movimentacoes_financeiras"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    tipo = Column(Enum(TipoMovimentacaoFinanceira), nullable=False)
+    categoria = Column(String(100), nullable=False)
+    descricao = Column(Text, nullable=False)
+    valor = Column(Numeric(10, 2), nullable=False)
+    status = Column(Enum(StatusMovimentacaoFinanceira), default=StatusMovimentacaoFinanceira.PENDENTE)
+    
+    usuario_responsavel_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    promoter_id = Column(Integer, ForeignKey("usuarios.id"))
+    
+    comprovante_url = Column(String(500))
+    numero_documento = Column(String(100))
+    
+    observacoes = Column(Text)
+    data_vencimento = Column(Date)
+    data_pagamento = Column(Date)
+    metodo_pagamento = Column(String(50))
+    
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    evento = relationship("Evento")
+    usuario_responsavel = relationship("Usuario", foreign_keys=[usuario_responsavel_id])
+    promoter = relationship("Usuario", foreign_keys=[promoter_id])
+
+
+class CaixaEvento(Base):
+    __tablename__ = "caixas_eventos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    data_abertura = Column(DateTime(timezone=True), server_default=func.now())
+    data_fechamento = Column(DateTime(timezone=True))
+    
+    saldo_inicial = Column(Numeric(10, 2), default=0)
+    total_entradas = Column(Numeric(10, 2), default=0)
+    total_saidas = Column(Numeric(10, 2), default=0)
+    total_vendas_pdv = Column(Numeric(10, 2), default=0)
+    total_vendas_listas = Column(Numeric(10, 2), default=0)
+    saldo_final = Column(Numeric(10, 2), default=0)
+    
+    status = Column(String(20), default="aberto")
+    usuario_abertura_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    usuario_fechamento_id = Column(Integer, ForeignKey("usuarios.id"))
+    
+    observacoes_abertura = Column(Text)
+    observacoes_fechamento = Column(Text)
+    
+    evento = relationship("Evento")
+    usuario_abertura = relationship("Usuario", foreign_keys=[usuario_abertura_id])
+    usuario_fechamento = relationship("Usuario", foreign_keys=[usuario_fechamento_id])
