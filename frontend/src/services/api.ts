@@ -1,0 +1,308 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8000/api';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export interface LoginRequest {
+  cpf: string;
+  senha: string;
+  codigo_verificacao?: string;
+}
+
+export interface Usuario {
+  id: number;
+  cpf: string;
+  nome: string;
+  email: string;
+  tipo: 'admin' | 'promoter' | 'operador';
+  empresa_id: number;
+  ativo: boolean;
+  criado_em: string;
+  ultimo_login?: string;
+}
+
+export interface Token {
+  access_token: string;
+  token_type: string;
+  usuario: Usuario;
+}
+
+export const authService = {
+  async login(data: LoginRequest): Promise<Token> {
+    const response = await api.post('/auth/login', data);
+    return response.data;
+  },
+
+  async getProfile(): Promise<Usuario> {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
+
+  async logout(): Promise<void> {
+    await api.post('/auth/logout');
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+  },
+
+  async solicitarCodigo(cpf: string): Promise<any> {
+    const response = await api.post('/auth/solicitar-codigo', { cpf });
+    return response.data;
+  }
+};
+
+export interface Empresa {
+  id: number;
+  nome: string;
+  cnpj: string;
+  email: string;
+  telefone: string;
+  endereco: string;
+  ativa: boolean;
+  criado_em: string;
+}
+
+export interface Evento {
+  id: number;
+  nome: string;
+  descricao?: string;
+  data_evento: string;
+  local: string;
+  endereco?: string;
+  limite_idade: number;
+  capacidade_maxima: number;
+  status: 'ativo' | 'cancelado' | 'finalizado';
+  empresa_id: number;
+  criador_id: number;
+  criado_em: string;
+  atualizado_em?: string;
+}
+
+export interface EventoCreate {
+  nome: string;
+  descricao?: string;
+  data_evento: string;
+  local: string;
+  endereco?: string;
+  limite_idade: number;
+  capacidade_maxima: number;
+  empresa_id: number;
+}
+
+export interface EventoDetalhado extends Evento {
+  total_vendas: number;
+  receita_total: number;
+  total_checkins: number;
+  promoters_vinculados: Array<{
+    id: number;
+    promoter_id: number;
+    nome: string;
+    meta_vendas?: number;
+    vendas_realizadas: number;
+    comissao_percentual: number;
+  }>;
+  status_financeiro: 'sem_vendas' | 'baixo' | 'medio' | 'alto';
+}
+
+export interface EventoFiltros {
+  nome?: string;
+  status?: string;
+  empresa_id?: number;
+  data_inicio?: string;
+  data_fim?: string;
+  local?: string;
+  limite_idade_min?: number;
+  limite_idade_max?: number;
+}
+
+export interface PromoterEventoCreate {
+  promoter_id: number;
+  meta_vendas?: number;
+  comissao_percentual?: number;
+}
+
+export interface Lista {
+  id: number;
+  nome: string;
+  tipo: 'vip' | 'free' | 'pagante' | 'desconto' | 'aniversario' | 'promoter';
+  preco: number;
+  limite_pessoas: number;
+  evento_id: number;
+  promoter_id?: number;
+  ativa: boolean;
+  criado_em: string;
+}
+
+export interface Transacao {
+  id: number;
+  cpf_comprador: string;
+  nome_comprador: string;
+  email_comprador: string;
+  telefone_comprador: string;
+  valor: number;
+  status: 'pendente' | 'aprovada' | 'rejeitada' | 'cancelada';
+  lista_id: number;
+  evento_id: number;
+  criado_em: string;
+}
+
+export const empresaService = {
+  async listar(): Promise<Empresa[]> {
+    const response = await api.get('/empresas/');
+    return response.data;
+  },
+
+  async obter(id: number): Promise<Empresa> {
+    const response = await api.get(`/empresas/${id}`);
+    return response.data;
+  }
+};
+
+export const eventoService = {
+  listar: (): Promise<Evento[]> => 
+    api.get('/eventos/').then(response => response.data),
+  
+  obter: (id: number): Promise<Evento> => 
+    api.get(`/eventos/${id}`).then(response => response.data),
+  
+  obterDetalhado: (id: number): Promise<EventoDetalhado> => 
+    api.get(`/eventos/detalhado/${id}`).then(response => response.data),
+  
+  buscar: (filtros: EventoFiltros, skip = 0, limit = 100): Promise<Evento[]> => {
+    const params = new URLSearchParams();
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    
+    return api.get(`/eventos/buscar?${params.toString()}`).then(response => response.data);
+  },
+  
+  criar: (evento: EventoCreate): Promise<Evento> => 
+    api.post('/eventos/', evento).then(response => response.data),
+  
+  atualizar: (id: number, evento: EventoCreate): Promise<Evento> => 
+    api.put(`/eventos/${id}`, evento).then(response => response.data),
+  
+  cancelar: (id: number): Promise<void> => 
+    api.delete(`/eventos/${id}`).then(response => response.data),
+  
+  vincularPromoter: (eventoId: number, promoterData: PromoterEventoCreate): Promise<any> => 
+    api.post(`/eventos/${eventoId}/promoters`, promoterData).then(response => response.data),
+  
+  desvincularPromoter: (eventoId: number, promoterId: number): Promise<void> => 
+    api.delete(`/eventos/${eventoId}/promoters/${promoterId}`).then(response => response.data),
+  
+  obterFinanceiro: (id: number): Promise<any> => 
+    api.get(`/eventos/${id}/financeiro`).then(response => response.data),
+  
+  exportarCSV: (id: number): Promise<Blob> => 
+    api.get(`/eventos/${id}/export/csv`, { responseType: 'blob' }).then(response => response.data),
+  
+  exportarPDF: (id: number): Promise<Blob> => 
+    api.get(`/eventos/${id}/export/pdf`, { responseType: 'blob' }).then(response => response.data),
+};
+
+export const listaService = {
+  async listarPorEvento(eventoId: number): Promise<Lista[]> {
+    const response = await api.get(`/listas/evento/${eventoId}`);
+    return response.data;
+  },
+
+  async listarPorPromoter(promoterId: number): Promise<Lista[]> {
+    const response = await api.get(`/listas/promoter/${promoterId}`);
+    return response.data;
+  }
+};
+
+export const transacaoService = {
+  async listar(eventoId?: number, cpf?: string, status?: string): Promise<Transacao[]> {
+    const params = new URLSearchParams();
+    if (eventoId) params.append('evento_id', eventoId.toString());
+    if (cpf) params.append('cpf_comprador', cpf);
+    if (status) params.append('status', status);
+    
+    const response = await api.get(`/transacoes/?${params.toString()}`);
+    return response.data;
+  },
+
+  async criar(transacao: Partial<Transacao>): Promise<Transacao> {
+    const response = await api.post('/transacoes/', transacao);
+    return response.data;
+  },
+
+  async obter(id: number): Promise<Transacao> {
+    const response = await api.get(`/transacoes/${id}`);
+    return response.data;
+  },
+
+  async atualizar(id: number, dados: Partial<Transacao>): Promise<Transacao> {
+    const response = await api.put(`/transacoes/${id}`, dados);
+    return response.data;
+  }
+};
+
+export const dashboardService = {
+  async obterResumo(eventoId?: number): Promise<any> {
+    const params = eventoId ? `?evento_id=${eventoId}` : '';
+    const response = await api.get(`/dashboard/resumo${params}`);
+    return response.data;
+  },
+
+  async obterRankingPromoters(eventoId?: number, limit: number = 10): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (eventoId) params.append('evento_id', eventoId.toString());
+    params.append('limit', limit.toString());
+    
+    const response = await api.get(`/dashboard/ranking-promoters?${params.toString()}`);
+    return response.data;
+  }
+};
+
+export const usuarioService = {
+  listar: (): Promise<Usuario[]> => 
+    api.get('/usuarios/').then(response => response.data),
+  
+  listarPromoters: (): Promise<Usuario[]> => 
+    api.get('/usuarios/?tipo=promoter').then(response => response.data),
+  
+  obter: (id: number): Promise<Usuario> => 
+    api.get(`/usuarios/${id}`).then(response => response.data),
+  
+  criar: (usuario: any): Promise<Usuario> => 
+    api.post('/usuarios/', usuario).then(response => response.data),
+  
+  atualizar: (id: number, usuario: any): Promise<Usuario> => 
+    api.put(`/usuarios/${id}`, usuario).then(response => response.data),
+  
+  desativar: (id: number): Promise<void> => 
+    api.delete(`/usuarios/${id}`).then(response => response.data),
+};
