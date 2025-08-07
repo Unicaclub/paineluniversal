@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
-from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario
+from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
 import re
 
 class EmpresaBase(BaseModel):
@@ -262,3 +262,188 @@ class CupomResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class ProdutoBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    tipo: TipoProduto
+    preco: Decimal
+    codigo_barras: Optional[str] = None
+    codigo_interno: Optional[str] = None
+    estoque_atual: int = 0
+    estoque_minimo: int = 0
+    estoque_maximo: int = 1000
+    controla_estoque: bool = True
+    categoria: Optional[str] = None
+    imagem_url: Optional[str] = None
+
+class ProdutoCreate(ProdutoBase):
+    evento_id: int
+
+class Produto(ProdutoBase):
+    id: int
+    status: StatusProduto
+    evento_id: int
+    empresa_id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComandaBase(BaseModel):
+    numero_comanda: str
+    cpf_cliente: Optional[str] = None
+    nome_cliente: Optional[str] = None
+    tipo: TipoComanda
+    codigo_rfid: Optional[str] = None
+    qr_code: Optional[str] = None
+
+class ComandaCreate(ComandaBase):
+    evento_id: int
+
+class Comanda(ComandaBase):
+    id: int
+    saldo_atual: Decimal
+    saldo_bloqueado: Decimal
+    status: StatusComanda
+    evento_id: int
+    empresa_id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class ItemVendaPDVBase(BaseModel):
+    produto_id: int
+    quantidade: int
+    preco_unitario: Decimal
+    observacoes: Optional[str] = None
+
+class ItemVendaPDVCreate(ItemVendaPDVBase):
+    pass
+
+class ItemVendaPDV(ItemVendaPDVBase):
+    id: int
+    venda_id: int
+    preco_total: Decimal
+    desconto_aplicado: Decimal
+    criado_em: datetime
+    produto_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class PagamentoPDVBase(BaseModel):
+    tipo_pagamento: TipoPagamentoPDV
+    valor: Decimal
+    promoter_id: Optional[int] = None
+    comissao_percentual: Optional[Decimal] = None
+
+class PagamentoPDVCreate(PagamentoPDVBase):
+    pass
+
+class PagamentoPDV(PagamentoPDVBase):
+    id: int
+    venda_id: int
+    codigo_transacao: Optional[str] = None
+    valor_comissao: Decimal
+    status: StatusVendaPDV
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class VendaPDVBase(BaseModel):
+    cpf_cliente: Optional[str] = None
+    nome_cliente: Optional[str] = None
+    comanda_id: Optional[int] = None
+    cupom_codigo: Optional[str] = None
+    observacoes: Optional[str] = None
+
+class VendaPDVCreate(VendaPDVBase):
+    evento_id: int
+    itens: List[ItemVendaPDVCreate]
+    pagamentos: List[PagamentoPDVCreate]
+
+class VendaPDV(VendaPDVBase):
+    id: int
+    numero_venda: str
+    valor_total: Decimal
+    valor_desconto: Decimal
+    valor_final: Decimal
+    tipo_pagamento: TipoPagamentoPDV
+    status: StatusVendaPDV
+    evento_id: int
+    empresa_id: int
+    usuario_vendedor_id: int
+    promoter_id: Optional[int] = None
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    itens: List[ItemVendaPDV] = []
+    pagamentos: List[PagamentoPDV] = []
+    
+    class Config:
+        from_attributes = True
+
+class RecargaComandaBase(BaseModel):
+    valor: Decimal
+    tipo_pagamento: TipoPagamentoPDV
+
+class RecargaComandaCreate(RecargaComandaBase):
+    comanda_id: int
+
+class RecargaComanda(RecargaComandaBase):
+    id: int
+    comanda_id: int
+    codigo_transacao: Optional[str] = None
+    usuario_id: int
+    status: StatusVendaPDV
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class CaixaPDVBase(BaseModel):
+    numero_caixa: str
+    valor_abertura: Decimal = Decimal('0.00')
+
+class CaixaPDVCreate(CaixaPDVBase):
+    evento_id: int
+
+class CaixaPDV(CaixaPDVBase):
+    id: int
+    evento_id: int
+    usuario_operador_id: int
+    valor_vendas: Decimal
+    valor_sangrias: Decimal
+    valor_fechamento: Decimal
+    status: str
+    data_abertura: datetime
+    data_fechamento: Optional[datetime] = None
+    observacoes: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class RelatorioVendasPDV(BaseModel):
+    evento_id: int
+    periodo_inicio: datetime
+    periodo_fim: datetime
+    total_vendas: int
+    valor_total: Decimal
+    vendas_por_produto: List[dict]
+    vendas_por_forma_pagamento: List[dict]
+    vendas_por_hora: List[dict]
+    top_produtos: List[dict]
+
+class DashboardPDV(BaseModel):
+    vendas_hoje: int
+    valor_vendas_hoje: Decimal
+    produtos_em_falta: int
+    comandas_ativas: int
+    caixas_abertos: int
+    vendas_por_hora: List[dict]
+    produtos_mais_vendidos: List[dict]
+    alertas: List[dict]

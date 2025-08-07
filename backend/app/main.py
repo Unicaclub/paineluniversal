@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -6,11 +6,11 @@ import psycopg
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
-from datetime import timedelta
+from .websocket import manager
 
 Base.metadata.create_all(bind=engine)
 
@@ -47,6 +47,17 @@ app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatóri
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(cupons.router, prefix="/api/cupons", tags=["Cupons"])
 app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
+app.include_router(pdv.router, prefix="/api", tags=["PDV"])
+
+@app.websocket("/api/pdv/ws/{evento_id}")
+async def websocket_endpoint(websocket: WebSocket, evento_id: int):
+    await manager.connect(websocket, evento_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"pong: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, evento_id)
 
 @app.get("/healthz")
 async def healthz():

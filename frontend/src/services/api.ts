@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = '/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -329,4 +329,48 @@ export const usuarioService = {
   
   desativar: (id: number): Promise<void> => 
     api.delete(`/usuarios/${id}`).then(response => response.data),
+};
+
+export const pdvService = {
+  listarProdutos: (eventoId: number, filtros?: any): Promise<any[]> =>
+    api.get(`/pdv/produtos?evento_id=${eventoId}`, { params: filtros }).then(response => response.data),
+  
+  criarProduto: (produto: any): Promise<any> =>
+    api.post('/pdv/produtos', produto).then(response => response.data),
+  
+  obterProduto: (produtoId: number): Promise<any> =>
+    api.get(`/pdv/produtos/${produtoId}`).then(response => response.data),
+  
+  atualizarProduto: (produtoId: number, produto: any): Promise<any> =>
+    api.put(`/pdv/produtos/${produtoId}`, produto).then(response => response.data),
+
+  listarComandas: (eventoId: number, filtros?: any): Promise<any[]> =>
+    api.get(`/pdv/comandas?evento_id=${eventoId}`, { params: filtros }).then(response => response.data),
+  
+  criarComanda: (comanda: any): Promise<any> =>
+    api.post('/pdv/comandas', comanda).then(response => response.data),
+  
+  recarregarComanda: (comandaId: number, recarga: any): Promise<any> =>
+    api.post(`/pdv/comandas/${comandaId}/recarga`, recarga).then(response => response.data),
+
+  processarVenda: (venda: any): Promise<any> =>
+    api.post('/pdv/vendas', venda).then(response => response.data),
+  
+  listarVendas: (eventoId: number, filtros?: any): Promise<any[]> =>
+    api.get(`/pdv/vendas?evento_id=${eventoId}`, { params: filtros }).then(response => response.data),
+
+  abrirCaixa: (caixa: any): Promise<any> =>
+    api.post('/pdv/caixa/abrir', caixa).then(response => response.data),
+  
+  fecharCaixa: (caixaId: number, valorFechamento: number, observacoes?: string): Promise<any> =>
+    api.post(`/pdv/caixa/${caixaId}/fechar`, { valor_fechamento: valorFechamento, observacoes }).then(response => response.data),
+
+  obterDashboardPDV: (eventoId: number): Promise<any> =>
+    api.get(`/pdv/dashboard/${eventoId}`).then(response => response.data),
+
+  relatorioX: (caixaId: number): Promise<any> =>
+    api.get(`/pdv/relatorios/x/${caixaId}`).then(response => response.data),
+  
+  relatorioZ: (caixaId: number): Promise<any> =>
+    api.get(`/pdv/relatorios/z/${caixaId}`).then(response => response.data),
 };

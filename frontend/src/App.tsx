@@ -8,6 +8,8 @@ import SalesModule from './components/sales/SalesModule';
 import CheckinModule from './components/checkin/CheckinModule';
 import EventosModule from './components/eventos/EventosModule';
 import MobileCheckinModule from './components/mobile/MobileCheckinModule';
+import PDVModule from './components/pdv/PDVModule';
+import DashboardPDV from './components/pdv/DashboardPDV';
 import './App.css';
 
 function App() {
@@ -42,6 +44,16 @@ function App() {
                     <Route path="/mobile-checkin" element={
                       <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                         <MobileCheckinModule />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/pdv" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                        <PDVModule />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/pdv/dashboard" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                        <DashboardPDV eventoId={1} />
                       </ProtectedRoute>
                     } />
                     <Route path="/usuarios" element={
