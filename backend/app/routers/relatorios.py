@@ -275,3 +275,181 @@ async def exportar_logs_auditoria(
                 for log in logs
             ]
         }
+
+@router.get("/vendas/{evento_id}/excel")
+async def exportar_vendas_excel(
+    evento_id: int,
+    db: Session = Depends(get_db),
+    usuario_atual: Usuario = Depends(obter_usuario_atual)
+):
+    """Exportar relatório de vendas em Excel"""
+    
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    
+    evento = db.query(Evento).filter(Evento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    
+    if (usuario_atual.tipo.value != "admin" and 
+        usuario_atual.empresa_id != evento.empresa_id):
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Relatório de Vendas"
+    
+    headers = ['ID', 'CPF', 'Nome', 'Email', 'Telefone', 'Valor', 'Método', 'Lista', 'Promoter', 'Data', 'Status']
+    
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center")
+    
+    transacoes = db.query(Transacao).join(Lista).outerjoin(Usuario).filter(
+        Transacao.evento_id == evento_id,
+        Transacao.status == "aprovada"
+    ).all()
+    
+    for row, transacao in enumerate(transacoes, 2):
+        ws.cell(row=row, column=1, value=transacao.id)
+        ws.cell(row=row, column=2, value=transacao.cpf_comprador)
+        ws.cell(row=row, column=3, value=transacao.nome_comprador)
+        ws.cell(row=row, column=4, value=transacao.email_comprador)
+        ws.cell(row=row, column=5, value=transacao.telefone_comprador)
+        ws.cell(row=row, column=6, value=float(transacao.valor))
+        ws.cell(row=row, column=7, value=transacao.metodo_pagamento)
+        ws.cell(row=row, column=8, value=transacao.lista.nome if transacao.lista else "")
+        ws.cell(row=row, column=9, value=transacao.promoter.nome if transacao.promoter else "")
+        ws.cell(row=row, column=10, value=transacao.criado_em.strftime("%d/%m/%Y %H:%M"))
+        ws.cell(row=row, column=11, value=transacao.status.upper())
+    
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].auto_size = True
+    
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=vendas_evento_{evento_id}.xlsx"}
+    )
+
+@router.get("/dashboard/export/{formato}")
+async def exportar_dashboard(
+    formato: str,
+    evento_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    usuario_atual: Usuario = Depends(obter_usuario_atual)
+):
+    """Exportar dados do dashboard em diferentes formatos"""
+    
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    
+    if formato not in ["pdf", "csv", "excel"]:
+        raise HTTPException(status_code=400, detail="Formato não suportado")
+    
+    transacoes_query = db.query(Transacao).filter(Transacao.status == "aprovada")
+    checkins_query = db.query(Checkin)
+    
+    if usuario_atual.tipo.value != "admin":
+        transacoes_query = transacoes_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        checkins_query = checkins_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+    
+    if evento_id:
+        transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)
+        checkins_query = checkins_query.filter(Checkin.evento_id == evento_id)
+    
+    if formato == "excel":
+        wb = Workbook()
+        
+        ws_vendas = wb.active
+        ws_vendas.title = "Vendas"
+        headers_vendas = ['CPF', 'Nome', 'Valor', 'Data', 'Método', 'Status']
+        
+        for col, header in enumerate(headers_vendas, 1):
+            cell = ws_vendas.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        transacoes = transacoes_query.all()
+        for row, transacao in enumerate(transacoes, 2):
+            ws_vendas.cell(row=row, column=1, value=transacao.cpf_comprador)
+            ws_vendas.cell(row=row, column=2, value=transacao.nome_comprador)
+            ws_vendas.cell(row=row, column=3, value=float(transacao.valor))
+            ws_vendas.cell(row=row, column=4, value=transacao.criado_em.strftime("%d/%m/%Y"))
+            ws_vendas.cell(row=row, column=5, value=transacao.metodo_pagamento)
+            ws_vendas.cell(row=row, column=6, value=transacao.status)
+        
+        ws_checkins = wb.create_sheet("Check-ins")
+        headers_checkins = ['CPF', 'Nome', 'Data Check-in', 'Método']
+        
+        for col, header in enumerate(headers_checkins, 1):
+            cell = ws_checkins.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        checkins = checkins_query.all()
+        for row, checkin in enumerate(checkins, 2):
+            ws_checkins.cell(row=row, column=1, value=checkin.cpf)
+            ws_checkins.cell(row=row, column=2, value=checkin.nome)
+            ws_checkins.cell(row=row, column=3, value=checkin.checkin_em.strftime("%d/%m/%Y %H:%M"))
+            ws_checkins.cell(row=row, column=4, value=checkin.metodo_checkin)
+        
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=dashboard_{datetime.now().strftime('%Y%m%d')}.xlsx"}
+        )
+    
+    elif formato == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        writer.writerow(['=== RELATÓRIO DASHBOARD ==='])
+        writer.writerow(['Data:', datetime.now().strftime('%d/%m/%Y %H:%M')])
+        writer.writerow([])
+        
+        writer.writerow(['=== VENDAS ==='])
+        writer.writerow(['CPF', 'Nome', 'Valor', 'Data', 'Método', 'Status'])
+        
+        transacoes = transacoes_query.all()
+        for transacao in transacoes:
+            writer.writerow([
+                transacao.cpf_comprador,
+                transacao.nome_comprador,
+                str(transacao.valor),
+                transacao.criado_em.strftime('%d/%m/%Y'),
+                transacao.metodo_pagamento,
+                transacao.status
+            ])
+        
+        writer.writerow([])
+        writer.writerow(['=== CHECK-INS ==='])
+        writer.writerow(['CPF', 'Nome', 'Data Check-in', 'Método'])
+        
+        checkins = checkins_query.all()
+        for checkin in checkins:
+            writer.writerow([
+                checkin.cpf,
+                checkin.nome,
+                checkin.checkin_em.strftime('%d/%m/%Y %H:%M'),
+                checkin.metodo_checkin
+            ])
+        
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=dashboard_{datetime.now().strftime('%Y%m%d')}.csv"}
+        )
+    
+    return {"message": "Formato PDF em desenvolvimento"}

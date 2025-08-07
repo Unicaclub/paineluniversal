@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, validator
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 from decimal import Decimal
 from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
@@ -448,3 +448,48 @@ class DashboardPDV(BaseModel):
     vendas_por_hora: List[dict]
     produtos_mais_vendidos: List[dict]
     alertas: List[dict]
+
+class DashboardAvancado(BaseModel):
+    total_eventos: int
+    total_vendas: int
+    total_checkins: int
+    receita_total: Decimal
+    taxa_conversao: float
+    vendas_hoje: int
+    vendas_semana: int
+    vendas_mes: int
+    receita_hoje: Decimal
+    receita_semana: Decimal
+    receita_mes: Decimal
+    checkins_hoje: int
+    checkins_semana: int
+    taxa_presenca: float
+    fila_espera: int
+    cortesias: int
+    inadimplentes: int
+    aniversariantes_mes: int
+    consumo_medio: Decimal
+
+class FiltrosDashboard(BaseModel):
+    evento_id: Optional[int] = None
+    promoter_id: Optional[int] = None
+    tipo_lista: Optional[str] = None
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    metodo_pagamento: Optional[str] = None
+
+class RankingPromoterAvancado(BaseModel):
+    promoter_id: int
+    nome_promoter: str
+    total_vendas: int
+    receita_gerada: Decimal
+    total_checkins: int
+    taxa_presenca: float
+    taxa_conversao: float
+    posicao: int
+    badge: str
+
+class DadosGrafico(BaseModel):
+    labels: List[str]
+    datasets: List[dict]
+    tipo: str

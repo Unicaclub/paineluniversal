@@ -10,6 +10,7 @@ import EventosModule from './components/eventos/EventosModule';
 import MobileCheckinModule from './components/mobile/MobileCheckinModule';
 import PDVModule from './components/pdv/PDVModule';
 import DashboardPDV from './components/pdv/DashboardPDV';
+import DashboardAvancado from './components/dashboard/DashboardAvancado';
 import './App.css';
 
 function App() {
@@ -79,10 +80,7 @@ function App() {
                     } />
                     <Route path="/relatorios" element={
                       <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                        <div className="p-8 text-center">
-                          <h1 className="text-2xl font-bold">Módulo de Relatórios</h1>
-                          <p className="text-gray-600 mt-2">Em desenvolvimento</p>
-                        </div>
+                        <DashboardAvancado />
                       </ProtectedRoute>
                     } />
                     <Route path="/configuracoes" element={

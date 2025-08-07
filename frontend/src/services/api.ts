@@ -286,7 +286,43 @@ export const dashboardService = {
     return response.data;
   },
 
-  obterDadosTempoReal: (eventoId: number): Promise<any> => api.get(`/dashboard/tempo-real/${eventoId}`).then(response => response.data)
+  obterDadosTempoReal: (eventoId: number): Promise<any> => api.get(`/dashboard/tempo-real/${eventoId}`).then(response => response.data),
+
+  obterDashboardAvancado: (filtros: any): Promise<any> =>
+    api.get('/dashboard/avancado', { params: filtros }).then(response => response.data),
+
+  obterGraficosVendasTempo: (periodo: string, eventoId?: number): Promise<any> =>
+    api.get('/dashboard/graficos/vendas-tempo', { 
+      params: { periodo, evento_id: eventoId } 
+    }).then(response => response.data),
+
+  obterGraficosVendasLista: (eventoId?: number): Promise<any> =>
+    api.get('/dashboard/graficos/vendas-lista', { 
+      params: { evento_id: eventoId } 
+    }).then(response => response.data),
+
+  obterRankingAvancado: (eventoId?: number): Promise<any[]> =>
+    api.get(`/dashboard/ranking-promoters-avancado${eventoId ? `?evento_id=${eventoId}` : ''}`).then(response => response.data),
+
+  exportarDashboard: (formato: string, filtros: any): Promise<any> =>
+    api.get(`/relatorios/dashboard/export/${formato}`, { 
+      params: filtros,
+      responseType: 'blob'
+    }).then(response => response.data),
+};
+
+export const relatoriosService = {
+  exportarVendasCSV: (eventoId: number): Promise<Blob> =>
+    api.get(`/relatorios/vendas/${eventoId}/csv`, { responseType: 'blob' }).then(response => response.data),
+
+  exportarCheckinsCSV: (eventoId: number): Promise<Blob> =>
+    api.get(`/relatorios/checkins/${eventoId}/csv`, { responseType: 'blob' }).then(response => response.data),
+
+  exportarVendasExcel: (eventoId: number): Promise<Blob> =>
+    api.get(`/relatorios/vendas/${eventoId}/excel`, { responseType: 'blob' }).then(response => response.data),
+
+  exportarCheckinsExcel: (eventoId: number): Promise<Blob> =>
+    api.get(`/relatorios/checkins/${eventoId}/excel`, { responseType: 'blob' }).then(response => response.data),
 };
 
 export const cupomService = {
