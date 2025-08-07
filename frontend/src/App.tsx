@@ -13,6 +13,7 @@ import DashboardPDV from './components/pdv/DashboardPDV';
 import DashboardAvancado from './components/dashboard/DashboardAvancado';
 import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
+import RankingModule from './components/ranking/RankingModule';
 import './App.css';
 
 function App() {
@@ -88,6 +89,11 @@ function App() {
                     <Route path="/financeiro" element={
                       <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                         <CaixaEvento />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ranking" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                        <RankingModule />
                       </ProtectedRoute>
                     } />
                     <Route path="/relatorios" element={

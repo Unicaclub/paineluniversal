@@ -466,3 +466,73 @@ class CaixaEvento(Base):
     evento = relationship("Evento")
     usuario_abertura = relationship("Usuario", foreign_keys=[usuario_abertura_id])
     usuario_fechamento = relationship("Usuario", foreign_keys=[usuario_fechamento_id])
+
+class TipoConquista(enum.Enum):
+    VENDAS = "vendas"
+    PRESENCA = "presenca"
+    FIDELIDADE = "fidelidade"
+    CRESCIMENTO = "crescimento"
+    ESPECIAL = "especial"
+
+class NivelBadge(enum.Enum):
+    BRONZE = "bronze"
+    PRATA = "prata"
+    OURO = "ouro"
+    PLATINA = "platina"
+    DIAMANTE = "diamante"
+    LENDA = "lenda"
+
+class Conquista(Base):
+    __tablename__ = "conquistas"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), nullable=False)
+    descricao = Column(Text, nullable=False)
+    tipo = Column(Enum(TipoConquista), nullable=False)
+    criterio_valor = Column(Integer, nullable=False)
+    badge_nivel = Column(Enum(NivelBadge), nullable=False)
+    icone = Column(String(50))
+    ativa = Column(Boolean, default=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+
+class PromoterConquista(Base):
+    __tablename__ = "promoter_conquistas"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    promoter_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    conquista_id = Column(Integer, ForeignKey("conquistas.id"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    valor_alcancado = Column(Integer, nullable=False)
+    data_conquista = Column(DateTime(timezone=True), server_default=func.now())
+    notificado = Column(Boolean, default=False)
+    
+    promoter = relationship("Usuario")
+    conquista = relationship("Conquista")
+    evento = relationship("Evento")
+
+class MetricaPromoter(Base):
+    __tablename__ = "metricas_promoters"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    promoter_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    periodo_inicio = Column(Date, nullable=False)
+    periodo_fim = Column(Date, nullable=False)
+    
+    total_vendas = Column(Integer, default=0)
+    receita_gerada = Column(Numeric(10, 2), default=0)
+    total_convidados = Column(Integer, default=0)
+    total_presentes = Column(Integer, default=0)
+    taxa_presenca = Column(Numeric(5, 2), default=0)
+    taxa_conversao = Column(Numeric(5, 2), default=0)
+    crescimento_vendas = Column(Numeric(5, 2), default=0)
+    
+    posicao_vendas = Column(Integer)
+    posicao_presenca = Column(Integer)
+    posicao_geral = Column(Integer)
+    badge_atual = Column(Enum(NivelBadge), default=NivelBadge.BRONZE)
+    
+    atualizado_em = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    promoter = relationship("Usuario")
+    evento = relationship("Evento")

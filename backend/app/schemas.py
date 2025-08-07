@@ -642,3 +642,93 @@ class DashboardListas(BaseModel):
     promoters_destaque: List[dict]
     convidados_por_tipo: List[dict]
     presencas_tempo_real: List[dict]
+
+class ConquistaBase(BaseModel):
+    nome: str
+    descricao: str
+    tipo: str
+    criterio_valor: int
+    badge_nivel: str
+    icone: Optional[str] = None
+
+class ConquistaCreate(ConquistaBase):
+    pass
+
+class Conquista(ConquistaBase):
+    id: int
+    ativa: bool
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PromoterConquistaResponse(BaseModel):
+    id: int
+    conquista_nome: str
+    conquista_descricao: str
+    badge_nivel: str
+    icone: Optional[str] = None
+    valor_alcancado: int
+    data_conquista: datetime
+    evento_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class MetricaPromoterResponse(BaseModel):
+    promoter_id: int
+    promoter_nome: str
+    evento_id: Optional[int] = None
+    evento_nome: Optional[str] = None
+    periodo_inicio: date
+    periodo_fim: date
+    total_vendas: int
+    receita_gerada: Decimal
+    total_convidados: int
+    total_presentes: int
+    taxa_presenca: Decimal
+    taxa_conversao: Decimal
+    crescimento_vendas: Decimal
+    posicao_vendas: Optional[int] = None
+    posicao_presenca: Optional[int] = None
+    posicao_geral: Optional[int] = None
+    badge_atual: str
+    conquistas_recentes: List[PromoterConquistaResponse] = []
+    
+    class Config:
+        from_attributes = True
+
+class RankingGamificado(BaseModel):
+    promoter_id: int
+    nome_promoter: str
+    avatar_url: Optional[str] = None
+    badge_principal: str
+    nivel_experiencia: int
+    total_vendas: int
+    receita_gerada: Decimal
+    taxa_presenca: float
+    taxa_conversao: float
+    crescimento_mensal: float
+    posicao_atual: int
+    posicao_anterior: Optional[int] = None
+    conquistas_total: int
+    conquistas_mes: int
+    eventos_ativos: int
+    streak_vendas: int
+    pontuacao_total: int
+    
+class DashboardGamificacao(BaseModel):
+    ranking_geral: List[RankingGamificado]
+    conquistas_recentes: List[PromoterConquistaResponse]
+    metricas_periodo: dict
+    badges_disponiveis: List[dict]
+    alertas_gamificacao: List[dict]
+    estatisticas_gerais: dict
+
+class FiltrosRanking(BaseModel):
+    evento_id: Optional[int] = None
+    periodo_inicio: Optional[date] = None
+    periodo_fim: Optional[date] = None
+    badge_nivel: Optional[str] = None
+    tipo_ranking: Optional[str] = "geral"
+    limit: int = 20

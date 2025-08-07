@@ -16,7 +16,8 @@ class AlertService:
             "limite_lista": self.check_limite_lista,
             "aniversarios_vip": self.check_aniversarios_vip,
             "vendas_baixas": self.check_vendas_baixas,
-            "evento_proximo": self.check_evento_proximo
+            "evento_proximo": self.check_evento_proximo,
+            "conquistas_pendentes": self.check_conquistas_pendentes
         }
     
     async def run_alert_checks(self):
@@ -182,5 +183,46 @@ Lembrete: Preparar equipe e materiais
     def _is_birthday_week(self, cpf: str) -> bool:
         """Mock para verificação de aniversário (requer API de CPF real)"""
         return cpf.endswith(('01', '15', '30'))
+    
+    async def check_conquistas_pendentes(self, db: Session):
+        """Verificar promoters que podem ter novas conquistas"""
+        from ..models import Conquista, PromoterConquista, TipoConquista
+        
+        promoters_ativos = db.query(Usuario).filter(
+            Usuario.tipo == "promoter",
+            Usuario.ativo == True
+        ).all()
+        
+        for promoter in promoters_ativos:
+            total_vendas = db.query(func.count(Transacao.id)).join(Lista).filter(
+                Lista.promoter_id == promoter.id,
+                Transacao.status == "aprovada"
+            ).scalar() or 0
+            
+            conquistas_vendas = db.query(Conquista).filter(
+                Conquista.tipo == TipoConquista.VENDAS,
+                Conquista.criterio_valor <= total_vendas,
+                Conquista.ativa == True
+            ).all()
+            
+            for conquista in conquistas_vendas:
+                ja_possui = db.query(PromoterConquista).filter(
+                    PromoterConquista.promoter_id == promoter.id,
+                    PromoterConquista.conquista_id == conquista.id
+                ).first()
+                
+                if not ja_possui and promoter.telefone:
+                    message = f"""
+🎉 *NOVA CONQUISTA DISPONÍVEL!*
+
+{promoter.nome}, você pode ter desbloqueado:
+{conquista.icone} {conquista.nome}
+
+Acesse o sistema para verificar! 🚀
+                    """.strip()
+                    
+                    await whatsapp_service._send_whatsapp_message(
+                        promoter.telefone, message
+                    )
 
 alert_service = AlertService()

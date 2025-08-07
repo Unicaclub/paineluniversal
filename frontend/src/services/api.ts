@@ -503,6 +503,45 @@ export const financeiroService = {
   }
 };
 
+export const gamificacaoService = {
+  async obterRanking(filtros?: any): Promise<any[]> {
+    const response = await api.get('/gamificacao/ranking', { params: filtros });
+    return response.data;
+  },
+
+  async obterDashboard(eventoId?: number): Promise<any> {
+    const response = await api.get('/gamificacao/dashboard', { 
+      params: eventoId ? { evento_id: eventoId } : {} 
+    });
+    return response.data;
+  },
+
+  async criarConquista(conquista: any): Promise<any> {
+    const response = await api.post('/gamificacao/conquistas', conquista);
+    return response.data;
+  },
+
+  async verificarConquistas(promoterId: number): Promise<any> {
+    const response = await api.post(`/gamificacao/verificar-conquistas/${promoterId}`);
+    return response.data;
+  },
+
+  async exportarRanking(formato: 'excel' | 'csv' | 'pdf', filtros?: any): Promise<Blob> {
+    const response = await api.get(`/gamificacao/export/ranking/${formato}`, {
+      params: filtros,
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  async obterMetricasPromoter(promoterId: number, eventoId?: number): Promise<any> {
+    const response = await api.get(`/gamificacao/metricas/${promoterId}`, {
+      params: eventoId ? { evento_id: eventoId } : {}
+    });
+    return response.data;
+  }
+};
+
 export const checkinService = {
   checkinCPF: (cpf: string, eventoId: number, validacaoCpf: string): Promise<any> =>
     api.post('/checkins/', {
