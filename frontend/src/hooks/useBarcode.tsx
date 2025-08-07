@@ -50,3 +50,49 @@ export const useBarcode = ({ onScan, enabled = true }: UseBarcodeProps) => {
     }
   };
 };
+
+export const useQRScanner = ({ onScan, enabled = true }: UseBarcodeProps) => {
+  const bufferRef = useRef<string>('');
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        if (bufferRef.current.length > 5) {
+          onScan(bufferRef.current);
+          bufferRef.current = '';
+        }
+        return;
+      }
+      
+      if (event.key.length === 1) {
+        bufferRef.current += event.key;
+        
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        
+        timeoutRef.current = setTimeout(() => {
+          bufferRef.current = '';
+        }, 100);
+      }
+    };
+
+    document.addEventListener('keypress', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keypress', handleKeyPress);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [onScan, enabled]);
+
+  return {
+    clearBuffer: () => {
+      bufferRef.current = '';
+    }
+  };
+};

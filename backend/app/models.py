@@ -143,6 +143,7 @@ class Transacao(Base):
     status = Column(Enum(StatusTransacao), default=StatusTransacao.PENDENTE)
     metodo_pagamento = Column(String(50))
     codigo_transacao = Column(String(100), unique=True)
+    qr_code_ticket = Column(String(100), unique=True)
     evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
     lista_id = Column(Integer, ForeignKey("listas.id"), nullable=False)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))

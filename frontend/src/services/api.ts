@@ -374,3 +374,28 @@ export const pdvService = {
   relatorioZ: (caixaId: number): Promise<any> =>
     api.get(`/pdv/relatorios/z/${caixaId}`).then(response => response.data),
 };
+
+export const checkinService = {
+  checkinCPF: (cpf: string, eventoId: number, validacaoCpf: string): Promise<any> =>
+    api.post('/checkins/', {
+      cpf: cpf.replace(/\D/g, ''),
+      evento_id: eventoId,
+      metodo_checkin: 'cpf',
+      validacao_cpf: validacaoCpf
+    }),
+  
+  checkinQR: (qrCode: string, validacaoCpf: string): Promise<any> =>
+    api.post('/checkins/qr', {
+      qr_code: qrCode,
+      validacao_cpf: validacaoCpf
+    }),
+  
+  listarCheckins: (eventoId: number): Promise<any[]> =>
+    api.get(`/checkins/evento/${eventoId}`),
+  
+  verificarCPF: (cpf: string, eventoId: number): Promise<any> =>
+    api.get(`/checkins/cpf/${cpf}?evento_id=${eventoId}`),
+  
+  obterDashboard: (eventoId: number): Promise<any> =>
+    api.get(`/checkins/dashboard/${eventoId}`),
+};

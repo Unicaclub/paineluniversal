@@ -167,6 +167,7 @@ class Transacao(TransacaoBase):
     id: int
     status: StatusTransacao
     codigo_transacao: Optional[str] = None
+    qr_code_ticket: Optional[str] = None
     evento_id: int
     lista_id: int
     usuario_id: Optional[int] = None

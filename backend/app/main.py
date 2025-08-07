@@ -59,6 +59,16 @@ async def websocket_endpoint(websocket: WebSocket, evento_id: int):
     except WebSocketDisconnect:
         manager.disconnect(websocket, evento_id)
 
+@app.websocket("/api/checkin/ws/{evento_id}")
+async def checkin_websocket_endpoint(websocket: WebSocket, evento_id: int):
+    await manager.connect(websocket, evento_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"checkin-pong: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, evento_id)
+
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok", "mensagem": "Sistema de Gestão de Eventos funcionando"}

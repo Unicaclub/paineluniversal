@@ -41,6 +41,11 @@ function App() {
                         <CheckinModule />
                       </ProtectedRoute>
                     } />
+                    <Route path="/checkin-inteligente" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <CheckinModule />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/mobile-checkin" element={
                       <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                         <MobileCheckinModule />

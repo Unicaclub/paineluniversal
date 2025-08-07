@@ -1,5 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List, Dict
+from datetime import datetime
 import json
 import asyncio
 from sqlalchemy.orm import sessionmaker
@@ -57,5 +58,19 @@ async def notify_cash_register_update(evento_id: int, caixa_data: dict):
     await manager.broadcast_to_event(evento_id, {
         "type": "cash_register_update",
         "caixa": caixa_data,
+        "timestamp": datetime.now().isoformat()
+    })
+
+async def notify_checkin_update(evento_id: int, checkin_data: dict):
+    await manager.broadcast_to_event(evento_id, {
+        "type": "checkin_update",
+        "data": checkin_data,
+        "timestamp": datetime.now().isoformat()
+    })
+
+async def notify_dashboard_update(evento_id: int, dashboard_data: dict):
+    await manager.broadcast_to_event(evento_id, {
+        "type": "dashboard_update",
+        "data": dashboard_data,
         "timestamp": datetime.now().isoformat()
     })

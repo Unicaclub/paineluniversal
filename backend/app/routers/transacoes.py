@@ -52,6 +52,7 @@ async def criar_transacao(
     
     transacao_data = transacao.dict()
     transacao_data['codigo_transacao'] = str(uuid.uuid4())
+    transacao_data['qr_code_ticket'] = f"TICKET-{str(uuid.uuid4())[:8].upper()}-{evento.id}"
     transacao_data['usuario_id'] = usuario_atual.id
     transacao_data['valor'] = lista.preco
     
