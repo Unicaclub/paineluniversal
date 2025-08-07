@@ -128,6 +128,10 @@ class ListaBase(BaseModel):
     tipo: TipoLista
     preco: Decimal = Decimal('0.00')
     limite_vendas: Optional[int] = None
+    ativa: bool = True
+    descricao: Optional[str] = None
+    codigo_cupom: Optional[str] = None
+    desconto_percentual: Decimal = Decimal('0.00')
 
 class ListaCreate(ListaBase):
     evento_id: int
@@ -136,7 +140,6 @@ class ListaCreate(ListaBase):
 class Lista(ListaBase):
     id: int
     vendas_realizadas: int
-    ativa: bool
     evento_id: int
     promoter_id: Optional[int] = None
     criado_em: datetime
@@ -493,3 +496,61 @@ class DadosGrafico(BaseModel):
     labels: List[str]
     datasets: List[dict]
     tipo: str
+
+class ConvidadoBase(BaseModel):
+    cpf: str
+    nome: str
+    email: Optional[EmailStr] = None
+    telefone: Optional[str] = None
+    
+    @validator('cpf')
+    def validar_cpf(cls, v):
+        cpf = re.sub(r'\D', '', v)
+        if len(cpf) != 11:
+            raise ValueError('CPF deve ter 11 dígitos')
+        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+
+class ConvidadoCreate(ConvidadoBase):
+    lista_id: int
+    evento_id: int
+
+class ConvidadoImport(BaseModel):
+    convidados: List[ConvidadoBase]
+    lista_id: int
+    evento_id: int
+
+class ListaDetalhada(Lista):
+    total_convidados: int = 0
+    convidados_presentes: int = 0
+    taxa_presenca: float = 0.0
+    receita_gerada: Decimal = Decimal('0.00')
+    promoter_nome: Optional[str] = None
+    
+class ListaFiltros(BaseModel):
+    evento_id: Optional[int] = None
+    promoter_id: Optional[int] = None
+    tipo: Optional[str] = None
+    ativa: Optional[bool] = None
+    
+class RankingPromoterLista(BaseModel):
+    promoter_id: int
+    nome_promoter: str
+    total_listas: int
+    total_convidados: int
+    total_presentes: int
+    receita_total: Decimal
+    taxa_presenca: float
+    taxa_conversao: float
+    posicao: int
+    badge: str
+    eventos_ativos: int
+
+class DashboardListas(BaseModel):
+    total_listas: int
+    total_convidados: int
+    total_presentes: int
+    taxa_presenca_geral: float
+    listas_mais_ativas: List[dict]
+    promoters_destaque: List[dict]
+    convidados_por_tipo: List[dict]
+    presencas_tempo_real: List[dict]

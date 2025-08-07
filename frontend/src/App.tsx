@@ -11,6 +11,7 @@ import MobileCheckinModule from './components/mobile/MobileCheckinModule';
 import PDVModule from './components/pdv/PDVModule';
 import DashboardPDV from './components/pdv/DashboardPDV';
 import DashboardAvancado from './components/dashboard/DashboardAvancado';
+import ListasModule from './components/listas/ListasModule';
 import './App.css';
 
 function App() {
@@ -76,6 +77,11 @@ function App() {
                           <h1 className="text-2xl font-bold">Módulo de Empresas</h1>
                           <p className="text-gray-600 mt-2">Em desenvolvimento</p>
                         </div>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/listas" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                        <ListasModule />
                       </ProtectedRoute>
                     } />
                     <Route path="/relatorios" element={

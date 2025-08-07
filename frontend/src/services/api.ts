@@ -240,6 +240,46 @@ export const listaService = {
   async listarPorPromoter(promoterId: number): Promise<Lista[]> {
     const response = await api.get(`/listas/promoter/${promoterId}`);
     return response.data;
+  },
+
+  async criar(lista: any): Promise<Lista> {
+    const response = await api.post('/listas/', lista);
+    return response.data;
+  },
+
+  async atualizar(listaId: number, lista: any): Promise<Lista> {
+    const response = await api.put(`/listas/${listaId}`, lista);
+    return response.data;
+  },
+
+  async desativar(listaId: number): Promise<void> {
+    await api.delete(`/listas/${listaId}`);
+  },
+
+  async obterDetalhada(listaId: number): Promise<any> {
+    const response = await api.get(`/listas/detalhada/${listaId}`);
+    return response.data;
+  },
+
+  async importarConvidados(listaId: number, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/listas/${listaId}/convidados/import`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  async exportarConvidados(listaId: number, formato: 'csv' | 'excel'): Promise<Blob> {
+    const response = await api.get(`/listas/${listaId}/convidados/export/${formato}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  async obterDashboard(eventoId: number): Promise<any> {
+    const response = await api.get(`/listas/dashboard/${eventoId}`);
+    return response.data;
   }
 };
 

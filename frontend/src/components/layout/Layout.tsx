@@ -39,6 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Smartphone, label: 'Check-in Mobile', path: '/mobile-checkin', roles: ['admin', 'promoter', 'operador'] },
     { icon: ShoppingCart, label: 'PDV', path: '/pdv', roles: ['admin', 'promoter'] },
     { icon: BarChart3, label: 'Dashboard PDV', path: '/pdv/dashboard', roles: ['admin', 'promoter'] },
+    { icon: Users, label: 'Listas & Convidados', path: '/listas', roles: ['admin', 'promoter'] },
     { icon: Users, label: 'Usuários', path: '/usuarios', roles: ['admin'] },
     { icon: Building2, label: 'Empresas', path: '/empresas', roles: ['admin'] },
     { icon: FileText, label: 'Relatórios', path: '/relatorios', roles: ['admin', 'promoter'] },
