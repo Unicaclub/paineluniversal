@@ -21,6 +21,7 @@ class WhatsAppService:
         self.qr_code = None
         self.is_connected = False
         self.webhook_url = None
+        self.n8n_webhook_url = None
         
     async def initialize_session(self) -> Dict[str, Any]:
         """Inicializa sessão do WhatsApp e retorna QR Code"""
@@ -169,6 +170,12 @@ Exemplo: CHECKIN {cpf_formatado} {cpf[:3]}
             
             await self._send_whatsapp_message(phone, response_msg)
             
+            await self.notify_n8n("confirmacao_presenca", {
+                "cpf": cpf_formatado,
+                "phone": phone,
+                "eventos_confirmados": len(transacoes)
+            })
+            
             return {
                 "status": "confirmed",
                 "cpf": cpf_formatado,
@@ -247,6 +254,12 @@ Bem-vindo(a) ao evento! 🎉
             
             await self._send_whatsapp_message(phone, response_msg)
             
+            await self.notify_n8n("checkin_realizado", {
+                "cpf": cpf_formatado,
+                "phone": phone,
+                "eventos": checkins_realizados
+            })
+            
             return {
                 "status": "checkin_success",
                 "cpf": cpf_formatado,
@@ -309,6 +322,29 @@ Precisa de ajuda? Entre em contato com a organização.
             logger.error(f"Erro no envio em massa: {e}")
             return {"status": "error", "message": str(e)}
     
+    async def set_n8n_webhook(self, webhook_url: str):
+        """Configurar webhook N8N para automações"""
+        self.n8n_webhook_url = webhook_url
+        
+    async def notify_n8n(self, event_type: str, data: Dict[str, Any]):
+        """Notificar N8N sobre eventos do WhatsApp"""
+        if not self.n8n_webhook_url:
+            return
+            
+        payload = {
+            "source": "whatsapp",
+            "event_type": event_type,
+            "timestamp": datetime.now().isoformat(),
+            "data": data
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.n8n_webhook_url, json=payload) as response:
+                    logger.info(f"N8N notificado: {event_type} - Status: {response.status}")
+        except Exception as e:
+            logger.error(f"Erro ao notificar N8N: {e}")
+
     async def get_session_status(self) -> Dict[str, Any]:
         """Retorna status da sessão WhatsApp"""
         return {

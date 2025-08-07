@@ -101,6 +101,15 @@ class Lista(Base):
     ativa = Column(Boolean, default=True)
     evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
     promoter_id = Column(Integer, ForeignKey("usuarios.id"))
+    
+    codigo_cupom = Column(String(50), unique=True)
+    desconto_percentual = Column(Numeric(5, 2), default=0)
+    desconto_valor = Column(Numeric(10, 2), default=0)
+    data_inicio_desconto = Column(DateTime(timezone=True))
+    data_fim_desconto = Column(DateTime(timezone=True))
+    limite_uso_cupom = Column(Integer)
+    usos_cupom = Column(Integer, default=0)
+    
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     
     evento = relationship("Evento", back_populates="listas")

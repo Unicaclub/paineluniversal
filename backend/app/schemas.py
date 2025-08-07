@@ -242,3 +242,23 @@ class RelatorioVendas(BaseModel):
     receita_total: Decimal
     vendas_por_lista: List[dict]
     vendas_por_promoter: List[dict]
+
+class CupomCreate(BaseModel):
+    lista_id: int
+    codigo: str
+    desconto_percentual: Optional[Decimal] = None
+    desconto_valor: Optional[Decimal] = None
+    data_inicio: Optional[datetime] = None
+    data_fim: Optional[datetime] = None
+    limite_uso: Optional[int] = None
+
+class CupomResponse(BaseModel):
+    id: int
+    codigo: str
+    desconto_percentual: Optional[Decimal]
+    desconto_valor: Optional[Decimal]
+    lista_nome: str
+    evento_nome: str
+    
+    class Config:
+        from_attributes = True

@@ -284,7 +284,31 @@ export const dashboardService = {
     
     const response = await api.get(`/dashboard/ranking-promoters?${params.toString()}`);
     return response.data;
-  }
+  },
+
+  obterDadosTempoReal: (eventoId: number): Promise<any> => api.get(`/dashboard/tempo-real/${eventoId}`).then(response => response.data)
+};
+
+export const cupomService = {
+  criar: (cupomData: any): Promise<any> => api.post('/cupons/', cupomData).then(response => response.data),
+  validar: (codigo: string): Promise<any> => api.post(`/cupons/validar/${codigo}`).then(response => response.data),
+  usar: (codigo: string): Promise<any> => api.post(`/cupons/usar/${codigo}`).then(response => response.data),
+  listarPorEvento: (eventoId: number): Promise<any> => api.get(`/cupons/evento/${eventoId}`).then(response => response.data)
+};
+
+export const whatsappService = {
+  inicializar: (webhookUrl?: string): Promise<any> => api.post('/whatsapp/init', { webhook_url: webhookUrl }).then(response => response.data),
+  obterStatus: (): Promise<any> => api.get('/whatsapp/status').then(response => response.data),
+  enviarConvite: (conviteData: any): Promise<any> => api.post('/whatsapp/send-invite', conviteData).then(response => response.data),
+  enviarConvitesMassa: (convitesData: any): Promise<any> => api.post('/whatsapp/send-bulk', convitesData).then(response => response.data),
+  listarConvites: (eventoId: number): Promise<any> => api.get(`/whatsapp/eventos/${eventoId}/invites`).then(response => response.data)
+};
+
+export const n8nService = {
+  triggerEventoCriado: (eventoId: number, webhookUrl: string): Promise<any> => 
+    api.post('/n8n/trigger/evento-criado', { evento_id: eventoId, n8n_webhook_url: webhookUrl }).then(response => response.data),
+  triggerVendaRealizada: (transacaoId: number, webhookUrl: string): Promise<any> => 
+    api.post('/n8n/trigger/venda-realizada', { transacao_id: transacaoId, n8n_webhook_url: webhookUrl }).then(response => response.data)
 };
 
 export const usuarioService = {

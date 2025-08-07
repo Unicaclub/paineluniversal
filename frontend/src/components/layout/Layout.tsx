@@ -35,6 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Calendar, label: 'Eventos', path: '/eventos', roles: ['admin', 'promoter'] },
     { icon: ShoppingCart, label: 'Vendas', path: '/vendas', roles: ['admin', 'promoter', 'operador'] },
     { icon: UserCheck, label: 'Check-in', path: '/checkin', roles: ['admin', 'promoter', 'operador'] },
+    { icon: Users, label: 'Check-in Mobile', path: '/mobile-checkin', roles: ['admin', 'promoter', 'operador'] },
     { icon: Users, label: 'Usuários', path: '/usuarios', roles: ['admin'] },
     { icon: Building2, label: 'Empresas', path: '/empresas', roles: ['admin'] },
     { icon: FileText, label: 'Relatórios', path: '/relatorios', roles: ['admin', 'promoter'] },

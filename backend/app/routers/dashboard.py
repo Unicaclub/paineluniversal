@@ -182,3 +182,42 @@ async def obter_aniversariantes(
         "total": 0,
         "observacao": "Funcionalidade requer integração com API de validação de CPF"
     }
+
+@router.get("/tempo-real/{evento_id}")
+async def obter_dados_tempo_real(
+    evento_id: int,
+    db: Session = Depends(get_db),
+    usuario_atual: Usuario = Depends(obter_usuario_atual)
+):
+    """Obter dados em tempo real para dashboard"""
+    
+    evento = db.query(Evento).filter(Evento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    
+    if (usuario_atual.tipo.value != "admin" and 
+        usuario_atual.empresa_id != evento.empresa_id):
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    uma_hora_atras = datetime.now() - timedelta(hours=1)
+    vendas_ultima_hora = db.query(func.count(Transacao.id)).filter(
+        Transacao.evento_id == evento_id,
+        Transacao.status == "aprovada",
+        Transacao.criado_em >= uma_hora_atras
+    ).scalar() or 0
+    
+    checkins_ultima_hora = db.query(func.count(Checkin.id)).filter(
+        Checkin.evento_id == evento_id,
+        Checkin.checkin_em >= uma_hora_atras
+    ).scalar() or 0
+    
+    ranking_atual = await obter_ranking_promoters(evento_id, 5, db, usuario_atual)
+    
+    return {
+        "evento_id": evento_id,
+        "timestamp": datetime.now().isoformat(),
+        "vendas_ultima_hora": vendas_ultima_hora,
+        "checkins_ultima_hora": checkins_ultima_hora,
+        "ranking_promoters": ranking_atual,
+        "status_evento": evento.status.value
+    }

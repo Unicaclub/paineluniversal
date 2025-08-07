@@ -7,6 +7,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import SalesModule from './components/sales/SalesModule';
 import CheckinModule from './components/checkin/CheckinModule';
 import EventosModule from './components/eventos/EventosModule';
+import MobileCheckinModule from './components/mobile/MobileCheckinModule';
 import './App.css';
 
 function App() {
@@ -36,6 +37,11 @@ function App() {
                     <Route path="/checkin" element={
                       <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                         <CheckinModule />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/mobile-checkin" element={
+                      <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <MobileCheckinModule />
                       </ProtectedRoute>
                     } />
                     <Route path="/usuarios" element={
