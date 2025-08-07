@@ -1,0 +1,55 @@
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+import psycopg
+
+from .database import engine, get_db
+from .models import Base
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios
+from .middleware import LoggingMiddleware
+from .auth import verificar_permissao_admin
+from datetime import timedelta
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Sistema de Gestão de Eventos",
+    description="API completa para gestão de eventos com foco em segurança e automação via CPF",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Disable CORS. Do not remove this for full-stack development.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+app.add_middleware(LoggingMiddleware)
+
+app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
+app.include_router(empresas.router, prefix="/api/empresas", tags=["Empresas"])
+app.include_router(usuarios.router, prefix="/api/usuarios", tags=["Usuários"])
+app.include_router(eventos.router, prefix="/api/eventos", tags=["Eventos"])
+app.include_router(listas.router, prefix="/api/listas", tags=["Listas"])
+app.include_router(transacoes.router, prefix="/api/transacoes", tags=["Transações"])
+app.include_router(checkins.router, prefix="/api/checkins", tags=["Check-ins"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatórios"])
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok", "mensagem": "Sistema de Gestão de Eventos funcionando"}
+
+@app.get("/")
+async def root():
+    return {
+        "mensagem": "Bem-vindo ao Sistema de Gestão de Eventos",
+        "versao": "1.0.0",
+        "documentacao": "/docs"
+    }
