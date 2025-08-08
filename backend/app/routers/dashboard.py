@@ -107,8 +107,6 @@ async def obter_vendas_tempo_real(
     
     query = db.query(Transacao)
     
-    # Role-based filtering removed - promoters and admins have access to all data
-    
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
     
@@ -190,8 +188,8 @@ async def obter_dados_tempo_real(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        False  # empresa_id removido):
+    # Verificação de acesso simplificada
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     uma_hora_atras = datetime.now() - timedelta(hours=1)
