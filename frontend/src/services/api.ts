@@ -125,14 +125,12 @@ export const authService = {
     telefone?: string;
     senha: string;
     tipo?: 'admin' | 'promoter' | 'cliente';
-    empresa_id?: number;
   }): Promise<Usuario> {
     const userData = {
       ...data,
-      tipo: data.tipo || 'cliente',
-      empresa_id: data.empresa_id || 1
+      tipo: data.tipo || 'cliente'
     };
-    const response = await api.post('/api/usuarios/', userData);
+    const response = await api.post('/api/auth/register', userData);
     return response.data;
   },
 
