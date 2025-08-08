@@ -86,6 +86,68 @@ async def healthz():
         "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development"
     }
 
+@app.post("/setup-inicial")
+async def setup_inicial_temp(db: Session = Depends(get_db)):
+    from .models import Empresa, Usuario, TipoUsuario
+    from .auth import get_password_hash
+    
+    try:
+        # Verificar se já existe empresa
+        empresa_existente = db.query(Empresa).first()
+        if empresa_existente:
+            return {"message": "Sistema já foi inicializado", "empresa": empresa_existente.nome}
+        
+        # Criar empresa
+        empresa = Empresa(
+            nome="Painel Universal - Empresa Demo",
+            cnpj="00000000000100",
+            email="contato@paineluniversal.com",
+            telefone="(11) 99999-9999",
+            endereco="Endereço da empresa demo"
+        )
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
+        
+        # Criar usuário admin
+        admin = Usuario(
+            cpf="00000000000",
+            nome="Administrador Sistema",
+            email="admin@paineluniversal.com",
+            telefone="(11) 99999-0000",
+            senha_hash=get_password_hash("admin123"),
+            tipo=TipoUsuario.ADMIN,
+            empresa_id=empresa.id
+        )
+        db.add(admin)
+        
+        # Criar usuário promoter
+        promoter = Usuario(
+            cpf="11111111111",
+            nome="Promoter Demo",
+            email="promoter@paineluniversal.com",
+            telefone="(11) 99999-1111",
+            senha_hash=get_password_hash("promoter123"),
+            tipo=TipoUsuario.PROMOTER,
+            empresa_id=empresa.id
+        )
+        db.add(promoter)
+        
+        db.commit()
+        
+        return {
+            "message": "Sistema inicializado com sucesso!",
+            "empresa": empresa.nome,
+            "usuarios_criados": [
+                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin"},
+                {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter"}
+            ]
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao inicializar sistema: {str(e)}")
+
 @app.get("/")
 async def root():
     return {

@@ -3,9 +3,9 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db, settings
-from ..models import Usuario
+from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema
-from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual
+from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha
 
 router = APIRouter()
 security = HTTPBearer()
@@ -92,3 +92,85 @@ async def solicitar_codigo_verificacao(cpf: str, db: Session = Depends(get_db)):
         "mensagem": "Código de verificação enviado",
         "codigo_desenvolvimento": codigo  # Remover em produção
     }
+
+@router.post("/setup-inicial")
+async def setup_inicial(db: Session = Depends(get_db)):
+    """Setup inicial do sistema - Criar empresa e admin padrão (apenas se não houver usuários)"""
+    
+    # Verificar se já existem usuários no sistema
+    usuario_existente = db.query(Usuario).first()
+    if usuario_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sistema já foi inicializado. Já existem usuários cadastrados."
+        )
+    
+    try:
+        # Criar empresa padrão
+        empresa = Empresa(
+            nome="Painel Universal - Empresa Demo",
+            cnpj="00000000000100",
+            email="contato@paineluniversal.com",
+            telefone="(11) 99999-9999",
+            endereco="Endereço da empresa demo",
+            ativa=True
+        )
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
+        
+        # Criar usuário admin
+        senha_hash = gerar_hash_senha("admin123")
+        admin = Usuario(
+            cpf="00000000000",
+            nome="Administrador Sistema",
+            email="admin@paineluniversal.com",
+            telefone="(11) 99999-0000",
+            senha_hash=senha_hash,
+            tipo=TipoUsuario.ADMIN,
+            ativo=True,
+            empresa_id=empresa.id
+        )
+        db.add(admin)
+        
+        # Criar usuário promoter
+        senha_hash_promoter = gerar_hash_senha("promoter123")
+        promoter = Usuario(
+            cpf="11111111111",
+            nome="Promoter Demo",
+            email="promoter@paineluniversal.com",
+            telefone="(11) 99999-1111",
+            senha_hash=senha_hash_promoter,
+            tipo=TipoUsuario.PROMOTER,
+            ativo=True,
+            empresa_id=empresa.id
+        )
+        db.add(promoter)
+        
+        db.commit()
+        
+        return {
+            "mensagem": "Setup inicial realizado com sucesso!",
+            "empresa": {
+                "id": empresa.id,
+                "nome": empresa.nome,
+                "cnpj": empresa.cnpj
+            },
+            "credenciais": {
+                "admin": {
+                    "cpf": "00000000000",
+                    "senha": "admin123"
+                },
+                "promoter": {
+                    "cpf": "11111111111", 
+                    "senha": "promoter123"
+                }
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao realizar setup inicial: {str(e)}"
+        )

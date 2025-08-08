@@ -15,14 +15,7 @@ export default defineConfig({
         name: 'Sistema de Gestão de Eventos',
         short_name: 'Eventos',
         description: 'Sistema completo para gestão de eventos',
-        theme_color: '#000000',
-        icons: [
-          {
-            src: 'icon-192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          }
-        ]
+        theme_color: '#000000'
       }
     })
   ],
