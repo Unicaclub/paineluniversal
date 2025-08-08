@@ -107,8 +107,7 @@ async def obter_vendas_tempo_real(
     
     query = db.query(Transacao)
     
-    if usuario_atual.tipo.value != "admin":
-        # Role-based filtering removed - promoters and admins have access to all data
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -235,8 +234,7 @@ async def obter_dashboard_avancado(
     transacoes_query = db.query(Transacao)
     checkins_query = db.query(Checkin)
     
-    if usuario_atual.tipo.value != "admin":
-        # Role-based filtering removed - promoters and admins have access to all data
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)
@@ -363,8 +361,7 @@ async def obter_grafico_vendas_tempo(
     
     transacoes_query = db.query(Transacao).filter(Transacao.status == "aprovada")
     
-    if usuario_atual.tipo.value != "admin":
-        # Role-based filtering removed - promoters and admins have access to all data
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)
@@ -442,8 +439,7 @@ async def obter_grafico_vendas_lista(
         Transacao.status == "aprovada"
     )
     
-    if usuario_atual.tipo.value != "admin":
-        # Role-based filtering removed - promoters and admins have access to all data
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -489,8 +485,7 @@ async def obter_ranking_promoters_avancado(
         Usuario.tipo == "promoter"
     )
     
-    if usuario_atual.tipo.value != "admin":
-        # Role-based filtering removed - promoters and admins have access to all data
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)

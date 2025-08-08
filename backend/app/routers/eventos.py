@@ -70,7 +70,7 @@ async def listar_eventos(
     query = db.query(Evento)
     
     # Role-based filtering removed - promoters and admins have access to all data
-    elif empresa_id:
+    if empresa_id:
         query = query.filter(Evento.empresa_id == empresa_id)
     
     if status:
@@ -95,7 +95,7 @@ async def buscar_eventos(
     query = db.query(Evento)
     
     # Role-based filtering removed - promoters and admins have access to all data
-    elif empresa_id:
+    if empresa_id:
         query = query.filter(Evento.empresa_id == empresa_id)
     
     if nome:
