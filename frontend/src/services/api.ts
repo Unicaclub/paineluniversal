@@ -96,7 +96,7 @@ export interface Usuario {
   email: string;
   telefone?: string;
   tipo: 'admin' | 'promoter' | 'cliente';
-  empresa_id: number;
+  empresa_id?: number | null;  // Opcional agora
   ativo?: boolean;
   criado_em?: string;
   ultimo_login?: string;

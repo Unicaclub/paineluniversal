@@ -15,7 +15,7 @@ interface Usuario {
   email: string;
   telefone: string;
   tipo: 'admin' | 'promoter' | 'cliente';
-  empresa_id: number;
+  empresa_id?: number | null;  // Opcional agora
   ativo?: boolean;
 }
 
@@ -49,7 +49,7 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
     telefone: '',
     senha: '',
     tipo: 'cliente',
-    empresa_id: 1,
+    empresa_id: null,  // Inicializa como null
     ativo: true
   });
   
@@ -76,7 +76,7 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
         telefone: usuario.telefone || '',
         senha: '', // Não mostrar senha atual por segurança
         tipo: usuario.tipo,
-        empresa_id: usuario.empresa_id,
+        empresa_id: usuario.empresa_id || null,  // Usa null se não tiver empresa
         ativo: usuario.ativo ?? true
       });
     } else {
@@ -88,7 +88,7 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
         telefone: '',
         senha: '',
         tipo: 'cliente',
-        empresa_id: 1,
+        empresa_id: null,  // Null por padrão para novos usuários
         ativo: true
       });
     }
@@ -178,10 +178,7 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
       }
     }
     
-    // Empresa obrigatória
-    if (!formData.empresa_id) {
-      newErrors.empresa_id = 'Empresa é obrigatória';
-    }
+    // Empresa é opcional agora - sem validação obrigatória
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -399,13 +396,14 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
               <Input disabled placeholder="Carregando empresas..." />
             ) : (
               <Select
-                value={formData.empresa_id.toString()}
-                onValueChange={(value) => handleInputChange('empresa_id', parseInt(value))}
+                value={formData.empresa_id ? formData.empresa_id.toString() : ''}
+                onValueChange={(value) => handleInputChange('empresa_id', value ? parseInt(value) : null)}
               >
-                <SelectTrigger className={errors.empresa_id ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Selecione a empresa" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Nenhuma empresa</SelectItem>
                   {empresas.map((empresa) => (
                     <SelectItem key={empresa.id} value={empresa.id.toString()}>
                       {empresa.nome}
@@ -413,9 +411,6 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-            )}
-            {errors.empresa_id && (
-              <p className="text-sm text-red-500">{errors.empresa_id}</p>
             )}
           </div>
 

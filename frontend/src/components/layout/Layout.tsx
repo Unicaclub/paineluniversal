@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { useToast } from '../../hooks/use-toast';
 import { 
   Calendar, 
   Users, 
@@ -42,12 +43,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleNotifications = () => {
+    toast({
+      title: "Notificações",
+      description: "Você tem 3 notificações não lidas",
+      duration: 3000,
+    });
+    // TODO: Implementar painel de notificações
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
+    toast({
+      title: "Busca",
+      description: `Buscando por: ${searchTerm}`,
+      duration: 2000,
+    });
+    // TODO: Implementar funcionalidade de busca global
   };
 
   const menuItems = [
@@ -365,19 +389,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Menu className="h-5 w-5" />
               </Button>
               
-              <div className="hidden sm:flex items-center space-x-2 max-w-sm">
+              <form onSubmit={handleSearch} className="hidden sm:flex items-center space-x-2 max-w-sm">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 h-9 bg-muted/50 border-0 focus:bg-background"
                   />
                 </div>
-              </div>
+              </form>
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative" 
+                onClick={handleNotifications}
+                title="Ver notificações"
+              >
                 <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center">
                   3
