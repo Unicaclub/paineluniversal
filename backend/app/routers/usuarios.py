@@ -36,14 +36,6 @@ async def criar_usuario(
             detail="Email já cadastrado"
         )
     
-    # Validar empresa apenas se empresa_id foi fornecido
-    if usuario.empresa_id:
-        empresa = db.query(Empresa).filter(Empresa.id == usuario.empresa_id).first()
-        if not empresa:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Empresa não encontrada"
-            )
     
     senha_hash = gerar_hash_senha(usuario.senha)
     usuario_data = usuario.dict()
@@ -61,19 +53,12 @@ async def criar_usuario(
 async def listar_usuarios(
     skip: int = 0,
     limit: int = 100,
-    empresa_id: Optional[int] = None,
     db: Session = Depends(get_db),
     usuario_atual: Usuario = Depends(obter_usuario_atual)
 ):
     """Listar usuários"""
     
     query = db.query(Usuario)
-    
-    if usuario_atual.tipo.value != "admin":
-        query = query.filter(Usuario.empresa_id == usuario_atual.empresa_id)
-    elif empresa_id:
-        query = query.filter(Usuario.empresa_id == empresa_id)
-    
     usuarios = query.offset(skip).limit(limit).all()
     return usuarios
 
@@ -93,7 +78,6 @@ async def obter_usuario(
         )
     
     if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != usuario.empresa_id and 
         usuario_atual.id != usuario_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

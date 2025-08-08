@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Eye, EyeOff, User, Mail, Phone, CreditCard, Building } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, CreditCard } from 'lucide-react';
 import { api } from '../../services/api';
 
 interface Usuario {
@@ -15,7 +15,6 @@ interface Usuario {
   email: string;
   telefone: string;
   tipo: 'admin' | 'promoter' | 'cliente';
-  empresa_id?: number | null;  // Opcional agora
   ativo?: boolean;
 }
 
@@ -23,11 +22,6 @@ interface UsuarioCreate extends Usuario {
   senha: string;
 }
 
-interface Empresa {
-  id: number;
-  nome: string;
-  cnpj: string;
-}
 
 interface CadastroUsuarioModalProps {
   usuario?: Usuario | null;
@@ -49,22 +43,13 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
     telefone: '',
     senha: '',
     tipo: 'cliente',
-    empresa_id: null,  // Inicializa como null
     ativo: true
   });
   
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
 
-  // Carregar empresas disponíveis
-  useEffect(() => {
-    if (isOpen) {
-      loadEmpresas();
-    }
-  }, [isOpen]);
 
   // Preencher formulário se estiver editando
   useEffect(() => {
@@ -76,7 +61,6 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
         telefone: usuario.telefone || '',
         senha: '', // Não mostrar senha atual por segurança
         tipo: usuario.tipo,
-        empresa_id: usuario.empresa_id || null,  // Usa null se não tiver empresa
         ativo: usuario.ativo ?? true
       });
     } else {
@@ -88,24 +72,12 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
         telefone: '',
         senha: '',
         tipo: 'cliente',
-        empresa_id: null,  // Null por padrão para novos usuários
         ativo: true
       });
     }
     setErrors({});
   }, [usuario, isOpen]);
 
-  const loadEmpresas = async () => {
-    try {
-      setLoadingEmpresas(true);
-      const response = await api.get('/api/empresas/');
-      setEmpresas(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar empresas:', error);
-    } finally {
-      setLoadingEmpresas(false);
-    }
-  };
 
   const formatCPF = (value: string) => {
     // Remove todos os caracteres não numéricos
@@ -178,7 +150,6 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
       }
     }
     
-    // Empresa é opcional agora - sem validação obrigatória
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -386,33 +357,6 @@ const CadastroUsuarioModal: React.FC<CadastroUsuarioModalProps> = ({
             )}
           </div>
 
-          {/* Empresa */}
-          <div className="space-y-2">
-            <Label htmlFor="empresa" className="flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              Empresa
-            </Label>
-            {loadingEmpresas ? (
-              <Input disabled placeholder="Carregando empresas..." />
-            ) : (
-              <Select
-                value={formData.empresa_id ? formData.empresa_id.toString() : ''}
-                onValueChange={(value) => handleInputChange('empresa_id', value ? parseInt(value) : null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a empresa (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Nenhuma empresa</SelectItem>
-                  {empresas.map((empresa) => (
-                    <SelectItem key={empresa.id} value={empresa.id.toString()}>
-                      {empresa.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
 
           {/* Erro geral */}
           {errors.submit && (

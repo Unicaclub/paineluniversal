@@ -125,7 +125,6 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     senha: str
-    empresa_id: Optional[int] = None
     
     @validator('cpf')
     def validar_cpf(cls, v):
