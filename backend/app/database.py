@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings
 import os
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./eventos.db"
-    secret_key: str = "sua-chave-secreta-super-segura-aqui"
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./eventos.db")
+    secret_key: str = os.getenv("SECRET_KEY", "sua-chave-secreta-super-segura-aqui")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     

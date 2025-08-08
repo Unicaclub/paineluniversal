@@ -2,7 +2,6 @@ from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket,
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-import psycopg
 
 from .database import engine, get_db
 from .models import Base
