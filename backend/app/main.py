@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket,
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+import os
 
 from .database import engine, get_db
 from .models import Base
@@ -24,7 +25,13 @@ app = FastAPI(
 # Disable CORS. Do not remove this for full-stack development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173", 
+        "https://frontend-painel-universal-production.up.railway.app",
+        "https://*.railway.app",
+        "*"  # Remove em produção se necessário
+    ],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
@@ -72,12 +79,18 @@ async def checkin_websocket_endpoint(websocket: WebSocket, evento_id: int):
 
 @app.get("/healthz")
 async def healthz():
-    return {"status": "ok", "mensagem": "Sistema de Gestão de Eventos funcionando"}
+    return {
+        "status": "ok", 
+        "mensagem": "Sistema de Gestão de Eventos funcionando",
+        "timestamp": datetime.now().isoformat(),
+        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development"
+    }
 
 @app.get("/")
 async def root():
     return {
         "mensagem": "Bem-vindo ao Sistema de Gestão de Eventos",
         "versao": "1.0.0",
-        "documentacao": "/docs"
+        "documentacao": "/docs",
+        "timestamp": datetime.now().isoformat()
     }

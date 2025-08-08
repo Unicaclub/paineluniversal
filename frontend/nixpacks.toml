@@ -5,7 +5,10 @@ nixPkgs = ['nodejs_18', 'npm-9_x']
 cmds = ['npm ci']
 
 [phases.build]
-cmds = ['npm run build -- --mode production']
+cmds = ['npm run build']
 
 [start]
 cmd = 'npm run start'
+
+[variables]
+VITE_API_URL = "https://backend-painel-universal-production.up.railway.app"

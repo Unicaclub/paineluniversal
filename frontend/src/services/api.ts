@@ -1,12 +1,28 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Configuração da URL da API baseada no ambiente
+const getApiBaseUrl = () => {
+  // Se estiver em produção (Railway)
+  if (import.meta.env.PROD || window.location.hostname.includes('railway.app')) {
+    // Usar URL do backend configurada ou inferir do hostname  
+    const backendUrl = import.meta.env.VITE_API_URL || 
+                      'https://backend-painel-universal-production.up.railway.app';
+    console.log('🚀 Modo produção - URL Backend:', backendUrl);
+    return backendUrl;
+  }
+  // Em desenvolvimento, usar proxy local
+  console.log('🔧 Modo desenvolvimento - usando proxy local');
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 segundos timeout
 });
 
 api.interceptors.request.use((config) => {
@@ -20,11 +36,26 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      message: error.message
+    });
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
       window.location.href = '/login';
     }
+    
+    // Tratamento específico para erro 502
+    if (error.response?.status === 502) {
+      console.error('Erro 502: Backend indisponível ou problema de proxy');
+      // Adicionar notificação de erro aqui se necessário
+    }
+    
     return Promise.reject(error);
   }
 );
