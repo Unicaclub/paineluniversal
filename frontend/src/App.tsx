@@ -14,6 +14,7 @@ import DashboardAvancado from './components/dashboard/DashboardAvancado';
 import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
+import { UsuariosModule } from './components/usuarios';
 import './App.css';
 
 function App() {
@@ -67,10 +68,7 @@ function App() {
                     } />
                     <Route path="/usuarios" element={
                       <ProtectedRoute requiredRoles={['admin']}>
-                        <div className="p-8 text-center">
-                          <h1 className="text-2xl font-bold">Módulo de Usuários</h1>
-                          <p className="text-gray-600 mt-2">Em desenvolvimento</p>
-                        </div>
+                        <UsuariosModule />
                       </ProtectedRoute>
                     } />
                     <Route path="/empresas" element={

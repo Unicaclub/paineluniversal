@@ -35,7 +35,7 @@ async function createInitialData() {
     try {
       const loginResponse = await axios.post(`${API_BASE}/api/auth/login`, {
         cpf: "00000000000",
-        senha: "admin123"
+        senha: "0000"
       });
       
       if (loginResponse.data.access_token) {
@@ -52,7 +52,7 @@ async function createInitialData() {
         try {
           const loginComCodigoResponse = await axios.post(`${API_BASE}/api/auth/login`, {
             cpf: "00000000000",
-            senha: "admin123",
+            senha: "0000",
             codigo_verificacao: codigo
           });
           console.log(`✅ Login com código funcionando!`);
@@ -70,7 +70,7 @@ async function createInitialData() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('👤 ADMIN:');
     console.log('   CPF: 000.000.000-00 (ou 00000000000)');
-    console.log('   Senha: admin123');
+    console.log('   Senha: 0000');
     console.log();
     console.log('👤 PROMOTER:');
     console.log('   CPF: 111.111.111-11 (ou 11111111111)');

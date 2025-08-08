@@ -115,7 +115,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             nome="Administrador Sistema",
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
-            senha_hash=get_password_hash("admin123"),
+            senha_hash=get_password_hash("0000"),
             tipo=TipoUsuario.ADMIN,
             empresa_id=empresa.id
         )
@@ -139,8 +139,8 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             "message": "Sistema inicializado com sucesso!",
             "empresa": empresa.nome,
             "usuarios_criados": [
-                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin"},
-                {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter"}
+                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "0000"},
+                {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter", "senha": "promoter123"}
             ]
         }
         
