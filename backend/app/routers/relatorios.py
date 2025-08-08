@@ -289,8 +289,8 @@ async def exportar_vendas_excel(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        False  # empresa_id removido):
+    # Verificação de acesso simplificada
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     wb = Workbook()

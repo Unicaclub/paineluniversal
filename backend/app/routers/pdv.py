@@ -42,7 +42,6 @@ async def criar_produto(
     
     db_produto = Produto(
         **produto.model_dump(),
-        # empresa_id removido
         status=StatusProduto.ATIVO
     )
     
@@ -156,7 +155,6 @@ async def criar_comanda(
     
     db_comanda = Comanda(
         **comanda.model_dump(),
-        # empresa_id removido
         qr_code=qr_code,
         status=StatusComanda.ATIVA
     )
@@ -210,8 +208,8 @@ async def recarregar_comanda(
     if not comanda:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        False  # empresa_id removido):
+    # Verificação de acesso simplificada
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     if comanda.status != StatusComanda.ATIVA:
@@ -291,7 +289,6 @@ async def processar_venda(
         status=StatusVendaPDV.APROVADA,
         comanda_id=venda.comanda_id,
         evento_id=venda.evento_id,
-        # empresa_id removido
         usuario_vendedor_id=usuario_atual.id,
         cupom_codigo=venda.cupom_codigo,
         observacoes=venda.observacoes
