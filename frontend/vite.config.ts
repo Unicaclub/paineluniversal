@@ -26,6 +26,27 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          radix: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast'
+          ],
+          charts: ['recharts'],
+          router: ['react-router-dom'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'yup', 'zod'],
+          ui: ['lucide-react', 'class-variance-authority', 'clsx']
+        }
+      }
+    }
+  },
   server: {
     proxy: {
       '/api': {
