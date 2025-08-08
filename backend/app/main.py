@@ -89,7 +89,7 @@ async def healthz():
 @app.post("/setup-inicial")
 async def setup_inicial_temp(db: Session = Depends(get_db)):
     from .models import Empresa, Usuario, TipoUsuario
-    from .auth import get_password_hash
+    from .auth import gerar_hash_senha
     
     try:
         # Verificar se já existe empresa
@@ -115,7 +115,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             nome="Administrador Sistema",
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
-            senha_hash=get_password_hash("0000"),
+            senha_hash=gerar_hash_senha("0000"),
             tipo=TipoUsuario.ADMIN,
             empresa_id=empresa.id
         )
@@ -127,7 +127,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             nome="Promoter Demo",
             email="promoter@paineluniversal.com",
             telefone="(11) 99999-1111",
-            senha_hash=get_password_hash("promoter123"),
+            senha_hash=gerar_hash_senha("promoter123"),
             tipo=TipoUsuario.PROMOTER,
             empresa_id=empresa.id
         )
