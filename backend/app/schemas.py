@@ -125,7 +125,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     senha: str
-    empresa_id: int
+    empresa_id: Optional[int] = None
     
     @validator('cpf')
     def validar_cpf(cls, v):
@@ -152,7 +152,7 @@ class UsuarioRegister(BaseModel):
 class Usuario(UsuarioBase):
     id: int
     ativo: bool
-    empresa_id: int
+    empresa_id: Optional[int] = None
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
     

@@ -86,16 +86,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
             detail="Email já cadastrado"
         )
     
-    # Buscar uma empresa padrão (primeira empresa ativa)
-    empresa_padrao = db.query(Empresa).filter(Empresa.ativa == True).first()
-    if not empresa_padrao:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Nenhuma empresa disponível para cadastro. Entre em contato com o administrador."
-        )
-    
     try:
-        # Criar usuário
+        # Criar usuário sem empresa obrigatória
         senha_hash = gerar_hash_senha(usuario_data.senha)
         
         novo_usuario = Usuario(
@@ -106,7 +98,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
             senha_hash=senha_hash,
             tipo=usuario_data.tipo,
             ativo=True,  # Usuários registrados publicamente ficam ativos por padrão
-            empresa_id=empresa_padrao.id
+            empresa_id=None  # Não vincula a nenhuma empresa inicialmente
         )
         
         db.add(novo_usuario)

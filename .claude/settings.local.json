@@ -6,7 +6,8 @@
       "Bash(npm run build:*)",
       "Bash(pip install:*)",
       "Bash(python:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

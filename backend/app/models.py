@@ -54,7 +54,7 @@ class Usuario(Base):
     senha_hash = Column(String(255), nullable=False)
     tipo = Column(Enum(TipoUsuario), nullable=False)
     ativo = Column(Boolean, default=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     ultimo_login = Column(DateTime(timezone=True))
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())

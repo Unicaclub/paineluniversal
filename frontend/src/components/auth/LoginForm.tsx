@@ -1,17 +1,29 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Calendar, UserPlus, LogIn, CheckCircle } from 'lucide-react';
+import { ThemeToggle } from '../theme/ThemeToggle';
+import { 
+  Loader2, 
+  Calendar, 
+  UserPlus, 
+  LogIn, 
+  CheckCircle, 
+  Shield,
+  Zap,
+  ArrowRight,
+  Eye,
+  EyeOff
+} from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
-import RegisterForm from './RegisterForm';
 
 const LoginForm: React.FC = () => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [codigoVerificacao, setCodigoVerificacao] = useState('');
@@ -19,8 +31,10 @@ const LoginForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationMessage, setVerificationMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
+  const { effectiveTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,84 +67,143 @@ const LoginForm: React.FC = () => {
       const result = await login(cpfNumbers, senha, codigoVerificacao);
 
       if (result.success) {
-        navigate('/dashboard');
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard...",
+          duration: 2000,
+        });
+        setTimeout(() => navigate('/dashboard'), 1000);
       } else if (result.needsVerification) {
         setNeedsVerification(true);
         setVerificationMessage(result.message);
+        toast({
+          title: "Código de verificação enviado",
+          description: "Digite o código de 6 dígitos enviado.",
+          duration: 5000,
+        });
       }
     } catch (error: any) {
       setError(error.response?.data?.detail || 'Erro ao fazer login');
+      toast({
+        title: "Erro no login",
+        description: error.response?.data?.detail || 'Erro ao fazer login',
+        variant: "destructive",
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegisterSuccess = () => {
-    setMode('login');
-    setError('');
-    // Limpar campos
-    setCpf('');
-    setSenha('');
-    setCodigoVerificacao('');
-    setNeedsVerification(false);
-    setVerificationMessage('');
-    
-    // Mostrar toast de sucesso
-    toast({
-      title: "Conta criada com sucesso!",
-      description: "Agora você pode fazer login com suas credenciais.",
-      duration: 5000,
-    });
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut"
+      }
+    }
   };
 
-  const handleToggleMode = () => {
-    setMode(mode === 'login' ? 'register' : 'login');
-    setError('');
-    setNeedsVerification(false);
-    setVerificationMessage('');
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        delay: 0.2,
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <Calendar className="mx-auto h-12 w-12 text-blue-600" />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Sistema de Gestão de Eventos
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/5 rounded-full mix-blend-multiply filter blur-xl animate-pulse" />
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-400/5 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000" />
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-400/5 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000" />
+      </div>
+
+      {/* Theme Toggle */}
+      <div className="absolute top-6 right-6 z-10">
+        <ThemeToggle />
+      </div>
+
+      <motion.div 
+        className="max-w-md w-full space-y-8 relative z-10"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Header */}
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          <motion.div 
+            className="mx-auto h-16 w-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-6 shadow-premium-lg"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Calendar className="h-8 w-8 text-primary-foreground" />
+          </motion.div>
+          
+          <h2 className="text-3xl font-heading font-bold text-foreground">
+            Sistema Universal de Eventos
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            {mode === 'login' 
-              ? 'Faça login para acessar o sistema'
-              : 'Crie sua conta para acessar o sistema'
+          <p className="mt-2 text-sm text-muted-foreground">
+            {needsVerification 
+              ? 'Digite o código de verificação para continuar'
+              : 'Faça login para acessar o sistema de gestão'
             }
           </p>
-        </div>
+        </motion.div>
 
-        {mode === 'register' ? (
-          <RegisterForm 
-            onSuccess={handleRegisterSuccess}
-            onToggleMode={handleToggleMode}
-          />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LogIn className="h-5 w-5" />
-                Entrar
+        {/* Login Card */}
+        <motion.div variants={cardVariants}>
+          <Card className="premium-card bg-card/50 backdrop-blur-xl border-border/50 shadow-premium-xl">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-xl font-heading font-semibold text-center flex items-center justify-center gap-2">
+                {needsVerification ? (
+                  <>
+                    <Shield className="h-5 w-5 text-primary" />
+                    Verificação de Segurança
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-5 w-5 text-primary" />
+                    Entrar no Sistema
+                  </>
+                )}
               </CardTitle>
-              <CardDescription>
-                {needsVerification 
-                  ? 'Digite o código de verificação enviado'
-                  : 'Digite suas credenciais para acessar'
+              <CardDescription className="text-center">
+                {needsVerification
+                  ? 'Por segurança, precisamos confirmar sua identidade'
+                  : 'Digite suas credenciais para acessar o painel administrativo'
                 }
               </CardDescription>
             </CardHeader>
+            
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {!needsVerification ? (
-                  <>
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
                     <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF</Label>
+                      <Label htmlFor="cpf" className="text-sm font-medium text-foreground">
+                        CPF
+                      </Label>
                       <Input
                         id="cpf"
                         type="text"
@@ -139,33 +212,58 @@ const LoginForm: React.FC = () => {
                         onChange={handleCpfChange}
                         required
                         maxLength={14}
+                        className="h-11 text-base bg-background/50 border-border focus:border-primary focus:ring-primary/20"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="senha">Senha</Label>
-                      <Input
-                        id="senha"
-                        type="password"
-                        placeholder="Digite sua senha"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        required
-                      />
+                      <Label htmlFor="senha" className="text-sm font-medium text-foreground">
+                        Senha
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="senha"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Digite sua senha"
+                          value={senha}
+                          onChange={(e) => setSenha(e.target.value)}
+                          required
+                          className="h-11 text-base bg-background/50 border-border focus:border-primary focus:ring-primary/20 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </>
+                  </motion.div>
                 ) : (
-                  <>
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     {verificationMessage && (
-                      <Alert>
-                        <AlertDescription>
+                      <Alert className="border-primary/20 bg-primary/5">
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <AlertDescription className="text-foreground">
                           {verificationMessage}
                         </AlertDescription>
                       </Alert>
                     )}
                     
                     <div className="space-y-2">
-                      <Label htmlFor="codigo">Código de Verificação</Label>
+                      <Label htmlFor="codigo" className="text-sm font-medium text-foreground">
+                        Código de Verificação
+                      </Label>
                       <Input
                         id="codigo"
                         type="text"
@@ -174,75 +272,170 @@ const LoginForm: React.FC = () => {
                         onChange={(e) => setCodigoVerificacao(e.target.value)}
                         required
                         maxLength={6}
+                        className="h-11 text-base text-center tracking-widest font-mono bg-background/50 border-border focus:border-primary focus:ring-primary/20"
+                        autoComplete="one-time-code"
                       />
                     </div>
-                  </>
+                  </motion.div>
                 )}
 
                 {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
                 )}
 
-                <div className="space-y-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={loading}
+                <div className="space-y-4">
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {needsVerification ? 'Verificando...' : 'Entrando...'}
-                      </>
-                    ) : (
-                      needsVerification ? 'Verificar' : 'Entrar'
-                    )}
-                  </Button>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-medium shadow-premium-md transition-all duration-200"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <motion.div 
+                          className="flex items-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {needsVerification ? 'Verificando...' : 'Entrando...'}
+                        </motion.div>
+                      ) : (
+                        <div className="flex items-center justify-center">
+                          {needsVerification ? (
+                            <>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Verificar Código
+                            </>
+                          ) : (
+                            <>
+                              Entrar no Sistema
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </Button>
+                  </motion.div>
 
                   {!needsVerification && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={handleToggleMode}
-                      className="w-full flex items-center gap-2"
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
                     >
-                      <UserPlus className="h-4 w-4" />
-                      Não tem uma conta? Criar conta
-                    </Button>
+                      <Link to="/register">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full h-11 bg-background/50 border-border hover:bg-muted/50 transition-colors"
+                        >
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Não tem uma conta? Criar conta
+                        </Button>
+                      </Link>
+                    </motion.div>
                   )}
 
                   {needsVerification && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => {
-                        setNeedsVerification(false);
-                        setCodigoVerificacao('');
-                        setError('');
-                        setVerificationMessage('');
-                      }}
-                      className="w-full"
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
                     >
-                      Voltar
-                    </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setNeedsVerification(false);
+                          setCodigoVerificacao('');
+                          setError('');
+                          setVerificationMessage('');
+                        }}
+                        className="w-full h-11 hover:bg-muted/50"
+                      >
+                        Voltar ao Login
+                      </Button>
+                    </motion.div>
                   )}
                 </div>
               </form>
             </CardContent>
           </Card>
-        )}
+        </motion.div>
 
-        {/* Informações adicionais para desenvolvimento */}
-        <div className="text-center">
-          <div className="text-xs text-gray-500 space-y-1">
-            <p><strong>Usuários para teste:</strong></p>
-            <p>Admin: CPF 000.000.000-00, Senha: 0000</p>
-            <p>Promoter: CPF 111.111.111-11, Senha: promoter123</p>
+        {/* Features */}
+        <motion.div 
+          className="mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
+          <div className="text-center mb-4">
+            <p className="text-sm font-medium text-foreground mb-3">
+              Recursos do Sistema Universal
+            </p>
           </div>
-        </div>
-      </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { icon: Calendar, title: 'Gestão de Eventos', color: 'text-blue-500' },
+              { icon: Zap, title: 'Performance Alta', color: 'text-green-500' },
+              { icon: Shield, title: 'Segurança Total', color: 'text-purple-500' }
+            ].map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="text-center p-3 rounded-lg bg-card/30 backdrop-blur-sm border border-border/50"
+              >
+                <feature.icon className={`h-6 w-6 mx-auto mb-2 ${feature.color}`} />
+                <p className="text-xs text-muted-foreground font-medium">{feature.title}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Demo Credentials */}
+        <motion.div 
+          className="mt-6 p-4 rounded-lg bg-muted/20 border border-border/30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium text-muted-foreground mb-2">
+              🚀 Credenciais para Demonstração
+            </p>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Admin:</span>
+                <code className="bg-background/60 px-2 py-1 rounded text-foreground">
+                  000.000.000-00 / 0000
+                </code>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Promoter:</span>
+                <code className="bg-background/60 px-2 py-1 rounded text-foreground">
+                  111.111.111-11 / promoter123
+                </code>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

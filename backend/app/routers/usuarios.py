@@ -36,12 +36,14 @@ async def criar_usuario(
             detail="Email já cadastrado"
         )
     
-    empresa = db.query(Empresa).filter(Empresa.id == usuario.empresa_id).first()
-    if not empresa:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Empresa não encontrada"
-        )
+    # Validar empresa apenas se empresa_id foi fornecido
+    if usuario.empresa_id:
+        empresa = db.query(Empresa).filter(Empresa.id == usuario.empresa_id).first()
+        if not empresa:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Empresa não encontrada"
+            )
     
     senha_hash = gerar_hash_senha(usuario.senha)
     usuario_data = usuario.dict()

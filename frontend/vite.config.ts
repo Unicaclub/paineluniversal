@@ -9,13 +9,33 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}']
       },
       manifest: {
-        name: 'Sistema de Gestão de Eventos',
-        short_name: 'Eventos',
-        description: 'Sistema completo para gestão de eventos',
-        theme_color: '#000000'
+        name: 'Sistema Universal de Eventos - CPF Seguro',
+        short_name: 'Eventos Universal',
+        description: 'Sistema completo para gestão de eventos com segurança CPF',
+        theme_color: '#007BFF',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        scope: '/',
+        start_url: '/',
+        lang: 'pt-BR',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          }
+        ]
       }
     })
   ],
