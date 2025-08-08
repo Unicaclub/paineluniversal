@@ -7,12 +7,11 @@
 import axios from 'axios';
 
 const BACKEND_URLS = [
-  'https://backend-painel-universal-production.up.railway.app',
   'https://backend-painel-universal-production.up.railway.app/healthz',
-  'https://backend-painel-universal-production.up.railway.app/api/auth/me',
   'https://backend-painel-universal-production.up.railway.app/api/eventos/',
-  'http://localhost:8000',
-  'http://localhost:8000/healthz'
+  'https://backend-painel-universal-production.up.railway.app/api/empresas/',
+  'https://backend-painel-universal-production.up.railway.app/api/dashboard/resumo',
+  'https://backend-painel-universal-production.up.railway.app/docs'
 ];
 
 async function testUrl(url) {

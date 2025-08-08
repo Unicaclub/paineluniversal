@@ -1,0 +1,4 @@
+# Arquivo de configuração para deploy no Railway
+# Este arquivo instrui o servidor a servir o index.html para todas as rotas SPA
+
+/*    /index.html   200

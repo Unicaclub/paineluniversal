@@ -2,17 +2,20 @@ import axios from 'axios';
 
 // Configuração da URL da API baseada no ambiente
 const getApiBaseUrl = () => {
-  // Se estiver em produção (Railway)
-  if (import.meta.env.PROD || window.location.hostname.includes('railway.app')) {
-    // Usar URL do backend configurada ou inferir do hostname  
+  // Detectar se está em produção
+  const isProd = import.meta.env.PROD || window.location.hostname.includes('railway.app');
+  
+  if (isProd) {
+    // Em produção, usar URL completa do backend
     const backendUrl = import.meta.env.VITE_API_URL || 
                       'https://backend-painel-universal-production.up.railway.app';
     console.log('🚀 Modo produção - URL Backend:', backendUrl);
     return backendUrl;
+  } else {
+    // Em desenvolvimento, usar proxy local
+    console.log('🔧 Modo desenvolvimento - usando proxy local');
+    return '';
   }
-  // Em desenvolvimento, usar proxy local
-  console.log('🔧 Modo desenvolvimento - usando proxy local');
-  return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();
