@@ -15,6 +15,7 @@ import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
 import { UsuariosModule } from './components/usuarios';
+import PublicRegisterPage from './components/auth/PublicRegisterPage';
 import './App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<PublicRegisterPage />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/*"

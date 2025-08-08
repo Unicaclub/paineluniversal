@@ -55,15 +55,35 @@ const Dashboard: React.FC = () => {
   const carregarDados = async () => {
     try {
       setLoading(true);
-      const [resumo, rankingData] = await Promise.all([
-        dashboardService.obterResumo(),
-        dashboardService.obterRankingPromoters()
+      const [stats, eventosProximos, resumoFinanceiro] = await Promise.all([
+        dashboardService.getStats(),
+        dashboardService.getEventosProximos(),
+        dashboardService.getResumoFinanceiro()
       ]);
       
-      setDashboardData(resumo);
-      setRanking(rankingData);
+      // Mapear dados para o formato esperado
+      setDashboardData({
+        total_eventos: stats.total_eventos || 0,
+        total_vendas: stats.total_vendas || 0,
+        total_checkins: stats.total_checkins || 0,
+        receita_total: resumoFinanceiro.receita_total || 0,
+        eventos_hoje: stats.eventos_hoje || 0,
+        vendas_hoje: stats.vendas_hoje || 0,
+      });
+      
+      // Placeholder para ranking - será implementado quando a API estiver disponível
+      setRanking([]);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
+      // Dados padrão em caso de erro
+      setDashboardData({
+        total_eventos: 0,
+        total_vendas: 0,
+        total_checkins: 0,
+        receita_total: 0,
+        eventos_hoje: 0,
+        vendas_hoje: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -72,13 +92,9 @@ const Dashboard: React.FC = () => {
   const carregarDadosEvento = async (eventoId: number) => {
     try {
       setLoading(true);
-      const [resumo, rankingData] = await Promise.all([
-        dashboardService.obterResumo(eventoId),
-        dashboardService.obterRankingPromoters(eventoId)
-      ]);
-      
-      setDashboardData(resumo);
-      setRanking(rankingData);
+      // Por enquanto, carrega os dados gerais
+      // TODO: Implementar filtro por evento quando a API estiver disponível
+      await carregarDados();
     } catch (error) {
       console.error('Erro ao carregar dados do evento:', error);
     } finally {
@@ -88,7 +104,7 @@ const Dashboard: React.FC = () => {
 
   const carregarEventos = async () => {
     try {
-      const eventosData = await eventoService.listar();
+      const eventosData = await eventoService.getAll();
       setEventos(eventosData);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
@@ -104,8 +120,25 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-64 mt-2 animate-pulse"></div>
+          </div>
+        </div>
+        
+        {/* Skeleton cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -143,7 +176,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
@@ -199,7 +232,7 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Ranking de Promoters */}
         <Card>
           <CardHeader>

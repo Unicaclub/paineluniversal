@@ -6,7 +6,8 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Calendar, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, Calendar, UserPlus, LogIn, CheckCircle } from 'lucide-react';
+import { useToast } from '../../hooks/use-toast';
 import RegisterForm from './RegisterForm';
 
 const LoginForm: React.FC = () => {
@@ -21,6 +22,7 @@ const LoginForm: React.FC = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -72,8 +74,13 @@ const LoginForm: React.FC = () => {
     setCodigoVerificacao('');
     setNeedsVerification(false);
     setVerificationMessage('');
-    // Mostrar mensagem de sucesso
-    alert('Conta criada com sucesso! Faça login para continuar.');
+    
+    // Mostrar toast de sucesso
+    toast({
+      title: "Conta criada com sucesso!",
+      description: "Agora você pode fazer login com suas credenciais.",
+      duration: 5000,
+    });
   };
 
   const handleToggleMode = () => {

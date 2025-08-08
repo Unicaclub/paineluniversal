@@ -20,6 +20,31 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// Instância pública da API (sem autenticação automática)
+export const publicApi = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000,
+});
+
+// Interceptor para API pública (apenas log de erros, sem redirect)
+publicApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('Public API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      message: error.message
+    });
+    
+    return Promise.reject(error);
+  }
+);
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -126,12 +151,7 @@ export const authService = {
     senha: string;
     tipo?: 'admin' | 'promoter' | 'cliente';
   }): Promise<Usuario> {
-    const userData = {
-      ...data,
-      tipo: data.tipo || 'cliente'
-    };
-    const response = await api.post('/api/auth/register', userData);
-    return response.data;
+    return publicService.register(data);
   },
 
   async getProfile(): Promise<Usuario> {
@@ -394,10 +414,39 @@ export interface Lista {
   ativa?: boolean;
 }
 
-// Setup inicial do sistema
+// Serviços públicos (sem autenticação)
+export const publicService = {
+  async register(data: {
+    cpf: string;
+    nome: string;
+    email: string;
+    telefone?: string;
+    senha: string;
+    tipo?: 'admin' | 'promoter' | 'cliente';
+  }): Promise<Usuario> {
+    const userData = {
+      ...data,
+      tipo: data.tipo || 'cliente'
+    };
+    
+    const response = await publicApi.post('/api/auth/register', userData);
+    return response.data;
+  },
+
+  async setupInicial(): Promise<any> {
+    const response = await publicApi.post('/setup-inicial');
+    return response.data;
+  },
+
+  async healthCheck(): Promise<any> {
+    const response = await publicApi.get('/healthz');
+    return response.data;
+  }
+};
+
+// Setup inicial do sistema (mantido para compatibilidade)
 export const setupInicial = async (): Promise<any> => {
-  const response = await api.post('/setup-inicial');
-  return response.data;
+  return publicService.setupInicial();
 };
 
 // Serviços de PDV
