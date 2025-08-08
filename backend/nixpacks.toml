@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ['python312', 'poetry']
+
+[phases.install]
+cmds = ['poetry install --only=main']
+
+[phases.build]
+cmds = [
+  'python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)" || echo "Database setup will be done at runtime"'
+]
+
+[start]
+cmd = 'poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT'
