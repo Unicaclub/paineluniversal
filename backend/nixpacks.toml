@@ -1,10 +1,10 @@
 [phases.setup]
-nixPkgs = ['python312', 'poetry']
+nixPkgs = ['python312', 'pip']
 
 [phases.install]
 cmds = [
-  'poetry config virtualenvs.create false',
-  'poetry install --only=main --no-interaction --no-ansi'
+  'pip install --upgrade pip',
+  'pip install fastapi[standard] uvicorn[standard] psycopg[binary] sqlalchemy alembic passlib[bcrypt] python-jose[cryptography] python-multipart pydantic-settings python-dotenv reportlab pandas qrcode pillow aiohttp websockets schedule openpyxl'
 ]
 
 [phases.build]
