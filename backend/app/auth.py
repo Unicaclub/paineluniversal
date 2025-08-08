@@ -110,6 +110,25 @@ def validar_cpf_basico(cpf: str) -> bool:
     
     return cpf[-2:] == f"{digito1}{digito2}"
 
+def verificar_permissao_empresa(usuario_atual: Usuario, empresa_id: Optional[int]) -> bool:
+    """
+    Verifica se o usuário tem permissão para acessar recursos da empresa.
+    
+    Regras:
+    - Admins têm acesso a todas as empresas
+    - Usuários sem empresa vinculada (empresa_id=None) só têm acesso a recursos sem empresa específica
+    - Usuários com empresa vinculada só têm acesso aos recursos da sua empresa
+    """
+    if usuario_atual.tipo.value == "admin":
+        return True
+    
+    # Se usuário não tem empresa vinculada, só pode acessar recursos sem empresa específica
+    if usuario_atual.empresa_id is None:
+        return empresa_id is None
+    
+    # Se usuário tem empresa vinculada, só pode acessar recursos da sua empresa
+    return usuario_atual.empresa_id == empresa_id
+
 async def validar_cpf_receita_ws(cpf: str) -> dict:
     """Mock da validação de CPF via ReceitaWS/Serpro"""
     
