@@ -41,9 +41,8 @@ async def criar_movimentacao(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     db_movimentacao = MovimentacaoFinanceira(
         **movimentacao.dict(),
@@ -85,9 +84,8 @@ async def listar_movimentacoes(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     query = db.query(MovimentacaoFinanceira).filter(
         MovimentacaoFinanceira.evento_id == evento_id
@@ -133,9 +131,8 @@ async def atualizar_movimentacao(
         raise HTTPException(status_code=404, detail="Movimentação não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == movimentacao.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     dados_anteriores = {
         "categoria": movimentacao.categoria,
@@ -182,9 +179,8 @@ async def upload_comprovante(
         raise HTTPException(status_code=404, detail="Movimentação não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == movimentacao.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     allowed_types = ["image/jpeg", "image/png", "application/pdf"]
     if file.content_type not in allowed_types:
@@ -221,9 +217,8 @@ async def obter_dashboard_financeiro(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     total_entradas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
         MovimentacaoFinanceira.evento_id == evento_id,
@@ -328,9 +323,8 @@ async def exportar_relatorio_financeiro(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     query = db.query(MovimentacaoFinanceira).filter(
         MovimentacaoFinanceira.evento_id == evento_id
@@ -464,9 +458,8 @@ async def abrir_caixa_evento(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     caixa_existente = db.query(CaixaEvento).filter(
         CaixaEvento.evento_id == caixa.evento_id,
@@ -513,9 +506,8 @@ async def fechar_caixa_evento(
         raise HTTPException(status_code=404, detail="Caixa não encontrado")
     
     evento = db.query(Evento).filter(Evento.id == caixa.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
     if caixa.status == "fechado":
         raise HTTPException(status_code=400, detail="Caixa já está fechado")

@@ -49,10 +49,10 @@ async def obter_empresa(
 ):
     """Obter dados de uma empresa"""
     
-    if usuario_atual.tipo.value != "admin" and usuario_atual.empresa_id != empresa_id:
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()

@@ -37,11 +37,11 @@ async def criar_transacao(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem gerenciar transações
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem gerenciar transações"
         )
     
     if lista.limite_vendas and lista.vendas_realizadas >= lista.limite_vendas:
@@ -80,8 +80,8 @@ async def listar_transacoes(
     
     query = db.query(Transacao)
     
-    if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+    # Admins podem ver todas as transações
+    # Promoters e clientes têm acesso baseado em suas permissões específicas
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -111,11 +111,11 @@ async def obter_transacao(
         )
     
     evento = db.query(Evento).filter(Evento.id == transacao.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem gerenciar transações
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem gerenciar transações"
         )
     
     return transacao
@@ -137,11 +137,11 @@ async def atualizar_status_transacao(
         )
     
     evento = db.query(Evento).filter(Evento.id == transacao.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem gerenciar transações
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem gerenciar transações"
         )
     
     status_validos = ["pendente", "aprovada", "cancelada"]

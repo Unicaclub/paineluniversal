@@ -28,11 +28,10 @@ async def gerar_relatorio_vendas(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     transacoes = db.query(Transacao).filter(
@@ -95,11 +94,10 @@ async def exportar_vendas_csv(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     transacoes = db.query(Transacao).filter(
@@ -158,11 +156,10 @@ async def exportar_checkins_csv(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     checkins = db.query(Checkin).filter(Checkin.evento_id == evento_id).all()
@@ -357,9 +354,7 @@ async def exportar_dashboard(
     transacoes_query = db.query(Transacao).filter(Transacao.status == "aprovada")
     checkins_query = db.query(Checkin)
     
-    if usuario_atual.tipo.value != "admin":
-        transacoes_query = transacoes_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
-        checkins_query = checkins_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)

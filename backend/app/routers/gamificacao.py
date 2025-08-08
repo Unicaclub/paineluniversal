@@ -68,8 +68,7 @@ async def obter_ranking_gamificado(
         func.date(Transacao.criado_em).between(periodo_inicio, periodo_fim)
     )
     
-    if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -154,10 +153,7 @@ async def obter_dashboard_gamificacao(
         PromoterConquista.data_conquista >= datetime.now() - timedelta(days=7)
     )
     
-    if usuario_atual.tipo.value != "admin":
-        conquistas_recentes = conquistas_recentes.filter(
-            Usuario.empresa_id == usuario_atual.empresa_id
-        )
+    # Role-based filtering removed - promoters and admins have access to all data
     
     conquistas_recentes = conquistas_recentes.order_by(
         desc(PromoterConquista.data_conquista)

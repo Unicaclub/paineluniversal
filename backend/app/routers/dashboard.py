@@ -23,9 +23,9 @@ async def obter_resumo_dashboard(
         transacoes_query = db.query(Transacao)
         checkins_query = db.query(Checkin)
     else:
-        eventos_query = db.query(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
-        transacoes_query = db.query(Transacao).join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
-        checkins_query = db.query(Checkin).join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        eventos_query = db.query(Evento)
+        transacoes_query = db.query(Transacao)
+        checkins_query = db.query(Checkin)
     
     total_eventos = eventos_query.count()
     total_vendas = transacoes_query.filter(Transacao.status == "aprovada").count()
@@ -74,10 +74,7 @@ async def obter_ranking_promoters(
         Usuario.tipo == "promoter"
     )
     
-    if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento, Evento.id == Transacao.evento_id).filter(
-            Evento.empresa_id == usuario_atual.empresa_id
-        )
+    # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -111,7 +108,7 @@ async def obter_vendas_tempo_real(
     query = db.query(Transacao)
     
     if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -167,11 +164,10 @@ async def obter_aniversariantes(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     
@@ -240,9 +236,7 @@ async def obter_dashboard_avancado(
     checkins_query = db.query(Checkin)
     
     if usuario_atual.tipo.value != "admin":
-        eventos_query = eventos_query.filter(Evento.empresa_id == usuario_atual.empresa_id)
-        transacoes_query = transacoes_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
-        checkins_query = checkins_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)
@@ -370,7 +364,7 @@ async def obter_grafico_vendas_tempo(
     transacoes_query = db.query(Transacao).filter(Transacao.status == "aprovada")
     
     if usuario_atual.tipo.value != "admin":
-        transacoes_query = transacoes_query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         transacoes_query = transacoes_query.filter(Transacao.evento_id == evento_id)
@@ -449,7 +443,7 @@ async def obter_grafico_vendas_lista(
     )
     
     if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)
@@ -496,7 +490,7 @@ async def obter_ranking_promoters_avancado(
     )
     
     if usuario_atual.tipo.value != "admin":
-        query = query.join(Evento).filter(Evento.empresa_id == usuario_atual.empresa_id)
+        # Role-based filtering removed - promoters and admins have access to all data
     
     if evento_id:
         query = query.filter(Transacao.evento_id == evento_id)

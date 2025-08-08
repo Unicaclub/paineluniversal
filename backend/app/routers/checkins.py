@@ -32,11 +32,11 @@ async def realizar_checkin(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem fazer checkin
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem realizar checkin"
         )
     
     checkin_existente = db.query(Checkin).filter(
@@ -96,11 +96,11 @@ async def listar_checkins_evento(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem fazer checkin
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem realizar checkin"
         )
     
     checkins = db.query(Checkin).filter(Checkin.evento_id == evento_id).all()
@@ -128,11 +128,11 @@ async def verificar_checkin_cpf(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Verificação simplificada: admins e promoters podem fazer checkin
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem realizar checkin"
         )
     
     checkin = db.query(Checkin).filter(
