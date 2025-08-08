@@ -2,7 +2,7 @@
 nixPkgs = ['python312', 'poetry']
 
 [phases.install]
-cmds = ['poetry install --only=main']
+cmds = ['poetry install --no-dev']
 
 [phases.build]
 cmds = [
@@ -10,4 +10,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT'
+cmd = 'poetry run python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT'
