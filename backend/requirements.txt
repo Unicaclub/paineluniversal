@@ -9,3 +9,11 @@ python-multipart
 pydantic-settings
 python-dotenv
 email-validator
+reportlab
+pandas
+qrcode
+pillow
+aiohttp
+websockets
+schedule
+openpyxl
