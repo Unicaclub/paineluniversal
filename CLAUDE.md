@@ -18,7 +18,12 @@ cd backend
 poetry install                    # Install dependencies
 poetry run uvicorn app.main:app --reload --port 8000  # Run development server
 poetry run pytest --cov=app --cov-report=html -v      # Run tests with coverage
+poetry run pytest tests/test_specific.py -v           # Run specific test file
 poetry run python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)"  # Create database tables
+
+# Database migrations (if needed)
+python apply_postgresql_migration.py                   # Apply PostgreSQL migrations
+python apply_remove_empresa_migration.py               # Remove empresa_id column (if needed)
 ```
 
 ### Frontend (React/TypeScript)
@@ -70,11 +75,12 @@ npm start           # Preview production build
 - **Build Optimization**: Manual chunk splitting for vendor, UI, charts, and forms
 
 ### Database Schema
-- Multi-tenant architecture with `Empresa` (Company) as the root entity
-- User system based on CPF (Brazilian tax ID) for security
-- Event management with different list types (VIP, FREE, PAGANTE, PROMOTER, etc.)
-- Transaction tracking with status management
-- Gamification system with achievements and rankings
+- **User System**: Independent user accounts based on CPF (Brazilian tax ID) for security
+- **Multi-tenant Support**: `Empresa` (Company) entity exists but users are NOT required to have company association
+- **Event Management**: Different list types (VIP, FREE, PAGANTE, PROMOTER, etc.) with flexible pricing
+- **Transaction Tracking**: Complete financial flow with status management
+- **Gamification System**: Achievements, rankings, and badges for promoters
+- **Real-time Data**: WebSocket support for live updates in PDV and check-in systems
 
 ### Key Business Logic
 - **CPF-based Security**: All operations use CPF for user identification
@@ -91,8 +97,19 @@ npm start           # Preview production build
 - Documentation: Available at `/docs` (Swagger) and `/redoc`
 
 ## Development Notes
-- Frontend proxies API calls to `http://localhost:8000` in development
-- CORS is fully open for development (disabled for full-stack development)
-- Database migrations handled via direct model metadata creation
-- Tests use pytest with async support
-- Frontend uses TypeScript with strict configuration
+- **Environment**: Uses SQLite for development, PostgreSQL for production (configured via DATABASE_URL)
+- **Frontend Proxy**: Proxies API calls to `http://localhost:8000` in development
+- **CORS**: Fully open for development (disabled for full-stack development) 
+- **Database Setup**: Migrations handled via direct model metadata creation
+- **Testing**: Backend uses pytest with async support and coverage reporting
+- **TypeScript**: Strict configuration with comprehensive type checking
+- **PWA**: Progressive Web App capabilities with service worker caching
+
+## Recent Architecture Changes
+- **User Independence**: Users can be created without company association (empresa_id removed from required fields)
+- **Simplified Permissions**: Role-based access simplified to focus on user type rather than company relationships  
+- **Database Flexibility**: Schema supports both standalone users and company-linked users for future extensibility
+
+## Database Migrations
+- **Production Setup**: Use `backend/apply_postgresql_migration.py` or `backend/remove_empresa_id_migration.sql` for PostgreSQL
+- **Development**: SQLite migrations are handled automatically via SQLAlchemy metadata

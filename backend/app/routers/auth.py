@@ -97,8 +97,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
             telefone=usuario_data.telefone or "",
             senha_hash=senha_hash,
             tipo=usuario_data.tipo,
-            ativo=True,  # Usuários registrados publicamente ficam ativos por padrão
-            empresa_id=None  # Não vincula a nenhuma empresa inicialmente
+            ativo=True  # Usuários registrados publicamente ficam ativos por padrão
         )
         
         db.add(novo_usuario)
@@ -177,8 +176,7 @@ async def setup_inicial(db: Session = Depends(get_db)):
             telefone="(11) 99999-0000",
             senha_hash=senha_hash,
             tipo=TipoUsuario.ADMIN,
-            ativo=True,
-            empresa_id=empresa.id
+            ativo=True
         )
         db.add(admin)
         
@@ -191,8 +189,7 @@ async def setup_inicial(db: Session = Depends(get_db)):
             telefone="(11) 99999-1111",
             senha_hash=senha_hash_promoter,
             tipo=TipoUsuario.PROMOTER,
-            ativo=True,
-            empresa_id=empresa.id
+            ativo=True
         )
         db.add(promoter)
         
