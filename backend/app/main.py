@@ -53,7 +53,7 @@ app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatóri
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(cupons.router, prefix="/api/cupons", tags=["Cupons"])
 app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
-app.include_router(pdv.router, prefix="/api", tags=["PDV"])
+app.include_router(pdv.router, prefix="/api")
 app.include_router(financeiro.router, prefix="/api")
 app.include_router(gamificacao.router, prefix="/api")
 

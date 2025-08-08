@@ -134,6 +134,21 @@ class UsuarioCreate(UsuarioBase):
             raise ValueError('CPF deve ter 11 dígitos')
         return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
 
+class UsuarioRegister(BaseModel):
+    cpf: str
+    nome: str
+    email: EmailStr
+    telefone: Optional[str] = None
+    senha: str
+    tipo: TipoUsuario = TipoUsuario.CLIENTE
+    
+    @validator('cpf')
+    def validar_cpf(cls, v):
+        cpf = re.sub(r'\D', '', v)
+        if len(cpf) != 11:
+            raise ValueError('CPF deve ter 11 dígitos')
+        return cpf  # Manter apenas os números para o registro público
+
 class Usuario(UsuarioBase):
     id: int
     ativo: bool

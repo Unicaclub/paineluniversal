@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
-from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema
+from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
 from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha
 
 router = APIRouter()
@@ -64,6 +64,62 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "usuario": UsuarioSchema.from_orm(usuario)
     }
+
+@router.post("/register", response_model=UsuarioSchema)
+async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
+    """Registro público de usuários"""
+    
+    # Verificar se CPF já existe
+    usuario_existente = db.query(Usuario).filter(Usuario.cpf == usuario_data.cpf).first()
+    if usuario_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CPF já cadastrado"
+        )
+    
+    # Verificar se email já existe
+    email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
+    if email_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email já cadastrado"
+        )
+    
+    # Buscar uma empresa padrão (primeira empresa ativa)
+    empresa_padrao = db.query(Empresa).filter(Empresa.ativa == True).first()
+    if not empresa_padrao:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Nenhuma empresa disponível para cadastro. Entre em contato com o administrador."
+        )
+    
+    try:
+        # Criar usuário
+        senha_hash = gerar_hash_senha(usuario_data.senha)
+        
+        novo_usuario = Usuario(
+            cpf=usuario_data.cpf,
+            nome=usuario_data.nome,
+            email=usuario_data.email,
+            telefone=usuario_data.telefone or "",
+            senha_hash=senha_hash,
+            tipo=usuario_data.tipo,
+            ativo=True,  # Usuários registrados publicamente ficam ativos por padrão
+            empresa_id=empresa_padrao.id
+        )
+        
+        db.add(novo_usuario)
+        db.commit()
+        db.refresh(novo_usuario)
+        
+        return novo_usuario
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar usuário: {str(e)}"
+        )
 
 @router.get("/me", response_model=UsuarioSchema)
 async def obter_perfil(usuario_atual: Usuario = Depends(obter_usuario_atual)):

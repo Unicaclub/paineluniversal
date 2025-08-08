@@ -5,8 +5,8 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Eye, EyeOff, User, Mail, Phone, CreditCard, Building } from 'lucide-react';
-import { authService, empresaService } from '../../services/api';
+import { Eye, EyeOff, User, Mail, Phone, CreditCard } from 'lucide-react';
+import { authService } from '../../services/api';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -21,31 +21,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
     telefone: '',
     senha: '',
     confirmarSenha: '',
-    tipo: 'cliente' as 'admin' | 'promoter' | 'cliente',
-    empresa_id: 1
+    tipo: 'cliente' as 'admin' | 'promoter' | 'cliente'
   });
   
-  const [empresas, setEmpresas] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    loadEmpresas();
-  }, []);
-
-  const loadEmpresas = async () => {
-    try {
-      const empresasData = await empresaService.getAll();
-      setEmpresas(empresasData);
-      if (empresasData.length > 0 && empresasData[0].id) {
-        setFormData(prev => ({ ...prev, empresa_id: empresasData[0].id! }));
-      }
-    } catch (error) {
-      console.error('Erro ao carregar empresas:', error);
-    }
-  };
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -138,8 +120,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
         email: formData.email,
         telefone: formData.telefone.replace(/\D/g, ''),
         senha: formData.senha,
-        tipo: formData.tipo,
-        empresa_id: formData.empresa_id
+        tipo: formData.tipo
       };
       
       await authService.register(userData);
@@ -299,34 +280,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
               <p className="text-sm text-red-500">{errors.tipo}</p>
             )}
           </div>
-
-          {/* Empresa */}
-          {empresas.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="empresa" className="flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                Empresa
-              </Label>
-              <Select
-                value={formData.empresa_id.toString()}
-                onValueChange={(value) => handleInputChange('empresa_id', parseInt(value))}
-              >
-                <SelectTrigger className={errors.empresa_id ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Selecione a empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {empresas.map((empresa) => (
-                    <SelectItem key={empresa.id} value={empresa.id.toString()}>
-                      {empresa.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.empresa_id && (
-                <p className="text-sm text-red-500">{errors.empresa_id}</p>
-              )}
-            </div>
-          )}
 
           {/* Senha */}
           <div className="space-y-2">
