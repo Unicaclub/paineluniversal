@@ -8,7 +8,7 @@ cmds = ['npm ci']
 cmds = ['npm run build']
 
 [start]
-cmd = 'npm run start'
+cmd = 'npm run start -- --host 0.0.0.0'
 
 [variables]
 VITE_API_URL = "https://backend-painel-universal-production.up.railway.app"
