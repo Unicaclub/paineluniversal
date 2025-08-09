@@ -323,7 +323,6 @@ class TokenData(BaseModel):
 class LoginRequest(BaseModel):
     cpf: str
     senha: str
-    codigo_verificacao: Optional[str] = None
 
 class DashboardResumo(BaseModel):
     total_eventos: int

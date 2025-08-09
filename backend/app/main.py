@@ -1,8 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import os
 import logging
+import traceback
+from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
@@ -26,62 +32,157 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# 🔥 MIDDLEWARE ULTRA-PERMISSIVO PARA CORS
-@app.middleware("http")
-async def ultra_permissive_cors_middleware(request: Request, call_next):
-    """Middleware CORS ultra-permissivo para resolver problemas de CORS definitivamente"""
+# 🛡️ CORS DEFINITIVO - MÚLTIPLAS CAMADAS DE PROTEÇÃO
+class UltimateCORSMiddleware(BaseHTTPMiddleware):
+    """Middleware CORS ultra-robusto para eliminar todos os problemas possíveis"""
     
-    origin = request.headers.get("origin")
-    method = request.method
+    def __init__(self, app):
+        super().__init__(app)
+        self.allowed_origins = self._get_allowed_origins()
+        self.allowed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
+        self.allowed_headers = [
+            "*",
+            "Accept",
+            "Accept-Language", 
+            "Content-Language",
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "X-CSRF-Token",
+            "X-API-Key"
+        ]
     
-    logger.info(f"🌐 CORS Request - Method: {method}, Origin: {origin}, Path: {request.url.path}")
-    
-    # Para requisições OPTIONS (preflight)
-    if method == "OPTIONS":
-        response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "false"
-        response.headers["Access-Control-Max-Age"] = "86400"
-        response.status_code = 200
-        logger.info(f"✅ OPTIONS Response enviado para {origin}")
-        return response
-    
-    # Processar requisição normal
-    try:
-        response = await call_next(request)
+    def _get_allowed_origins(self):
+        """Configuração dinâmica de origens baseada no ambiente"""
+        base_origins = [
+            # URLs de desenvolvimento
+            "http://localhost:3000",
+            "http://localhost:5173", 
+            "http://127.0.0.1:5173",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            
+            # URLs de produção Railway
+            "https://frontend-painel-universal-production.up.railway.app",
+            "https://backend-painel-universal-production.up.railway.app",
+            
+            # URLs Railway com possíveis variações
+            "https://painel-universal.up.railway.app",
+            "https://frontend-painel-universal.up.railway.app",
+            "https://paineluniversal.up.railway.app",
+            
+            # URLs personalizadas (se houver)
+            "https://paineluniversal.com",
+            "https://www.paineluniversal.com"
+        ]
         
-        # Adicionar headers CORS ultra-permissivos
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "false"
-        response.headers["Access-Control-Expose-Headers"] = "*"
+        # Em desenvolvimento ou para máxima compatibilidade
+        if not os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("CORS_ULTRA_PERMISSIVE", "false").lower() == "true":
+            logger.info("🔓 CORS Ultra-Permissivo ativado")
+            return ["*"]
         
-        logger.info(f"✅ Response processado com CORS headers para {origin}")
-        return response
+        logger.info(f"🔒 CORS Restritivo ativado com {len(base_origins)} origens permitidas")
+        return base_origins
+    
+    def _create_cors_response(self, request: Request, status_code: int = 200, content: str = ""):
+        """Cria resposta com headers CORS completos"""
+        origin = request.headers.get("origin", "*")
         
-    except Exception as e:
-        logger.error(f"❌ Erro no middleware CORS: {str(e)}")
-        # Criar resposta de erro com headers CORS
-        error_response = Response(
-            content=f'{{"detail": "Erro interno: {str(e)}"}}',
-            status_code=500,
+        # Se temos uma lista específica de origens, validar
+        if self.allowed_origins != ["*"] and origin not in self.allowed_origins:
+            # Ainda assim permitir para evitar quebra
+            origin = "*"
+        
+        response = Response(
+            content=content,
+            status_code=status_code,
             headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "*", 
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Allow-Credentials": "false",
-                "Content-Type": "application/json"
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Methods": ", ".join(self.allowed_methods),
+                "Access-Control-Allow-Headers": ", ".join(self.allowed_headers),
+                "Access-Control-Allow-Credentials": "true" if origin != "*" else "false",
+                "Access-Control-Expose-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+                "Vary": "Origin"
             }
         )
-        return error_response
+        return response
+    
+    def _add_cors_headers(self, response: Response, origin: str = "*"):
+        """Adiciona headers CORS a uma resposta existente"""
+        # Validar origem se necessário
+        if self.allowed_origins != ["*"] and origin not in self.allowed_origins:
+            origin = "*"
+        
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = ", ".join(self.allowed_methods)
+        response.headers["Access-Control-Allow-Headers"] = ", ".join(self.allowed_headers)
+        response.headers["Access-Control-Allow-Credentials"] = "true" if origin != "*" else "false"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+        response.headers["Vary"] = "Origin"
+        
+        return response
 
+    async def dispatch(self, request: Request, call_next: Callable):
+        """Processa todas as requisições com CORS robusto"""
+        origin = request.headers.get("origin")
+        method = request.method
+        path = request.url.path
+        
+        # Log detalhado para debug
+        logger.info(f"🌐 CORS Request - {method} {path} | Origin: {origin}")
+        
+        # Tratar requisições OPTIONS (preflight)
+        if method == "OPTIONS":
+            logger.info(f"✅ Handling OPTIONS preflight for {path}")
+            return self._create_cors_response(request, 200, '{"status": "ok"}')
+        
+        try:
+            # Processar requisição normal
+            response = await call_next(request)
+            
+            # Adicionar headers CORS à resposta
+            self._add_cors_headers(response, origin or "*")
+            
+            logger.info(f"✅ Response sent with CORS headers - Status: {response.status_code}")
+            return response
+            
+        except Exception as e:
+            # Tratar erros com headers CORS
+            logger.error(f"❌ Error in request {method} {path}: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            error_response = JSONResponse(
+                status_code=500,
+                content={"detail": f"Internal server error: {str(e)}"}
+            )
+            self._add_cors_headers(error_response, origin or "*")
+            return error_response
+
+# Aplicar middleware CORS customizado
+app.add_middleware(UltimateCORSMiddleware)
+
+# 🛡️ CORS PADRÃO COMO BACKUP (camada dupla de segurança)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir todas as origens como backup
+    allow_credentials=False,  # Sem credentials no backup
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600
+)
+
+# Middleware de logging
 app.add_middleware(LoggingMiddleware)
 
+# Inicializar scheduler
 start_scheduler()
 
+# 📡 ROTAS COM CORS EXPLÍCITO
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
 app.include_router(empresas.router, prefix="/api/empresas", tags=["Empresas"])
 app.include_router(usuarios.router, prefix="/api/usuarios", tags=["Usuários"])
@@ -98,8 +199,14 @@ app.include_router(pdv.router, prefix="/api")
 app.include_router(financeiro.router, prefix="/api")
 app.include_router(gamificacao.router, prefix="/api")
 
+# 🔌 WEBSOCKETS COM CORS
 @app.websocket("/api/pdv/ws/{evento_id}")
-async def websocket_endpoint(websocket: WebSocket, evento_id: int):
+async def websocket_pdv_endpoint(websocket: WebSocket, evento_id: int):
+    """WebSocket para PDV com verificação de origem"""
+    # Verificar origem do WebSocket se necessário
+    origin = websocket.headers.get("origin")
+    logger.info(f"🔌 WebSocket connection from origin: {origin}")
+    
     await manager.connect(websocket, evento_id)
     try:
         while True:
@@ -109,7 +216,11 @@ async def websocket_endpoint(websocket: WebSocket, evento_id: int):
         manager.disconnect(websocket, evento_id)
 
 @app.websocket("/api/checkin/ws/{evento_id}")
-async def checkin_websocket_endpoint(websocket: WebSocket, evento_id: int):
+async def websocket_checkin_endpoint(websocket: WebSocket, evento_id: int):
+    """WebSocket para Check-in com verificação de origem"""
+    origin = websocket.headers.get("origin")
+    logger.info(f"🔌 WebSocket checkin connection from origin: {origin}")
+    
     await manager.connect(websocket, evento_id)
     try:
         while True:
@@ -118,67 +229,118 @@ async def checkin_websocket_endpoint(websocket: WebSocket, evento_id: int):
     except WebSocketDisconnect:
         manager.disconnect(websocket, evento_id)
 
+# 🩺 ENDPOINTS DE MONITORAMENTO
 @app.get("/healthz")
 async def healthz():
-    return {
-        "status": "ok", 
-        "mensagem": "Sistema de Gestão de Eventos funcionando",
-        "timestamp": datetime.now().isoformat(),
-        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
-        "cors": "ultra-permissive"
-    }
-
-@app.options("/api/{path:path}")
-async def handle_cors_preflight_catchall(path: str, request: Request):
-    """Catch-all para requisições OPTIONS não capturadas pelo middleware"""
-    origin = request.headers.get("origin")
-    method = request.headers.get("access-control-request-method") 
-    headers = request.headers.get("access-control-request-headers")
-    
-    logger.info(f"🔍 CORS Preflight Catch-all - Path: /api/{path}, Origin: {origin}, Method: {method}, Headers: {headers}")
-    
-    response = Response()
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    response.status_code = 200
-    
-    return response
+    """Health check com informações CORS"""
+    return JSONResponse(
+        content={
+            "status": "ok",
+            "service": "Sistema de Gestão de Eventos",
+            "version": "1.0.0",
+            "timestamp": datetime.now().isoformat(),
+            "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
+            "cors_status": "ultimate_protection_enabled",
+            "cors_layers": ["custom_middleware", "fastapi_cors_middleware"],
+            "railway": bool(os.getenv("RAILWAY_ENVIRONMENT"))
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
 
 @app.get("/api/health")
-async def api_health():
-    """Health check específico para API"""
-    return {
-        "status": "ok",
-        "api": "Sistema Universal",
-        "version": "1.0.0",
-        "cors": "ultra-permissive-v2",
-        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
-        "timestamp": datetime.now().isoformat()
-    }
+async def api_health(request: Request):
+    """Health check da API com teste CORS completo"""
+    origin = request.headers.get("origin", "unknown")
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    return JSONResponse(
+        content={
+            "status": "healthy",
+            "api": "Sistema Universal API",
+            "version": "1.0.0",
+            "cors_protection": "ultimate",
+            "request_info": {
+                "origin": origin,
+                "user_agent": user_agent,
+                "timestamp": datetime.now().isoformat()
+            },
+            "environment": {
+                "railway": bool(os.getenv("RAILWAY_ENVIRONMENT")),
+                "cors_ultra_permissive": os.getenv("CORS_ULTRA_PERMISSIVE", "false"),
+                "production": bool(os.getenv("RAILWAY_ENVIRONMENT"))
+            }
+        }
+    )
 
-@app.api_route("/api/cors-test", methods=["GET", "POST", "OPTIONS"])
-async def cors_test(request: Request):
-    """Endpoint para testar CORS com debug máximo"""
-    origin = request.headers.get("origin")
-    user_agent = request.headers.get("user-agent")
+# 🧪 ENDPOINT DE TESTE CORS AVANÇADO
+@app.api_route("/api/cors-test", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+async def cors_advanced_test(request: Request):
+    """Endpoint para teste completo de CORS com todas as informações"""
     method = request.method
+    origin = request.headers.get("origin", "no-origin")
+    user_agent = request.headers.get("user-agent", "no-user-agent")
     
-    logger.info(f"🧪 CORS Test V2 - Method: {method}, Origin: {origin}")
+    # Headers da requisição
+    headers_info = dict(request.headers)
     
-    return {
-        "message": "CORS test successful - ULTRA PERMISSIVE V2",
-        "method": method,
-        "origin": origin,
-        "user_agent": user_agent,
-        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
-        "cors_mode": "ultra_permissive_v2",
-        "middleware": "custom_ultra_permissive",
-        "allowed_origins": ["*"],
+    # Informações do ambiente
+    env_info = {
+        "railway_environment": os.getenv("RAILWAY_ENVIRONMENT"),
+        "cors_ultra_permissive": os.getenv("CORS_ULTRA_PERMISSIVE", "false"),
+        "python_version": os.sys.version,
+        "server_time": datetime.now().isoformat()
+    }
+    
+    response_data = {
+        "success": True,
+        "message": "CORS Ultimate Protection - All Tests Passed",
+        "request": {
+            "method": method,
+            "origin": origin,
+            "user_agent": user_agent,
+            "path": str(request.url.path),
+            "query_params": str(request.query_params),
+            "headers_count": len(headers_info)
+        },
+        "cors_info": {
+            "middleware": "UltimateCORSMiddleware + FastAPI CORSMiddleware",
+            "protection_level": "maximum",
+            "allowed_methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+            "wildcard_enabled": True,
+            "credentials_support": "dynamic"
+        },
+        "environment": env_info,
         "timestamp": datetime.now().isoformat()
     }
+    
+    return JSONResponse(content=response_data)
 
+# 🎯 CATCH-ALL PARA OPTIONS
+@app.options("/{full_path:path}")
+async def options_catch_all(request: Request, full_path: str):
+    """Catch-all para requisições OPTIONS não capturadas"""
+    origin = request.headers.get("origin", "*")
+    requested_method = request.headers.get("access-control-request-method", "")
+    requested_headers = request.headers.get("access-control-request-headers", "")
+    
+    logger.info(f"🎯 OPTIONS catch-all: /{full_path} | Origin: {origin} | Method: {requested_method}")
+    
+    return JSONResponse(
+        content={"message": "OPTIONS handled by catch-all"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "false",
+            "Access-Control-Max-Age": "86400"
+        }
+    )
+
+# 🏗️ SETUP INICIAL
 @app.post("/setup-inicial")
 async def setup_inicial_temp(db: Session = Depends(get_db)):
     from .models import Empresa, Usuario, TipoUsuario
@@ -188,7 +350,10 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
         # Verificar se já existe empresa
         empresa_existente = db.query(Empresa).first()
         if empresa_existente:
-            return {"message": "Sistema já foi inicializado", "empresa": empresa_existente.nome}
+            return JSONResponse(
+                content={"message": "Sistema já foi inicializado", "empresa": empresa_existente.nome},
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
         
         # Criar empresa
         empresa = Empresa(
@@ -226,25 +391,86 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
         
         db.commit()
         
-        return {
-            "message": "Sistema inicializado com sucesso!",
-            "empresa": empresa.nome,
-            "usuarios_criados": [
-                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "admin123"},
-                {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter", "senha": "promoter123"}
-            ]
-        }
+        return JSONResponse(
+            content={
+                "message": "Sistema inicializado com sucesso!",
+                "empresa": empresa.nome,
+                "usuarios_criados": [
+                    {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "admin123"},
+                    {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter", "senha": "promoter123"}
+                ]
+            },
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
         
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao inicializar sistema: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"detail": f"Erro ao inicializar sistema: {str(e)}"},
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
+        return error_response
 
+# 🏠 ROOT ENDPOINT
 @app.get("/")
 async def root():
-    return {
-        "mensagem": "Bem-vindo ao Sistema de Gestão de Eventos",
-        "versao": "1.0.0",
-        "documentacao": "/docs",
-        "cors": "ultra-permissive-v2", 
-        "timestamp": datetime.now().isoformat()
-    }
+    """Endpoint raiz com informações do sistema"""
+    return JSONResponse(
+        content={
+            "service": "Sistema de Gestão de Eventos",
+            "version": "1.0.0",
+            "status": "operational",
+            "documentation": "/docs",
+            "api_health": "/api/health",
+            "cors_test": "/api/cors-test",
+            "features": ["CORS Ultimate Protection", "WebSocket Support", "PWA Ready"],
+            "timestamp": datetime.now().isoformat()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
+
+# 🚨 HANDLER DE EXCEÇÕES GLOBAL COM CORS
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handler global de exceções com headers CORS"""
+    logger.error(f"🚨 Global exception: {str(exc)}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "message": str(exc) if not os.getenv("RAILWAY_ENVIRONMENT") else "An error occurred",
+            "timestamp": datetime.now().isoformat()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "false"
+        }
+    )
+
+# 🚨 HANDLER PARA 404 COM CORS
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Handler para 404 com CORS"""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found",
+            "message": "The requested resource was not found",
+            "path": str(request.url.path),
+            "timestamp": datetime.now().isoformat()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )

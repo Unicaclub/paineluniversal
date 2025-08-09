@@ -5,32 +5,17 @@ from datetime import timedelta
 from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
-from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
-try:
-    from ..services.email_service import email_service
-except ImportError:
-    # Fallback para quando não há serviço de email disponível
-    class DummyEmailService:
-        async def send_verification_code(self, email: str, name: str, code: str) -> bool:
-            print(f"📧 MODO TESTE - Código {code} para {name} ({email})")
-            return True
-        async def send_welcome_email(self, email: str, name: str) -> bool:
-            print(f"🎉 MODO TESTE - Email de boas-vindas para {name} ({email})")
-            return True
-    email_service = DummyEmailService()
+from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
 
 router = APIRouter()
 security = HTTPBearer()
 
-codigos_verificacao = {}
-
-
 @router.post("/login", response_model=Token)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     """
-    Autenticação multi-fator:
-    1. Primeira etapa: CPF + senha
-    2. Segunda etapa: código de verificação (simulado)
+    Autenticação simplificada:
+    - CPF + senha diretamente
+    - Sem código de verificação
     """
     
     try:
@@ -44,6 +29,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
                 detail="CPF e senha são obrigatórios"
             )
         
+        # Autenticar usuário
         usuario = autenticar_usuario(login_data.cpf, login_data.senha, db)
         if not usuario:
             print(f"❌ Usuário não encontrado ou senha incorreta")
@@ -53,6 +39,33 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             )
             
         print(f"✅ Usuário encontrado: {usuario.nome}")
+        
+        # Verificar se usuário está ativo
+        if not usuario.ativo:
+            print(f"❌ Usuário inativo: {usuario.cpf}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuário inativo"
+            )
+        
+        # Criar token de acesso diretamente
+        access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+        access_token = criar_access_token(
+            data={"sub": usuario.cpf}, expires_delta=access_token_expires
+        )
+        
+        # Atualizar último login
+        from datetime import datetime
+        usuario.ultimo_login = datetime.now()
+        db.commit()
+        
+        print(f"✅ Login realizado com sucesso para {usuario.nome}")
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "usuario": UsuarioSchema.from_orm(usuario)
+        }
         
     except HTTPException:
         raise
@@ -65,56 +78,6 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno do servidor: {str(e)}"
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro interno do servidor: {str(e)}"
-        )
-    
-    if not usuario.ativo:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário inativo"
-        )
-    
-    if not login_data.codigo_verificacao:
-        codigo = gerar_codigo_verificacao()
-        codigos_verificacao[login_data.cpf] = codigo
-        
-        # Enviar código por email
-        email_enviado = await email_service.send_verification_code(
-            to_email=usuario.email,
-            to_name=usuario.nome,
-            verification_code=codigo
-        )
-        
-        # Sempre retorna sucesso em modo teste
-        raise HTTPException(
-            status_code=status.HTTP_202_ACCEPTED,
-            detail=f"🧪 MODO TESTE: Código de verificação gerado. Verifique o console do backend para o código: {codigo}"
-        )
-    
-    codigo_armazenado = codigos_verificacao.get(login_data.cpf)
-    if not codigo_armazenado or codigo_armazenado != login_data.codigo_verificacao:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Código de verificação inválido"
-        )
-    
-    del codigos_verificacao[login_data.cpf]
-    
-    usuario.ultimo_login = db.query(Usuario).filter(Usuario.id == usuario.id).first().criado_em
-    db.commit()
-    
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    access_token = criar_access_token(
-        data={"sub": usuario.cpf}, expires_delta=access_token_expires
-    )
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "usuario": UsuarioSchema.from_orm(usuario)
-    }
 
 @router.post("/register", response_model=UsuarioSchema)
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
@@ -154,11 +117,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         db.commit()
         db.refresh(novo_usuario)
         
-        # Enviar email de boas-vindas
-        await email_service.send_welcome_email(
-            to_email=novo_usuario.email,
-            to_name=novo_usuario.nome
-        )
+        print(f"✅ Novo usuário registrado: {novo_usuario.nome}")
         
         return novo_usuario
         
@@ -179,30 +138,25 @@ async def logout(usuario_atual: Usuario = Depends(obter_usuario_atual)):
     """Logout do usuário (invalidar token)"""
     return {"mensagem": "Logout realizado com sucesso"}
 
-@router.post("/solicitar-codigo")
-async def solicitar_codigo_verificacao(cpf: str, db: Session = Depends(get_db)):
-    """Solicitar novo código de verificação"""
-    usuario = db.query(Usuario).filter(Usuario.cpf == cpf).first()
-    if not usuario:
+@router.post("/forgot-password")
+async def forgot_password(cpf: str, db: Session = Depends(get_db)):
+    """
+    Esqueci a senha - Simplificado
+    Retorna mensagem genérica por segurança
+    """
+    
+    # Validar CPF básico
+    if not validar_cpf_basico(cpf):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CPF inválido"
         )
     
-    codigo = gerar_codigo_verificacao()
-    codigos_verificacao[cpf] = codigo
-    
-    # Enviar código por email
-    email_enviado = await email_service.send_verification_code(
-        to_email=usuario.email,
-        to_name=usuario.nome,
-        verification_code=codigo
-    )
-    
-    # Sempre retorna sucesso em modo teste
+    # Sempre retorna sucesso por questões de segurança
+    # (não revela se o CPF existe ou não)
     return {
-        "mensagem": f"🧪 MODO TESTE: Código gerado. Verifique o console do backend.",
-        "codigo_desenvolvimento": codigo  # Mostrado em modo teste
+        "mensagem": "Se o CPF estiver cadastrado, as instruções de recuperação foram enviadas.",
+        "instrucoes": "Entre em contato com o administrador do sistema para recuperar sua senha."
     }
 
 @router.post("/setup-inicial")
@@ -258,6 +212,8 @@ async def setup_inicial(db: Session = Depends(get_db)):
         db.add(promoter)
         
         db.commit()
+        
+        print("✅ Setup inicial concluído com sucesso")
         
         return {
             "mensagem": "Setup inicial realizado com sucesso!",
