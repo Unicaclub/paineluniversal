@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Evento, EventoCreate } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface EventoModalProps {
   evento?: Evento | null;
@@ -20,6 +21,8 @@ const EventoModal: React.FC<EventoModalProps> = ({
   onClose,
   onSave
 }) => {
+  const { usuario, token, isAuthenticated } = useAuth();
+  
   const [formData, setFormData] = useState<EventoCreate>({
     nome: '',
     descricao: '',
@@ -120,6 +123,25 @@ const EventoModal: React.FC<EventoModalProps> = ({
     console.log('🚀 Iniciando submissão do formulário');
     console.log('📝 FormData antes da validação:', formData);
     
+    // Verificar autenticação usando contexto
+    console.log('🔐 Status autenticação:', {
+      isAuthenticated,
+      hasToken: !!token,
+      hasUsuario: !!usuario,
+      usuarioTipo: usuario?.tipo
+    });
+    
+    if (!isAuthenticated || !token) {
+      setSubmitError('Você precisa estar logado para criar eventos');
+      return;
+    }
+    
+    // Verificar permissão do usuário
+    if (usuario?.tipo && !['admin', 'promoter'].includes(usuario.tipo)) {
+      setSubmitError('Apenas admins e promoters podem criar eventos');
+      return;
+    }
+    
     // Garantir que temos uma data válida antes da validação
     if (!formData.data_evento) {
       const agora = new Date();
@@ -161,6 +183,10 @@ const EventoModal: React.FC<EventoModalProps> = ({
       };
       
       console.log('📤 Dados finais sendo enviados:', eventoData);
+      
+      // Log da requisição que será enviada
+      console.log('🌐 Fazendo requisição para:', 'https://backend-painel-universal-production.up.railway.app/api/eventos/');
+      console.log('🔑 Token sendo usado:', token ? `${token.substring(0, 20)}...` : 'NENHUM');
       
       await onSave(eventoData);
       console.log('✅ Evento salvo com sucesso!');
@@ -206,6 +232,12 @@ const EventoModal: React.FC<EventoModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isAuthenticated && (
+            <Alert variant="destructive">
+              <AlertDescription>Você precisa estar logado para criar eventos</AlertDescription>
+            </Alert>
+          )}
+          
           {submitError && (
             <Alert variant="destructive">
               <AlertDescription>{submitError}</AlertDescription>
@@ -320,7 +352,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isAuthenticated}
             >
               {loading ? 'Salvando...' : (evento ? 'Atualizar' : 'Criar')}
             </Button>
