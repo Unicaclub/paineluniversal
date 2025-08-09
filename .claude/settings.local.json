@@ -13,7 +13,8 @@
       "Bash(mkdir:*)",
       "Bash(npx tsc:*)",
       "Bash(timeout:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

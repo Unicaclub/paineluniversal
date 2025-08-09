@@ -26,33 +26,57 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# 🔥 MIDDLEWARE SIMPLIFICADO PARA CORS
+# 🔥 MIDDLEWARE ULTRA-PERMISSIVO PARA CORS
 @app.middleware("http")
-async def simple_cors_middleware(request: Request, call_next):
-    """Middleware CORS simplificado e seguro"""
+async def ultra_permissive_cors_middleware(request: Request, call_next):
+    """Middleware CORS ultra-permissivo para resolver problemas de CORS definitivamente"""
+    
+    origin = request.headers.get("origin")
+    method = request.method
+    
+    logger.info(f"🌐 CORS Request - Method: {method}, Origin: {origin}, Path: {request.url.path}")
     
     # Para requisições OPTIONS (preflight)
-    if request.method == "OPTIONS":
+    if method == "OPTIONS":
         response = Response()
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers["Access-Control-Max-Age"] = "86400"
         response.status_code = 200
+        logger.info(f"✅ OPTIONS Response enviado para {origin}")
         return response
     
     # Processar requisição normal
     try:
         response = await call_next(request)
         
-        # Adicionar headers CORS básicos
+        # Adicionar headers CORS ultra-permissivos
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers["Access-Control-Expose-Headers"] = "*"
         
+        logger.info(f"✅ Response processado com CORS headers para {origin}")
         return response
+        
     except Exception as e:
-        logger.error(f"❌ Erro no middleware: {str(e)}")
-        raise
+        logger.error(f"❌ Erro no middleware CORS: {str(e)}")
+        # Criar resposta de erro com headers CORS
+        error_response = Response(
+            content=f'{{"detail": "Erro interno: {str(e)}"}}',
+            status_code=500,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*", 
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "false",
+                "Content-Type": "application/json"
+            }
+        )
+        return error_response
 
 app.add_middleware(LoggingMiddleware)
 
@@ -100,23 +124,25 @@ async def healthz():
         "status": "ok", 
         "mensagem": "Sistema de Gestão de Eventos funcionando",
         "timestamp": datetime.now().isoformat(),
-        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development"
+        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
+        "cors": "ultra-permissive"
     }
 
 @app.options("/api/{path:path}")
-async def handle_cors_preflight(path: str, request: Request):
-    """Handle CORS preflight requests com debug detalhado"""
+async def handle_cors_preflight_catchall(path: str, request: Request):
+    """Catch-all para requisições OPTIONS não capturadas pelo middleware"""
     origin = request.headers.get("origin")
-    method = request.headers.get("access-control-request-method")
+    method = request.headers.get("access-control-request-method") 
     headers = request.headers.get("access-control-request-headers")
     
-    logger.info(f"🔍 CORS Preflight - Path: {path}, Origin: {origin}, Method: {method}, Headers: {headers}")
+    logger.info(f"🔍 CORS Preflight Catch-all - Path: /api/{path}, Origin: {origin}, Method: {method}, Headers: {headers}")
     
     response = Response()
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "*"
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Max-Age"] = "86400"
+    response.status_code = 200
     
     return response
 
@@ -127,27 +153,28 @@ async def api_health():
         "status": "ok",
         "api": "Sistema Universal",
         "version": "1.0.0",
-        "cors": "ultra-permissive",
+        "cors": "ultra-permissive-v2",
         "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
         "timestamp": datetime.now().isoformat()
     }
 
 @app.api_route("/api/cors-test", methods=["GET", "POST", "OPTIONS"])
 async def cors_test(request: Request):
-    """Endpoint para testar CORS e debug detalhado"""
+    """Endpoint para testar CORS com debug máximo"""
     origin = request.headers.get("origin")
     user_agent = request.headers.get("user-agent")
     method = request.method
     
-    logger.info(f"🧪 CORS Test - Method: {method}, Origin: {origin}")
+    logger.info(f"🧪 CORS Test V2 - Method: {method}, Origin: {origin}")
     
     return {
-        "message": "CORS test successful - ULTRA PERMISSIVE MODE",
+        "message": "CORS test successful - ULTRA PERMISSIVE V2",
         "method": method,
         "origin": origin,
         "user_agent": user_agent,
         "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
-        "cors_mode": "ultra_permissive",
+        "cors_mode": "ultra_permissive_v2",
+        "middleware": "custom_ultra_permissive",
         "allowed_origins": ["*"],
         "timestamp": datetime.now().isoformat()
     }
@@ -181,7 +208,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             nome="Administrador Sistema",
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
-            senha_hash=gerar_hash_senha("0000"),
+            senha_hash=gerar_hash_senha("admin123"),
             tipo=TipoUsuario.ADMIN
         )
         db.add(admin)
@@ -203,7 +230,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             "message": "Sistema inicializado com sucesso!",
             "empresa": empresa.nome,
             "usuarios_criados": [
-                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "0000"},
+                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "admin123"},
                 {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter", "senha": "promoter123"}
             ]
         }
@@ -218,5 +245,6 @@ async def root():
         "mensagem": "Bem-vindo ao Sistema de Gestão de Eventos",
         "versao": "1.0.0",
         "documentacao": "/docs",
+        "cors": "ultra-permissive-v2", 
         "timestamp": datetime.now().isoformat()
     }
