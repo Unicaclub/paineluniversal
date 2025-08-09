@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
+import { publicService } from '../../services/api';
 
 const LoginForm: React.FC = () => {
   const [cpf, setCpf] = useState('');
@@ -34,11 +35,31 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState('');
   const [verificationMessage, setVerificationMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'testing' | 'ok' | 'error'>('testing');
 
   const { login } = useAuth();
   const { effectiveTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // 🔧 TESTE DE CONECTIVIDADE AO CARREGAR
+  useEffect(() => {
+    const testBackendConnection = async () => {
+      console.log('🧪 Testando conectividade com backend...');
+      const result = await publicService.testConnection();
+      
+      if (result.success) {
+        setConnectionStatus('ok');
+        console.log('✅ Backend conectado com sucesso');
+      } else {
+        setConnectionStatus('error');
+        console.error('❌ Falha na conexão com backend:', result);
+        setError(`Erro de conectividade: ${result.error}`);
+      }
+    };
+
+    testBackendConnection();
+  }, []);
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -174,6 +195,28 @@ const LoginForm: React.FC = () => {
               : 'Faça login para acessar o sistema de gestão'
             }
           </p>
+          
+          {/* 🔧 INDICADOR DE STATUS DA CONEXÃO */}
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs">
+            {connectionStatus === 'testing' && (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin text-yellow-500" />
+                <span className="text-yellow-600">Testando conectividade...</span>
+              </>
+            )}
+            {connectionStatus === 'ok' && (
+              <>
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                <span className="text-green-600">Backend conectado</span>
+              </>
+            )}
+            {connectionStatus === 'error' && (
+              <>
+                <Shield className="h-3 w-3 text-red-500" />
+                <span className="text-red-600">Erro de conectividade</span>
+              </>
+            )}
+          </div>
         </motion.div>
 
         {/* Login Card */}

@@ -6,13 +6,13 @@ const getApiBaseUrl = () => {
   const isProd = import.meta.env.PROD || window.location.hostname.includes('railway.app');
   
   if (isProd) {
-    // 🔥 EM PRODUÇÃO: Usar URL relativa para evitar CORS
-    console.log('🚀 Modo produção - usando URL relativa (sem CORS)');
-    return window.location.origin; // Usar a mesma origem do frontend
+    // 🔥 EM PRODUÇÃO: Usar URL completa do backend DIRETO
+    console.log('🚀 Modo produção - URL backend direta (sem CORS via middleware)');
+    return 'https://backend-painel-universal-production.up.railway.app';
   } else {
-    // 🔧 EM DESENVOLVIMENTO: Usar proxy do Vite (sem CORS)
-    console.log('🔧 Modo desenvolvimento - usando proxy Vite');
-    return ''; // URL vazia = usar proxy do Vite
+    // 🔧 EM DESENVOLVIMENTO: Usar localhost com middleware CORS
+    console.log('🔧 Modo desenvolvimento - localhost com middleware CORS');
+    return 'http://localhost:8000';
   }
 };
 
@@ -54,11 +54,29 @@ export const api = axios.create({
   withCredentials: false, // Explicitamente desabilitar credentials
 });
 
+// 🔧 LOG DETALHADO PARA DEBUG
+console.log('🔍 API Configuration:', {
+  baseURL: API_BASE_URL,
+  isProd: import.meta.env.PROD,
+  hostname: window.location.hostname,
+  origin: window.location.origin
+});
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // 🔍 LOG DA REQUISIÇÃO
+  console.log('🚀 API Request:', {
+    method: config.method?.toUpperCase(),
+    url: config.url,
+    baseURL: config.baseURL,
+    fullURL: `${config.baseURL}${config.url}`,
+    headers: config.headers
+  });
+  
   return config;
 });
 
@@ -437,6 +455,28 @@ export const publicService = {
   async healthCheck(): Promise<any> {
     const response = await publicApi.get('/healthz');
     return response.data;
+  },
+
+  // 🔧 TESTE DE CONECTIVIDADE
+  async testConnection(): Promise<any> {
+    console.log('🧪 Testando conectividade com backend...');
+    try {
+      const response = await publicApi.get('/api/cors-test', { timeout: 10000 });
+      console.log('✅ Conectividade OK:', response.data);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('❌ Falha na conectividade:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        details: {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          baseURL: error.config?.baseURL,
+          url: error.config?.url
+        }
+      };
+    }
   }
 };
 
