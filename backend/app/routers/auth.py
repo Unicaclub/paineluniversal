@@ -7,6 +7,7 @@ from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
 from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
 from ..services.email_service import email_service
+from ..services.cpf_service import cpf_service
 
 router = APIRouter()
 security = HTTPBearer()
@@ -243,3 +244,33 @@ async def setup_inicial(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao realizar setup inicial: {str(e)}"
         )
+
+
+@router.post("/validar-cpf")
+async def validar_cpf(
+    cpf: str,
+    db: Session = Depends(get_db)
+):
+    """Validar CPF com consulta à Receita Federal"""
+    try:
+        resultado = await cpf_service.validar_cpf_completo(cpf)
+        return resultado
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao validar CPF: {str(e)}"
+        )
+
+
+@router.get("/cpf/estatisticas")
+async def obter_estatisticas_cpf(
+    usuario_atual: Usuario = Depends(obter_usuario_atual)
+):
+    """Obter estatísticas do cache de consultas CPF (apenas admins)"""
+    if usuario_atual.tipo.value != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado: apenas administradores podem acessar estatísticas"
+        )
+    
+    return cpf_service.obter_estatisticas_cache()

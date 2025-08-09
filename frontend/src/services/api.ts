@@ -521,6 +521,36 @@ export const pdvService = {
     const params = pdvId ? { pdv_id: pdvId } : {};
     const response = await api.get('/api/pdv/dashboard', { params });
     return response.data;
+  },
+
+  async obterDashboardPDV(eventoId: number): Promise<any> {
+    const response = await api.get(`/api/pdv/dashboard/${eventoId}`);
+    return response.data;
+  },
+
+  async listarProdutos(eventoId: number): Promise<any[]> {
+    const response = await api.get('/api/pdv/produtos', { params: { evento_id: eventoId } });
+    return response.data;
+  },
+
+  async listarComandas(eventoId: number): Promise<any[]> {
+    const response = await api.get('/api/pdv/comandas', { params: { evento_id: eventoId } });
+    return response.data;
+  },
+
+  async criarComanda(comandaData: any): Promise<any> {
+    const response = await api.post('/api/pdv/comandas', comandaData);
+    return response.data;
+  },
+
+  async recarregarComanda(comandaId: number, recargaData: any): Promise<any> {
+    const response = await api.post(`/api/pdv/comandas/${comandaId}/recarga`, recargaData);
+    return response.data;
+  },
+
+  async processarVenda(vendaData: any): Promise<any> {
+    const response = await api.post('/api/pdv/vendas', vendaData);
+    return response.data;
   }
 };
 

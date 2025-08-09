@@ -21,7 +21,8 @@ import {
   Trophy,
   ChevronDown,
   Bell,
-  Search
+  Search,
+  Zap
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -81,6 +82,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: '/dashboard', 
       roles: ['admin', 'promoter', 'operador'],
       description: 'Visão geral do sistema'
+    },
+    { 
+      icon: Zap, 
+      label: 'Dashboard Supremo', 
+      path: '/dashboard-supremo', 
+      roles: ['admin', 'promoter'],
+      description: 'Dashboard integrado cashless'
     },
     { 
       icon: Calendar, 
