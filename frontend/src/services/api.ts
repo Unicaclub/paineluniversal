@@ -161,6 +161,17 @@ export interface Evento {
   criador_id?: number;
 }
 
+export interface EventoCreate {
+  nome: string;
+  descricao?: string;
+  data_evento: string;
+  local: string;
+  endereco?: string;
+  limite_idade: number;
+  capacidade_maxima: number;
+  empresa_id?: number;
+}
+
 // Serviços de autenticação
 export const authService = {
   async login(data: LoginRequest): Promise<Token> {

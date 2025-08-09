@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -33,17 +33,23 @@ const EventoModal: React.FC<EventoModalProps> = ({
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (evento) {
+      const dataEvento = new Date(evento.data_evento);
+      const dataFormatada = new Date(dataEvento.getTime() - (dataEvento.getTimezoneOffset() * 60000))
+        .toISOString()
+        .slice(0, 16);
+      
       setFormData({
         nome: evento.nome,
         descricao: evento.descricao || '',
-        data_evento: new Date(evento.data_evento).toISOString().slice(0, 16),
+        data_evento: dataFormatada,
         local: evento.local,
         endereco: evento.endereco || '',
-        limite_idade: evento.limite_idade,
-        capacidade_maxima: evento.capacidade_maxima,
+        limite_idade: evento.limite_idade || 18,
+        capacidade_maxima: evento.capacidade_maxima || 100,
         empresa_id: evento.empresa_id
       });
     } else {
@@ -59,6 +65,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
       });
     }
     setErrors({});
+    setSubmitError(null);
   }, [evento, isOpen]);
 
   const validateForm = (): boolean => {
@@ -73,7 +80,10 @@ const EventoModal: React.FC<EventoModalProps> = ({
     } else {
       const dataEvento = new Date(formData.data_evento);
       const agora = new Date();
-      if (dataEvento <= agora) {
+      
+      if (isNaN(dataEvento.getTime())) {
+        newErrors.data_evento = 'Data inválida. Verifique se preencheu corretamente dia, mês, ano, hora e minutos.';
+      } else if (dataEvento <= agora) {
         newErrors.data_evento = 'Data do evento deve ser futura';
       }
     }
@@ -83,11 +93,11 @@ const EventoModal: React.FC<EventoModalProps> = ({
     }
 
     if (formData.limite_idade < 0 || formData.limite_idade > 100) {
-      newErrors.limite_idade = 'Limite de idade deve estar entre 0 e 100';
+      newErrors.limite_idade = 'Limite de idade deve estar entre 0 e 100 anos';
     }
 
-    if (formData.capacidade_maxima < 1) {
-      newErrors.capacidade_maxima = 'Capacidade deve ser maior que 0';
+    if (formData.capacidade_maxima <= 0) {
+      newErrors.capacidade_maxima = 'Capacidade máxima deve ser maior que zero';
     }
 
     setErrors(newErrors);
@@ -102,21 +112,37 @@ const EventoModal: React.FC<EventoModalProps> = ({
     }
 
     setLoading(true);
+    setSubmitError(null);
+    
     try {
+      const dataEvento = new Date(formData.data_evento);
+      
       const eventoData = {
         ...formData,
-        data_evento: new Date(formData.data_evento).toISOString()
+        data_evento: dataEvento.toISOString(),
+        limite_idade: Number(formData.limite_idade),
+        capacidade_maxima: Number(formData.capacidade_maxima),
+        empresa_id: Number(formData.empresa_id)
       };
       
       await onSave(eventoData);
-    } catch (error) {
-      console.error('Erro ao salvar evento:', error);
+      
+    } catch (error: any) {
+      let errorMessage = 'Erro ao salvar evento';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (field: keyof EventoCreate, value: any) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -133,15 +159,21 @@ const EventoModal: React.FC<EventoModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {submitError && (
+            <Alert variant="destructive">
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
+            <div>
               <Label htmlFor="nome">Nome do Evento *</Label>
               <Input
                 id="nome"
                 value={formData.nome}
                 onChange={(e) => handleInputChange('nome', e.target.value)}
-                placeholder="Ex: Festa de Ano Novo 2025"
                 className={errors.nome ? 'border-red-500' : ''}
+                placeholder="Digite o nome do evento"
               />
               {errors.nome && (
                 <p className="text-sm text-red-500 mt-1">{errors.nome}</p>
@@ -154,6 +186,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
                 id="data_evento"
                 type="datetime-local"
                 value={formData.data_evento}
+                min={new Date().toISOString().slice(0, 16)}
                 onChange={(e) => handleInputChange('data_evento', e.target.value)}
                 className={errors.data_evento ? 'border-red-500' : ''}
               />
@@ -168,26 +201,26 @@ const EventoModal: React.FC<EventoModalProps> = ({
                 id="local"
                 value={formData.local}
                 onChange={(e) => handleInputChange('local', e.target.value)}
-                placeholder="Ex: Club Premium"
                 className={errors.local ? 'border-red-500' : ''}
+                placeholder="Local do evento"
               />
               {errors.local && (
                 <p className="text-sm text-red-500 mt-1">{errors.local}</p>
               )}
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <Label htmlFor="endereco">Endereço</Label>
               <Input
                 id="endereco"
                 value={formData.endereco}
                 onChange={(e) => handleInputChange('endereco', e.target.value)}
-                placeholder="Ex: Rua das Flores, 123 - Centro"
+                placeholder="Endereço completo (opcional)"
               />
             </div>
 
             <div>
-              <Label htmlFor="limite_idade">Limite de Idade *</Label>
+              <Label htmlFor="limite_idade">Limite de Idade</Label>
               <Input
                 id="limite_idade"
                 type="number"
@@ -203,33 +236,33 @@ const EventoModal: React.FC<EventoModalProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="capacidade_maxima">Capacidade Máxima *</Label>
+              <Label htmlFor="capacidade_maxima">Capacidade Máxima</Label>
               <Input
                 id="capacidade_maxima"
                 type="number"
                 min="1"
                 value={formData.capacidade_maxima}
-                onChange={(e) => handleInputChange('capacidade_maxima', parseInt(e.target.value) || 0)}
+                onChange={(e) => handleInputChange('capacidade_maxima', parseInt(e.target.value) || 1)}
                 className={errors.capacidade_maxima ? 'border-red-500' : ''}
               />
               {errors.capacidade_maxima && (
                 <p className="text-sm text-red-500 mt-1">{errors.capacidade_maxima}</p>
               )}
             </div>
-
-            <div className="md:col-span-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                value={formData.descricao}
-                onChange={(e) => handleInputChange('descricao', e.target.value)}
-                placeholder="Descreva o evento..."
-                rows={3}
-              />
-            </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div>
+            <Label htmlFor="descricao">Descrição</Label>
+            <Textarea
+              id="descricao"
+              value={formData.descricao}
+              onChange={(e) => handleInputChange('descricao', e.target.value)}
+              placeholder="Descrição do evento (opcional)"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"

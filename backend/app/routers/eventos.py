@@ -32,16 +32,28 @@ async def criar_evento(
 ):
     """Criar novo evento"""
     
+    print(f"🎫 Criando evento: {evento.nome}")
+    print(f"📅 Data do evento: {evento.data_evento}")
+    print(f"👤 Usuário: {usuario_atual.nome} ({usuario_atual.tipo.value})")
+    
     if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: apenas admins e promoters podem criar eventos"
         )
     
-    if evento.data_evento <= datetime.now():
+    # Validação de data mais robusta
+    try:
+        if evento.data_evento <= datetime.now():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data do evento deve ser futura"
+            )
+    except Exception as e:
+        print(f"❌ Erro ao validar data: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data do evento deve ser futura"
+            detail="Data do evento inválida"
         )
     
     # Se não foi especificada uma empresa, usar a primeira empresa disponível ou criar uma padrão
@@ -65,14 +77,29 @@ async def criar_evento(
         else:
             empresa_id = primeira_empresa.id
     
-    evento_data = evento.dict()
-    evento_data['criador_id'] = usuario_atual.id
-    evento_data['empresa_id'] = empresa_id
-    
-    db_evento = Evento(**evento_data)
-    db.add(db_evento)
-    db.commit()
-    db.refresh(db_evento)
+    try:
+        evento_data = evento.dict()
+        evento_data['criador_id'] = usuario_atual.id
+        evento_data['empresa_id'] = empresa_id
+        
+        print(f"📝 Dados finais do evento: {evento_data}")
+        
+        db_evento = Evento(**evento_data)
+        db.add(db_evento)
+        db.commit()
+        db.refresh(db_evento)
+        
+        print(f"✅ Evento criado com sucesso: ID {db_evento.id}")
+        
+        return db_evento
+        
+    except Exception as e:
+        print(f"💥 Erro ao criar evento no banco: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao criar evento: {str(e)}"
+        )
     
     return db_evento
 
