@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-import psycopg
+import os
+import logging
 
 from .database import engine, get_db
 from .models import Base
@@ -14,6 +15,10 @@ from .websocket import manager
 
 Base.metadata.create_all(bind=engine)
 
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="Sistema de Gestão de Eventos",
     description="API completa para gestão de eventos com foco em segurança e automação via CPF",
@@ -22,13 +27,64 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Disable CORS. Do not remove this for full-stack development.
+# Configuração de origens permitidas baseada no ambiente
+def get_allowed_origins():
+    """Retorna as origens permitidas baseado no ambiente"""
+    base_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "https://frontend-painel-universal-production.up.railway.app",
+    ]
+    
+    # Em desenvolvimento, permitir todas as origens
+    if not os.getenv("RAILWAY_ENVIRONMENT"):
+        logger.info("Ambiente de desenvolvimento detectado - CORS permissivo")
+        return ["*"]
+    
+    logger.info(f"Ambiente de produção detectado - CORS restritivo: {base_origins}")
+    return base_origins
+
+# Middleware de debug para CORS
+@app.middleware("http")
+async def cors_debug_middleware(request: Request, call_next):
+    """Middleware para debug de CORS requests"""
+    origin = request.headers.get("origin")
+    method = request.method
+    
+    logger.info(f"CORS Debug - Method: {method}, Origin: {origin}, Path: {request.url.path}")
+    
+    response = await call_next(request)
+    
+    # Log dos headers de resposta CORS
+    cors_headers = {k: v for k, v in response.headers.items() if k.lower().startswith('access-control')}
+    if cors_headers:
+        logger.info(f"CORS Headers enviados: {cors_headers}")
+    
+    return response
+
+# Configuração CORS corrigida para Railway
+allowed_origins = get_allowed_origins()
+is_development = not os.getenv("RAILWAY_ENVIRONMENT")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_origins=allowed_origins,
+    allow_credentials=not is_development,  # Só permitir credentials em produção com origens específicas
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language", 
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight por 1 hora
 )
 
 app.add_middleware(LoggingMiddleware)
@@ -73,12 +129,49 @@ async def checkin_websocket_endpoint(websocket: WebSocket, evento_id: int):
 
 @app.get("/healthz")
 async def healthz():
-    return {"status": "ok", "mensagem": "Sistema de Gestão de Eventos funcionando"}
+    return {
+        "status": "ok", 
+        "mensagem": "Sistema de Gestão de Eventos funcionando",
+        "timestamp": datetime.now().isoformat(),
+        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development"
+    }
+
+@app.options("/api/{path:path}")
+async def handle_cors_preflight(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "CORS preflight OK"}
+
+@app.get("/api/health")
+async def api_health():
+    """Health check específico para API"""
+    return {
+        "status": "ok",
+        "api": "Sistema Universal",
+        "version": "1.0.0",
+        "cors": "enabled",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.api_route("/api/cors-test", methods=["GET", "POST", "OPTIONS"])
+async def cors_test(request: Request):
+    """Endpoint para testar CORS e debug"""
+    origin = request.headers.get("origin")
+    user_agent = request.headers.get("user-agent")
+    
+    return {
+        "message": "CORS test successful",
+        "origin": origin,
+        "user_agent": user_agent,
+        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
+        "allowed_origins": get_allowed_origins(),
+        "timestamp": datetime.now().isoformat()
+    }
 
 @app.get("/")
 async def root():
     return {
         "mensagem": "Bem-vindo ao Sistema de Gestão de Eventos",
         "versao": "1.0.0",
-        "documentacao": "/docs"
+        "documentacao": "/docs",
+        "timestamp": datetime.now().isoformat()
     }
