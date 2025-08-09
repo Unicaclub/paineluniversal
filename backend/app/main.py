@@ -29,30 +29,11 @@ app = FastAPI(
 
 # Configuração de origens permitidas baseada no ambiente
 def get_allowed_origins():
-    """Retorna as origens permitidas baseado no ambiente"""
-    base_origins = [
-        # URLs de desenvolvimento
-        "http://localhost:3000",
-        "http://localhost:5173", 
-        "http://127.0.0.1:5173",
-        # URLs de produção Railway
-        "https://frontend-painel-universal-production.up.railway.app",
-        "https://backend-painel-universal-production.up.railway.app",
-        # URLs possíveis do frontend
-        "https://painel-universal.up.railway.app",
-        "https://frontend-painel-universal.up.railway.app",
-    ]
+    """CORS Ultra-Permissivo para resolver problemas de produção"""
     
-    # Em desenvolvimento, permitir todas as origens
-    if not os.getenv("RAILWAY_ENVIRONMENT"):
-        logger.info("Ambiente de desenvolvimento detectado - CORS permissivo")
-        return ["*"]
-    
-    # Em produção Railway, permitir origens específicas + wildcards como fallback
-    railway_origins = base_origins + ["*"]  # Temporariamente permitir todas até identificar problemas
-    
-    logger.info(f"Ambiente de produção Railway detectado - CORS com origens: {railway_origins}")
-    return railway_origins
+    # Em qualquer ambiente, permitir TODAS as origens
+    logger.info("🔥 CORS ULTRA-PERMISSIVO ATIVADO - Permitindo todas as origens")
+    return ["*"]
 
 # Middleware de debug para CORS
 @app.middleware("http")
@@ -82,29 +63,17 @@ async def cors_debug_middleware(request: Request, call_next):
     
     return response
 
-# Configuração CORS corrigida para Railway
+# 🔥 CONFIGURAÇÃO CORS ULTRA-PERMISSIVA - OPÇÃO 1
 allowed_origins = get_allowed_origins()
-is_development = not os.getenv("RAILWAY_ENVIRONMENT")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=False,  # Desabilitar credentials temporariamente para evitar problemas
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
-    allow_headers=[
-        "*",  # Permitir todos os headers temporariamente
-        "Accept",
-        "Accept-Language", 
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers",
-    ],
-    expose_headers=["*"],
-    max_age=3600,  # Cache preflight por 1 hora
+    allow_origins=["*"],  # Permitir TODAS as origens
+    allow_credentials=False,  # OBRIGATÓRIO ser False quando origins=["*"]
+    allow_methods=["*"],  # Permitir TODOS os métodos
+    allow_headers=["*"],  # Permitir TODOS os headers
+    expose_headers=["*"],  # Expor TODOS os headers
+    max_age=86400,  # Cache preflight por 24 horas
 )
 
 app.add_middleware(LoggingMiddleware)
@@ -157,9 +126,21 @@ async def healthz():
     }
 
 @app.options("/api/{path:path}")
-async def handle_cors_preflight(path: str):
-    """Handle CORS preflight requests"""
-    return {"message": "CORS preflight OK"}
+async def handle_cors_preflight(path: str, request: Request):
+    """Handle CORS preflight requests com debug detalhado"""
+    origin = request.headers.get("origin")
+    method = request.headers.get("access-control-request-method")
+    headers = request.headers.get("access-control-request-headers")
+    
+    logger.info(f"🔍 CORS Preflight - Path: {path}, Origin: {origin}, Method: {method}, Headers: {headers}")
+    
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
 
 @app.get("/api/health")
 async def api_health():
@@ -168,22 +149,28 @@ async def api_health():
         "status": "ok",
         "api": "Sistema Universal",
         "version": "1.0.0",
-        "cors": "enabled",
+        "cors": "ultra-permissive",
+        "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
         "timestamp": datetime.now().isoformat()
     }
 
 @app.api_route("/api/cors-test", methods=["GET", "POST", "OPTIONS"])
 async def cors_test(request: Request):
-    """Endpoint para testar CORS e debug"""
+    """Endpoint para testar CORS e debug detalhado"""
     origin = request.headers.get("origin")
     user_agent = request.headers.get("user-agent")
+    method = request.method
+    
+    logger.info(f"🧪 CORS Test - Method: {method}, Origin: {origin}")
     
     return {
-        "message": "CORS test successful",
+        "message": "CORS test successful - ULTRA PERMISSIVE MODE",
+        "method": method,
         "origin": origin,
         "user_agent": user_agent,
         "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development",
-        "allowed_origins": get_allowed_origins(),
+        "cors_mode": "ultra_permissive",
+        "allowed_origins": ["*"],
         "timestamp": datetime.now().isoformat()
     }
 

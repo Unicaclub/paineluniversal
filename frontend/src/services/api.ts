@@ -27,18 +27,20 @@ export const publicApi = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000,
+  withCredentials: false, // Explicitamente desabilitar credentials
 });
 
 // Interceptor para API pública (apenas log de erros, sem redirect)
 publicApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('Public API Error:', {
+    console.error('🔥 Public API Error:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
       baseURL: error.config?.baseURL,
-      message: error.message
+      message: error.message,
+      corsError: error.message?.includes('CORS') || error.message?.includes('Access-Control')
     });
     
     return Promise.reject(error);
@@ -51,6 +53,7 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 segundos timeout
+  withCredentials: false, // Explicitamente desabilitar credentials
 });
 
 api.interceptors.request.use((config) => {
