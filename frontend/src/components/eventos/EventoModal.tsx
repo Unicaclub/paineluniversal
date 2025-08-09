@@ -51,8 +51,8 @@ const EventoModal: React.FC<EventoModalProps> = ({
         local: evento.local,
         endereco: evento.endereco || '',
         limite_idade: evento.limite_idade || 18,
-        capacidade_maxima: evento.capacidade_maxima || 100,
-        empresa_id: evento.empresa_id
+        capacidade_maxima: evento.capacidade_maxima || 100
+        // empresa_id removido - não é mais obrigatório
       });
     } else {
       // Para novo evento, usar uma data padrão (1 hora no futuro)
@@ -178,8 +178,8 @@ const EventoModal: React.FC<EventoModalProps> = ({
         ...formData,
         data_evento: dataEvento.toISOString(),
         limite_idade: Number(formData.limite_idade) || 18,
-        capacidade_maxima: formData.capacidade_maxima && formData.capacidade_maxima > 0 ? Number(formData.capacidade_maxima) : undefined,
-        empresa_id: formData.empresa_id && formData.empresa_id > 0 ? Number(formData.empresa_id) : undefined
+        capacidade_maxima: formData.capacidade_maxima && formData.capacidade_maxima > 0 ? Number(formData.capacidade_maxima) : undefined
+        // empresa_id removido - será opcional no backend
       };
       
       console.log('📤 Dados finais sendo enviados:', eventoData);

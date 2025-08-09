@@ -172,7 +172,7 @@ class EventoCreate(EventoBase):
 class Evento(EventoBase):
     id: int
     status: StatusEvento
-    empresa_id: int
+    empresa_id: Optional[int] = None
     criador_id: int
     criado_em: datetime
     atualizado_em: Optional[datetime] = None
@@ -183,7 +183,7 @@ class Evento(EventoBase):
 class EventoDetalhado(EventoBase):
     id: int
     status: StatusEvento
-    empresa_id: int
+    empresa_id: Optional[int] = None
     criador_id: int
     criado_em: datetime
     atualizado_em: Optional[datetime] = None

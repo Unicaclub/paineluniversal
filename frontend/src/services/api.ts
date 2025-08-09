@@ -157,7 +157,7 @@ export interface Evento {
   limite_idade?: number;
   capacidade_maxima?: number;
   status?: string;
-  empresa_id: number;
+  empresa_id?: number;  // Agora opcional
   criador_id?: number;
 }
 
