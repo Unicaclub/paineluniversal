@@ -6,7 +6,18 @@ from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
 from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
-from ..services.email_service import email_service
+try:
+    from ..services.email_service import email_service
+except ImportError:
+    # Fallback para quando não há serviço de email disponível
+    class DummyEmailService:
+        async def send_verification_code(self, email: str, name: str, code: str) -> bool:
+            print(f"📧 MODO TESTE - Código {code} para {name} ({email})")
+            return True
+        async def send_welcome_email(self, email: str, name: str) -> bool:
+            print(f"🎉 MODO TESTE - Email de boas-vindas para {name} ({email})")
+            return True
+    email_service = DummyEmailService()
 
 router = APIRouter()
 security = HTTPBearer()
