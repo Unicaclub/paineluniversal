@@ -33,11 +33,29 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     2. Segunda etapa: código de verificação (simulado)
     """
     
-    usuario = autenticar_usuario(login_data.cpf, login_data.senha, db)
-    if not usuario:
+    try:
+        print(f"🔐 Tentativa de login para CPF: {login_data.cpf[:3]}***{login_data.cpf[-3:]}")
+        
+        usuario = autenticar_usuario(login_data.cpf, login_data.senha, db)
+        if not usuario:
+            print(f"❌ Usuário não encontrado ou senha incorreta")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="CPF ou senha incorretos"
+            )
+            
+        print(f"✅ Usuário encontrado: {usuario.nome}")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Erro interno no login: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="CPF ou senha incorretos"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno do servidor: {str(e)}"
         )
     
     if not usuario.ativo:
