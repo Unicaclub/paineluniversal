@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import os
@@ -27,54 +26,38 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configuração de origens permitidas baseada no ambiente
-def get_allowed_origins():
-    """CORS Ultra-Permissivo para resolver problemas de produção"""
-    
-    # Em qualquer ambiente, permitir TODAS as origens
-    logger.info("🔥 CORS ULTRA-PERMISSIVO ATIVADO - Permitindo todas as origens")
-    return ["*"]
-
-# Middleware de debug para CORS
+# 🔥 MIDDLEWARE PERSONALIZADO PARA SUBSTITUIR CORS
 @app.middleware("http")
-async def cors_debug_middleware(request: Request, call_next):
-    """Middleware para debug de CORS requests"""
+async def custom_cors_middleware(request: Request, call_next):
+    """Middleware personalizado que substitui CORS e resolve todos os problemas"""
+    
+    # Log da requisição
     origin = request.headers.get("origin")
     method = request.method
+    logger.info(f"🌐 Request: {method} {request.url.path} from {origin}")
     
-    logger.info(f"CORS Debug - Method: {method}, Origin: {origin}, Path: {request.url.path}")
-    
-    # Para requisições OPTIONS (preflight), retornar resposta CORS válida
+    # Para requisições OPTIONS (preflight)
     if method == "OPTIONS":
+        logger.info(f"✅ PREFLIGHT handled for {request.url.path}")
         response = Response()
-        response.headers["Access-Control-Allow-Origin"] = origin or "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Max-Age"] = "3600"
-        logger.info(f"CORS Preflight respondido para origin: {origin}")
+        response.headers["Access-Control-Max-Age"] = "86400"
+        response.status_code = 200
         return response
     
+    # Processar requisição normal
     response = await call_next(request)
     
-    # Log dos headers de resposta CORS
-    cors_headers = {k: v for k, v in response.headers.items() if k.lower().startswith('access-control')}
-    if cors_headers:
-        logger.info(f"CORS Headers enviados: {cors_headers}")
+    # Adicionar headers CORS em todas as respostas
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Expose-Headers"] = "*"
     
+    logger.info(f"✅ Response: {response.status_code} with CORS headers")
     return response
-
-# 🔥 CONFIGURAÇÃO CORS ULTRA-PERMISSIVA - OPÇÃO 1
-allowed_origins = get_allowed_origins()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Permitir TODAS as origens
-    allow_credentials=False,  # OBRIGATÓRIO ser False quando origins=["*"]
-    allow_methods=["*"],  # Permitir TODOS os métodos
-    allow_headers=["*"],  # Permitir TODOS os headers
-    expose_headers=["*"],  # Expor TODOS os headers
-    max_age=86400,  # Cache preflight por 24 horas
-)
 
 app.add_middleware(LoggingMiddleware)
 

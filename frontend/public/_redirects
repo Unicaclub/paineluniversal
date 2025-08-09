@@ -1,4 +1,6 @@
-# Arquivo de configuração para deploy no Railway
-# Este arquivo instrui o servidor a servir o index.html para todas as rotas SPA
+# 🔥 REDIRECTS PARA CONTORNAR CORS COMPLETAMENTE
+# Todas as chamadas /api/* são redirecionadas para o backend
+/api/* https://backend-painel-universal-production.up.railway.app/api/:splat 200
 
-/*    /index.html   200
+# SPA fallback - todas as outras rotas servem o index.html
+/* /index.html 200

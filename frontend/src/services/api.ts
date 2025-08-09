@@ -6,15 +6,13 @@ const getApiBaseUrl = () => {
   const isProd = import.meta.env.PROD || window.location.hostname.includes('railway.app');
   
   if (isProd) {
-    // Em produção, usar URL completa do backend
-    const backendUrl = import.meta.env.VITE_API_URL || 
-                      'https://backend-painel-universal-production.up.railway.app';
-    console.log('🚀 Modo produção - URL Backend:', backendUrl);
-    return backendUrl;
+    // 🔥 EM PRODUÇÃO: Usar URL relativa para evitar CORS
+    console.log('🚀 Modo produção - usando URL relativa (sem CORS)');
+    return window.location.origin; // Usar a mesma origem do frontend
   } else {
-    // Em desenvolvimento, sempre usar localhost direto (sem proxy)
-    console.log('🔧 Modo desenvolvimento - usando localhost direto');
-    return 'http://localhost:8000';
+    // 🔧 EM DESENVOLVIMENTO: Usar proxy do Vite (sem CORS)
+    console.log('🔧 Modo desenvolvimento - usando proxy Vite');
+    return ''; // URL vazia = usar proxy do Vite
   }
 };
 
