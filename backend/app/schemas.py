@@ -773,3 +773,260 @@ class FiltrosRanking(BaseModel):
     badge_nivel: Optional[str] = None
     tipo_ranking: Optional[str] = "geral"
     limit: int = 20
+
+
+# =====================================================
+# MEEP Integration Schemas
+# =====================================================
+
+class ClienteEventoBase(BaseModel):
+    cpf: str
+    nome_completo: str
+    nome_social: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    nome_mae: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[str] = None
+    status: str = "ativo"
+
+    @validator('cpf')
+    def validate_cpf(cls, v):
+        # Remove caracteres não numéricos
+        cpf = re.sub(r'[^0-9]', '', v)
+        if len(cpf) != 11:
+            raise ValueError('CPF deve conter 11 dígitos')
+        return cpf
+
+class ClienteEventoCreate(ClienteEventoBase):
+    pass
+
+class ClienteEventoUpdate(BaseModel):
+    nome_completo: Optional[str] = None
+    nome_social: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    nome_mae: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[str] = None
+    status: Optional[str] = None
+
+class ClienteEventoResponse(ClienteEventoBase):
+    id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ValidacaoAcessoBase(BaseModel):
+    evento_id: Optional[int] = None
+    cliente_id: Optional[int] = None
+    cpf_hash: str
+    qr_code_data: str
+    cpf_digits: str
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    sucesso: bool = False
+    motivo_falha: Optional[str] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    device_info: Optional[str] = None
+
+class ValidacaoAcessoCreate(ValidacaoAcessoBase):
+    pass
+
+class ValidacaoAcessoResponse(ValidacaoAcessoBase):
+    id: int
+    timestamp_validacao: datetime
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+class EquipamentoEventoBase(BaseModel):
+    evento_id: int
+    nome: str
+    tipo: str  # 'tablet', 'qr_reader', 'printer', 'pos', 'camera', 'sensor'
+    ip_address: str
+    mac_address: Optional[str] = None
+    status: str = "offline"
+    configuracao: Optional[str] = None
+    localizacao: Optional[str] = None
+    responsavel_id: Optional[int] = None
+    heartbeat_interval: int = 30
+
+    @validator('tipo')
+    def validate_tipo(cls, v):
+        tipos_validos = ['tablet', 'qr_reader', 'printer', 'pos', 'camera', 'sensor']
+        if v not in tipos_validos:
+            raise ValueError(f'Tipo deve ser um dos: {", ".join(tipos_validos)}')
+        return v
+
+class EquipamentoEventoCreate(EquipamentoEventoBase):
+    pass
+
+class EquipamentoEventoUpdate(BaseModel):
+    nome: Optional[str] = None
+    tipo: Optional[str] = None
+    status: Optional[str] = None
+    configuracao: Optional[str] = None
+    localizacao: Optional[str] = None
+    responsavel_id: Optional[int] = None
+    heartbeat_interval: Optional[int] = None
+
+class EquipamentoEventoResponse(EquipamentoEventoBase):
+    id: int
+    ultima_atividade: Optional[datetime] = None
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class SessaoOperadorBase(BaseModel):
+    usuario_id: int
+    evento_id: int
+    equipamento_id: Optional[int] = None
+    token_sessao: str
+    ip_address: Optional[str] = None
+    ativo: bool = True
+    configuracoes: Optional[str] = None
+
+class SessaoOperadorCreate(SessaoOperadorBase):
+    pass
+
+class SessaoOperadorResponse(SessaoOperadorBase):
+    id: int
+    inicio_sessao: datetime
+    fim_sessao: Optional[datetime] = None
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+class PrevisaoIABase(BaseModel):
+    evento_id: int
+    tipo_previsao: str  # 'fluxo_horario', 'pico_entrada', 'estimativa_total'
+    dados_entrada: str  # JSON string
+    resultado_previsao: str  # JSON string
+    confiabilidade: Optional[Decimal] = None
+    aplicada: bool = False
+    feedback_real: Optional[str] = None
+    precisao_real: Optional[Decimal] = None
+
+class PrevisaoIACreate(PrevisaoIABase):
+    pass
+
+class PrevisaoIAResponse(PrevisaoIABase):
+    id: int
+    timestamp_previsao: datetime
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+class AnalyticsMEEPBase(BaseModel):
+    evento_id: int
+    metrica: str
+    valor: Optional[Decimal] = None
+    valor_anterior: Optional[Decimal] = None
+    percentual_mudanca: Optional[Decimal] = None
+    periodo: Optional[str] = None  # 'hora', 'dia', 'semana', 'mes'
+    dados_detalhados: Optional[str] = None  # JSON string
+    alertas: Optional[str] = None  # JSON string
+
+class AnalyticsMEEPCreate(AnalyticsMEEPBase):
+    pass
+
+class AnalyticsMEEPResponse(AnalyticsMEEPBase):
+    id: int
+    timestamp_coleta: datetime
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+class LogSegurancaMEEPBase(BaseModel):
+    evento_id: Optional[int] = None
+    tipo_evento: str  # 'tentativa_acesso', 'validacao_cpf', 'erro_sistema'
+    gravidade: str = "info"  # 'info', 'warning', 'error', 'critical'
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    dados_evento: str  # JSON string
+    usuario_id: Optional[int] = None
+    resolvido: bool = False
+
+    @validator('gravidade')
+    def validate_gravidade(cls, v):
+        gravidades_validas = ['info', 'warning', 'error', 'critical']
+        if v not in gravidades_validas:
+            raise ValueError(f'Gravidade deve ser uma das: {", ".join(gravidades_validas)}')
+        return v
+
+class LogSegurancaMEEPCreate(LogSegurancaMEEPBase):
+    pass
+
+class LogSegurancaMEEPResponse(LogSegurancaMEEPBase):
+    id: int
+    timestamp_evento: datetime
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+# Schemas para requests complexos
+class MEEPDashboardRequest(BaseModel):
+    evento_id: int
+    periodo: str = "24h"
+    incluir_previsoes: bool = True
+    incluir_equipamentos: bool = True
+
+class MEEPAnalyticsRequest(BaseModel):
+    evento_id: int
+    tipo_analise: str  # 'fluxo', 'performance', 'seguranca'
+    periodo: str = "7d"
+    granularidade: str = "hora"  # 'minuto', 'hora', 'dia'
+
+class MEEPValidacaoRequest(BaseModel):
+    cpf: str
+    evento_id: Optional[int] = None
+
+class MEEPCheckinRequest(BaseModel):
+    qr_code: str
+    cpf_digits: str
+    evento_id: Optional[int] = None
+
+class MEEPEquipamentoHeartbeatRequest(BaseModel):
+    equipamento_id: int
+    status: str = "online"
+    dados_status: Optional[dict] = None
+
+# Responses complexos
+class MEEPDashboardResponse(BaseModel):
+    evento_id: int
+    periodo: str
+    metricas_gerais: dict
+    equipamentos: dict
+    seguranca: dict
+    fluxo_horario: List[dict]
+    timestamp: str
+
+class MEEPAnalyticsResponse(BaseModel):
+    evento_id: int
+    tipo_analise: str
+    periodo: str
+    dados: dict
+    insights: List[dict]
+    timestamp: str
+
+class MEEPValidacaoResponse(BaseModel):
+    valido: bool
+    nome: Optional[str] = None
+    situacao: str
+    fonte: str
+    timestamp: str
+
+class MEEPCheckinResponse(BaseModel):
+    sucesso: bool
+    cliente: Optional[dict] = None
+    motivo: Optional[str] = None
+    timestamp: str

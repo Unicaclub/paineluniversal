@@ -533,3 +533,137 @@ class MetricaPromoter(Base):
     
     promoter = relationship("Usuario")
     evento = relationship("Evento")
+
+
+# =====================================================
+# MEEP Integration Tables
+# =====================================================
+
+class ClienteEvento(Base):
+    __tablename__ = "clientes_eventos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    cpf = Column(String(11), unique=True, nullable=False, index=True)
+    nome_completo = Column(String(255), nullable=False)
+    nome_social = Column(String(255))
+    data_nascimento = Column(Date)
+    nome_mae = Column(String(255))
+    telefone = Column(String(20))
+    email = Column(String(255))
+    status = Column(String(50), default='ativo')
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+
+class ValidacaoAcesso(Base):
+    __tablename__ = "validacoes_acesso"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    cliente_id = Column(Integer, ForeignKey("clientes_eventos.id"))
+    cpf_hash = Column(String(255), nullable=False)
+    qr_code_data = Column(Text, nullable=False)
+    cpf_digits = Column(String(3), nullable=False)
+    ip_address = Column(String(45))
+    user_agent = Column(Text)
+    timestamp_validacao = Column(DateTime(timezone=True), server_default=func.now())
+    sucesso = Column(Boolean, default=False)
+    motivo_falha = Column(Text)
+    latitude = Column(Numeric(10, 8))
+    longitude = Column(Numeric(11, 8))
+    device_info = Column(Text)  # JSON string
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+    cliente = relationship("ClienteEvento")
+
+class EquipamentoEvento(Base):
+    __tablename__ = "equipamentos_eventos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    tipo = Column(String(100), nullable=False)  # 'tablet', 'qr_reader', 'printer', 'pos'
+    ip_address = Column(String(45), nullable=False)
+    mac_address = Column(String(17))
+    status = Column(String(50), default='offline')
+    ultima_atividade = Column(DateTime(timezone=True))
+    configuracao = Column(Text)  # JSON string
+    localizacao = Column(String(255))
+    responsavel_id = Column(Integer, ForeignKey("usuarios.id"))
+    heartbeat_interval = Column(Integer, default=30)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    evento = relationship("Evento")
+    responsavel = relationship("Usuario")
+
+class SessaoOperador(Base):
+    __tablename__ = "sessoes_operadores"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    equipamento_id = Column(Integer, ForeignKey("equipamentos_eventos.id"))
+    token_sessao = Column(String(255), unique=True, nullable=False)
+    ip_address = Column(String(45))
+    inicio_sessao = Column(DateTime(timezone=True), server_default=func.now())
+    fim_sessao = Column(DateTime(timezone=True))
+    ativo = Column(Boolean, default=True)
+    configuracoes = Column(Text)  # JSON string
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    usuario = relationship("Usuario")
+    evento = relationship("Evento")
+    equipamento = relationship("EquipamentoEvento")
+
+class PrevisaoIA(Base):
+    __tablename__ = "previsoes_ia"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    tipo_previsao = Column(String(100), nullable=False)  # 'fluxo_horario', 'pico_entrada', 'estimativa_total'
+    dados_entrada = Column(Text, nullable=False)  # JSON string
+    resultado_previsao = Column(Text, nullable=False)  # JSON string
+    confiabilidade = Column(Numeric(5, 2))  # Percentual de confiança
+    timestamp_previsao = Column(DateTime(timezone=True), server_default=func.now())
+    aplicada = Column(Boolean, default=False)
+    feedback_real = Column(Text)  # JSON string
+    precisao_real = Column(Numeric(5, 2))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+
+class AnalyticsMEEP(Base):
+    __tablename__ = "analytics_meep"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    metrica = Column(String(100), nullable=False)
+    valor = Column(Numeric(15, 2))
+    valor_anterior = Column(Numeric(15, 2))
+    percentual_mudanca = Column(Numeric(5, 2))
+    periodo = Column(String(50))  # 'hora', 'dia', 'semana', 'mes'
+    timestamp_coleta = Column(DateTime(timezone=True), server_default=func.now())
+    dados_detalhados = Column(Text)  # JSON string
+    alertas = Column(Text)  # JSON string
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+
+class LogSegurancaMEEP(Base):
+    __tablename__ = "logs_seguranca_meep"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    tipo_evento = Column(String(100), nullable=False)  # 'tentativa_acesso', 'validacao_cpf', 'erro_sistema'
+    gravidade = Column(String(20), default='info')  # 'info', 'warning', 'error', 'critical'
+    ip_address = Column(String(45))
+    user_agent = Column(Text)
+    dados_evento = Column(Text, nullable=False)  # JSON string
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    resolvido = Column(Boolean, default=False)
+    timestamp_evento = Column(DateTime(timezone=True), server_default=func.now())
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+    usuario = relationship("Usuario")
