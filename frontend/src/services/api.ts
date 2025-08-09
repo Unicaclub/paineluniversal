@@ -2,10 +2,6 @@ import axios from 'axios';
 
 // Configuração da URL da API baseada no ambiente
 const getApiBaseUrl = () => {
-  // 🔧 FORÇAR LOCAL PARA TESTE
-  console.log('🔧 TESTE LOCAL: Usando backend local');
-  return 'http://localhost:8000';
-  
   // Detectar se está em produção pela URL ou variável de ambiente
   const hostname = window.location.hostname;
   const isProd = import.meta.env.PROD || 

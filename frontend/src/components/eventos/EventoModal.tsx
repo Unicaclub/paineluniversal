@@ -122,6 +122,16 @@ const EventoModal: React.FC<EventoModalProps> = ({
     console.log('🚀 Iniciando submissão do formulário');
     console.log('📝 FormData antes da validação:', formData);
     
+    // Garantir que temos uma data válida antes da validação
+    if (!formData.data_evento) {
+      const agora = new Date();
+      agora.setHours(agora.getHours() + 1);
+      const dataDefault = agora.toISOString().slice(0, 16);
+      setFormData(prev => ({ ...prev, data_evento: dataDefault }));
+      console.log('📅 Data padrão definida:', dataDefault);
+      return; // Vai submeter novamente com a data preenchida
+    }
+    
     if (!validateForm()) {
       console.log('❌ Validação falhou');
       return;
@@ -140,18 +150,21 @@ const EventoModal: React.FC<EventoModalProps> = ({
         isValid: !isNaN(dataEvento.getTime())
       });
       
+      if (isNaN(dataEvento.getTime())) {
+        throw new Error('Data inválida');
+      }
+      
       const eventoData = {
         ...formData,
         data_evento: dataEvento.toISOString(),
         limite_idade: Number(formData.limite_idade),
         capacidade_maxima: Number(formData.capacidade_maxima),
-        empresa_id: Number(formData.empresa_id)
+        empresa_id: Number(formData.empresa_id) || 1
       };
       
       console.log('📤 Dados finais sendo enviados:', eventoData);
       
       await onSave(eventoData);
-      
       console.log('✅ Evento salvo com sucesso!');
       
     } catch (error: any) {
