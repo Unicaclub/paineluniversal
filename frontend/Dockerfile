@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -22,8 +22,11 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_MEEP_API_URL=$VITE_MEEP_API_URL
 ENV VITE_WS_URL=$VITE_WS_URL
 
-# Build the application
-RUN npm run build
+# Build the application with verbose output
+RUN echo "Starting build process..." && \
+    npm run build --verbose && \
+    echo "Build completed successfully!" && \
+    ls -la dist/
 
 # Production stage
 FROM nginx:alpine
