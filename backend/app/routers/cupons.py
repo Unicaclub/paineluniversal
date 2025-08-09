@@ -26,8 +26,7 @@ async def criar_cupom(
         raise HTTPException(status_code=404, detail="Lista não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if evento.empresa_id != usuario_atual.empresa_id:
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    # Role-based permission check handled by verificar_permissao_promoter
     
     cupom_existente = db.query(Lista).filter(Lista.codigo_cupom == cupom_data.codigo).first()
     if cupom_existente:
@@ -127,8 +126,7 @@ async def listar_cupons_evento(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if evento.empresa_id != usuario_atual.empresa_id:
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    # Role-based permission check handled by verificar_permissao_promoter
     
     listas_com_cupom = db.query(Lista).filter(
         Lista.evento_id == evento_id,

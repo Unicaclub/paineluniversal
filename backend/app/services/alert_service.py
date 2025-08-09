@@ -83,7 +83,7 @@ Ação necessária: Verificar estratégia de vendas
             
             if aniversariantes:
                 admin_users = db.query(Usuario).filter(
-                    Usuario.empresa_id == evento.empresa_id,
+                    # Usuario.empresa_id removido
                     Usuario.tipo == "admin"
                 ).all()
                 
@@ -159,7 +159,7 @@ Ação sugerida: Intensificar divulgação
             ).scalar() or 0
             
             admin_users = db.query(Usuario).filter(
-                Usuario.empresa_id == evento.empresa_id,
+                # Usuario.empresa_id removido
                 Usuario.tipo == "admin"
             ).all()
             

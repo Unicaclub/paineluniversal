@@ -53,7 +53,7 @@ export const useBarcode = ({ onScan, enabled = true }: UseBarcodeProps) => {
 
 export const useQRScanner = ({ onScan, enabled = true }: UseBarcodeProps) => {
   const bufferRef = useRef<string>('');
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<number>();
 
   useEffect(() => {
     if (!enabled) return;

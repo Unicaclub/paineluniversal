@@ -54,9 +54,10 @@ const EventosModule: React.FC = () => {
         if (busca) {
           filtrosCompletos.nome = busca;
         }
-        eventosData = await eventoService.buscar(filtrosCompletos);
+        // TODO: Implementar busca quando disponível na API
+        eventosData = await eventoService.getAll();
       } else {
-        eventosData = await eventoService.listar();
+        eventosData = await eventoService.getAll();
       }
       
       setEventos(eventosData);
@@ -73,10 +74,10 @@ const EventosModule: React.FC = () => {
       setError(null);
       
       if (eventoSelecionado) {
-        await eventoService.atualizar(eventoSelecionado.id, eventoData);
+        await eventoService.update(eventoSelecionado.id!, eventoData);
         setSuccess('Evento atualizado com sucesso!');
       } else {
-        await eventoService.criar(eventoData);
+        await eventoService.create(eventoData);
         setSuccess('Evento criado com sucesso!');
       }
       

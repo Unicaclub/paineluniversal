@@ -38,20 +38,36 @@ async def criar_evento(
             detail="Acesso negado: apenas admins e promoters podem criar eventos"
         )
     
-    if usuario_atual.tipo.value == "promoter" and usuario_atual.empresa_id != evento.empresa_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado: você só pode criar eventos para sua empresa"
-        )
-    
     if evento.data_evento <= datetime.now():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data do evento deve ser futura"
         )
     
+    # Se não foi especificada uma empresa, usar a primeira empresa disponível ou criar uma padrão
+    empresa_id = evento.empresa_id
+    if not empresa_id:
+        from ..models import Empresa
+        primeira_empresa = db.query(Empresa).filter(Empresa.ativa == True).first()
+        if not primeira_empresa:
+            # Criar empresa padrão se não existir nenhuma
+            empresa_padrao = Empresa(
+                nome="Empresa Padrão",
+                cnpj="00000000000100",
+                email="contato@paineluniversal.com",
+                telefone="(11) 99999-9999",
+                ativa=True
+            )
+            db.add(empresa_padrao)
+            db.commit()
+            db.refresh(empresa_padrao)
+            empresa_id = empresa_padrao.id
+        else:
+            empresa_id = primeira_empresa.id
+    
     evento_data = evento.dict()
     evento_data['criador_id'] = usuario_atual.id
+    evento_data['empresa_id'] = empresa_id
     
     db_evento = Evento(**evento_data)
     db.add(db_evento)
@@ -73,9 +89,8 @@ async def listar_eventos(
     
     query = db.query(Evento)
     
-    if usuario_atual.tipo.value != "admin":
-        query = query.filter(Evento.empresa_id == usuario_atual.empresa_id)
-    elif empresa_id:
+    # Role-based filtering removed - promoters and admins have access to all data
+    if empresa_id:
         query = query.filter(Evento.empresa_id == empresa_id)
     
     if status:
@@ -99,9 +114,8 @@ async def buscar_eventos(
     
     query = db.query(Evento)
     
-    if usuario_atual.tipo.value != "admin":
-        query = query.filter(Evento.empresa_id == usuario_atual.empresa_id)
-    elif empresa_id:
+    # Role-based filtering removed - promoters and admins have access to all data
+    if empresa_id:
         query = query.filter(Evento.empresa_id == empresa_id)
     
     if nome:
@@ -132,11 +146,10 @@ async def obter_evento(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     return evento
@@ -157,11 +170,10 @@ async def atualizar_evento(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     if evento_update.data_evento <= datetime.now():
@@ -216,11 +228,10 @@ async def obter_evento_detalhado(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     total_vendas = db.query(func.count(Transacao.id)).filter(
@@ -298,11 +309,10 @@ async def vincular_promoter(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     promoter = db.query(Usuario).filter(
@@ -365,11 +375,10 @@ async def desvincular_promoter(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     promoter_evento = db.query(PromoterEvento).filter(
@@ -404,11 +413,10 @@ async def obter_status_financeiro(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     vendas_por_lista = db.query(
@@ -479,11 +487,10 @@ async def exportar_evento_csv(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     transacoes = db.query(Transacao).join(Lista).filter(
@@ -538,11 +545,10 @@ async def exportar_evento_pdf(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     buffer = io.BytesIO()

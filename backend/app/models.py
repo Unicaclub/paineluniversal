@@ -40,7 +40,6 @@ class Empresa(Base):
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
     
-    usuarios = relationship("Usuario", back_populates="empresa")
     eventos = relationship("Evento", back_populates="empresa")
 
 class Usuario(Base):
@@ -54,12 +53,10 @@ class Usuario(Base):
     senha_hash = Column(String(255), nullable=False)
     tipo = Column(Enum(TipoUsuario), nullable=False)
     ativo = Column(Boolean, default=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     ultimo_login = Column(DateTime(timezone=True))
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
     
-    empresa = relationship("Empresa", back_populates="usuarios")
     eventos_criados = relationship("Evento", back_populates="criador")
     promocoes = relationship("PromoterEvento", back_populates="promoter")
     transacoes = relationship("Transacao", back_populates="usuario")

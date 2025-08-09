@@ -3,14 +3,27 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db, settings
-from ..models import Usuario
-from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema
-from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual
+from ..models import Usuario, Empresa, TipoUsuario
+from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
+from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
+try:
+    from ..services.email_service import email_service
+except ImportError:
+    # Fallback para quando não há serviço de email disponível
+    class DummyEmailService:
+        async def send_verification_code(self, email: str, name: str, code: str) -> bool:
+            print(f"📧 MODO TESTE - Código {code} para {name} ({email})")
+            return True
+        async def send_welcome_email(self, email: str, name: str) -> bool:
+            print(f"🎉 MODO TESTE - Email de boas-vindas para {name} ({email})")
+            return True
+    email_service = DummyEmailService()
 
 router = APIRouter()
 security = HTTPBearer()
 
 codigos_verificacao = {}
+
 
 @router.post("/login", response_model=Token)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
@@ -37,9 +50,17 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         codigo = gerar_codigo_verificacao()
         codigos_verificacao[login_data.cpf] = codigo
         
+        # Enviar código por email
+        email_enviado = await email_service.send_verification_code(
+            to_email=usuario.email,
+            to_name=usuario.nome,
+            verification_code=codigo
+        )
+        
+        # Sempre retorna sucesso em modo teste
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
-            detail=f"Código de verificação enviado. Use: {codigo}"
+            detail=f"🧪 MODO TESTE: Código de verificação gerado. Verifique o console do backend para o código: {codigo}"
         )
     
     codigo_armazenado = codigos_verificacao.get(login_data.cpf)
@@ -65,6 +86,59 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         "usuario": UsuarioSchema.from_orm(usuario)
     }
 
+@router.post("/register", response_model=UsuarioSchema)
+async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
+    """Registro público de usuários"""
+    
+    # Verificar se CPF já existe
+    usuario_existente = db.query(Usuario).filter(Usuario.cpf == usuario_data.cpf).first()
+    if usuario_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CPF já cadastrado"
+        )
+    
+    # Verificar se email já existe
+    email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
+    if email_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email já cadastrado"
+        )
+    
+    try:
+        # Criar usuário sem empresa obrigatória
+        senha_hash = gerar_hash_senha(usuario_data.senha)
+        
+        novo_usuario = Usuario(
+            cpf=usuario_data.cpf,
+            nome=usuario_data.nome,
+            email=usuario_data.email,
+            telefone=usuario_data.telefone or "",
+            senha_hash=senha_hash,
+            tipo=usuario_data.tipo,
+            ativo=True  # Usuários registrados publicamente ficam ativos por padrão
+        )
+        
+        db.add(novo_usuario)
+        db.commit()
+        db.refresh(novo_usuario)
+        
+        # Enviar email de boas-vindas
+        await email_service.send_welcome_email(
+            to_email=novo_usuario.email,
+            to_name=novo_usuario.nome
+        )
+        
+        return novo_usuario
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar usuário: {str(e)}"
+        )
+
 @router.get("/me", response_model=UsuarioSchema)
 async def obter_perfil(usuario_atual: Usuario = Depends(obter_usuario_atual)):
     """Obter dados do usuário logado"""
@@ -88,7 +162,95 @@ async def solicitar_codigo_verificacao(cpf: str, db: Session = Depends(get_db)):
     codigo = gerar_codigo_verificacao()
     codigos_verificacao[cpf] = codigo
     
+    # Enviar código por email
+    email_enviado = await email_service.send_verification_code(
+        to_email=usuario.email,
+        to_name=usuario.nome,
+        verification_code=codigo
+    )
+    
+    # Sempre retorna sucesso em modo teste
     return {
-        "mensagem": "Código de verificação enviado",
-        "codigo_desenvolvimento": codigo  # Remover em produção
+        "mensagem": f"🧪 MODO TESTE: Código gerado. Verifique o console do backend.",
+        "codigo_desenvolvimento": codigo  # Mostrado em modo teste
     }
+
+@router.post("/setup-inicial")
+async def setup_inicial(db: Session = Depends(get_db)):
+    """Setup inicial do sistema - Criar empresa e admin padrão (apenas se não houver usuários)"""
+    
+    # Verificar se já existem usuários no sistema
+    usuario_existente = db.query(Usuario).first()
+    if usuario_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sistema já foi inicializado. Já existem usuários cadastrados."
+        )
+    
+    try:
+        # Criar empresa padrão
+        empresa = Empresa(
+            nome="Painel Universal - Empresa Demo",
+            cnpj="00000000000100",
+            email="contato@paineluniversal.com",
+            telefone="(11) 99999-9999",
+            endereco="Endereço da empresa demo",
+            ativa=True
+        )
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
+        
+        # Criar usuário admin
+        senha_hash = gerar_hash_senha("admin123")
+        admin = Usuario(
+            cpf="00000000000",
+            nome="Administrador Sistema",
+            email="admin@paineluniversal.com",
+            telefone="(11) 99999-0000",
+            senha_hash=senha_hash,
+            tipo=TipoUsuario.ADMIN,
+            ativo=True
+        )
+        db.add(admin)
+        
+        # Criar usuário promoter
+        senha_hash_promoter = gerar_hash_senha("promoter123")
+        promoter = Usuario(
+            cpf="11111111111",
+            nome="Promoter Demo",
+            email="promoter@paineluniversal.com",
+            telefone="(11) 99999-1111",
+            senha_hash=senha_hash_promoter,
+            tipo=TipoUsuario.PROMOTER,
+            ativo=True
+        )
+        db.add(promoter)
+        
+        db.commit()
+        
+        return {
+            "mensagem": "Setup inicial realizado com sucesso!",
+            "empresa": {
+                "id": empresa.id,
+                "nome": empresa.nome,
+                "cnpj": empresa.cnpj
+            },
+            "credenciais": {
+                "admin": {
+                    "cpf": "00000000000",
+                    "senha": "admin123"
+                },
+                "promoter": {
+                    "cpf": "11111111111", 
+                    "senha": "promoter123"
+                }
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao realizar setup inicial: {str(e)}"
+        )

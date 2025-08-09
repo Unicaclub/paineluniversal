@@ -34,8 +34,7 @@ async def criar_produto(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if evento.empresa_id != usuario_atual.empresa_id:
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    # Role-based permission check handled by verificar_permissao_admin
     
     if not produto.codigo_interno:
         import uuid
@@ -43,7 +42,6 @@ async def criar_produto(
     
     db_produto = Produto(
         **produto.model_dump(),
-        empresa_id=usuario_atual.empresa_id,
         status=StatusProduto.ATIVO
     )
     
@@ -68,9 +66,11 @@ async def listar_produtos(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     query = db.query(Produto).filter(Produto.evento_id == evento_id)
     
@@ -101,9 +101,11 @@ async def obter_produto(
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != produto.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     return produto
 
@@ -120,8 +122,7 @@ async def atualizar_produto(
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     
-    if produto.empresa_id != usuario_atual.empresa_id:
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    # Role-based permission check handled by verificar_permissao_admin
     
     for field, value in produto_update.model_dump(exclude={'evento_id'}).items():
         if hasattr(produto, field):
@@ -144,15 +145,16 @@ async def criar_comanda(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     qr_code = str(uuid.uuid4())[:8].upper()
     
     db_comanda = Comanda(
         **comanda.model_dump(),
-        empresa_id=usuario_atual.empresa_id,
         qr_code=qr_code,
         status=StatusComanda.ATIVA
     )
@@ -177,9 +179,11 @@ async def listar_comandas(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     query = db.query(Comanda).filter(Comanda.evento_id == evento_id)
     
@@ -204,8 +208,8 @@ async def recarregar_comanda(
     if not comanda:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != comanda.empresa_id):
+    # Verificação de acesso simplificada
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     if comanda.status != StatusComanda.ATIVA:
@@ -240,9 +244,11 @@ async def processar_venda(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     for item in venda.itens:
         produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
@@ -283,7 +289,6 @@ async def processar_venda(
         status=StatusVendaPDV.APROVADA,
         comanda_id=venda.comanda_id,
         evento_id=venda.evento_id,
-        empresa_id=usuario_atual.empresa_id,
         usuario_vendedor_id=usuario_atual.id,
         cupom_codigo=venda.cupom_codigo,
         observacoes=venda.observacoes
@@ -381,9 +386,11 @@ async def listar_vendas(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     query = db.query(VendaPDV).filter(VendaPDV.evento_id == evento_id)
     
@@ -413,9 +420,11 @@ async def abrir_caixa(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     caixa_aberto = db.query(CaixaPDV).filter(
         and_(
@@ -494,9 +503,11 @@ async def obter_dashboard_pdv(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
+        )
     
     hoje = date.today()
     

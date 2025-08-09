@@ -32,11 +32,10 @@ async def criar_lista(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     db_lista = Lista(**lista.dict())
@@ -61,11 +60,10 @@ async def listar_listas_evento(
             detail="Evento não encontrado"
         )
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     listas = db.query(Lista).filter(Lista.evento_id == evento_id).all()
@@ -83,7 +81,7 @@ async def listar_listas_promoter(
         usuario_atual.id != promoter_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins ou o próprio promoter podem acessar suas listas"
         )
     
     listas = db.query(Lista).filter(Lista.promoter_id == promoter_id).all()
@@ -106,11 +104,10 @@ async def atualizar_lista(
         )
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     for field, value in lista_update.dict(exclude={'evento_id'}).items():
@@ -137,11 +134,10 @@ async def desativar_lista(
         )
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado"
+            detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
     lista.ativa = False
@@ -162,8 +158,8 @@ async def obter_lista_detalhada(
         raise HTTPException(status_code=404, detail="Lista não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    # Admins têm acesso total, outros usuários têm acesso limitado
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     total_convidados = db.query(Transacao).filter(
@@ -213,8 +209,7 @@ async def importar_convidados(
         raise HTTPException(status_code=404, detail="Lista não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     try:
@@ -306,8 +301,7 @@ async def exportar_convidados(
         raise HTTPException(status_code=404, detail="Lista não encontrada")
     
     evento = db.query(Evento).filter(Evento.id == lista.evento_id).first()
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     convidados = db.query(Transacao).outerjoin(Checkin).filter(
@@ -385,8 +379,7 @@ async def obter_dashboard_listas(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
-    if (usuario_atual.tipo.value != "admin" and 
-        usuario_atual.empresa_id != evento.empresa_id):
+    if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
     listas = db.query(Lista).filter(Lista.evento_id == evento_id).all()

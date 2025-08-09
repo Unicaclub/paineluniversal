@@ -1,6 +1,9 @@
-import React from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { ThemeToggle } from '../theme/ThemeToggle';
+import { useToast } from '../../hooks/use-toast';
 import { 
   Calendar, 
   Users, 
@@ -15,9 +18,22 @@ import {
   UserCheck,
   Smartphone,
   DollarSign,
-  Trophy
+  Trophy,
+  ChevronDown,
+  Bell,
+  Search
 } from 'lucide-react';
-import { useState } from 'react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '../ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -26,123 +42,398 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleNotifications = () => {
+    toast({
+      title: "Notificações",
+      description: "Você tem 3 notificações não lidas",
+      duration: 3000,
+    });
+    // TODO: Implementar painel de notificações
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
+    toast({
+      title: "Busca",
+      description: `Buscando por: ${searchTerm}`,
+      duration: 2000,
+    });
+    // TODO: Implementar funcionalidade de busca global
+  };
+
   const menuItems = [
-    { icon: BarChart3, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'promoter', 'operador'] },
-    { icon: Calendar, label: 'Eventos', path: '/eventos', roles: ['admin', 'promoter'] },
-    { icon: ShoppingCart, label: 'Vendas', path: '/vendas', roles: ['admin', 'promoter', 'operador'] },
-    { icon: UserCheck, label: 'Check-in Inteligente', path: '/checkin', roles: ['admin', 'promoter', 'operador'] },
-    { icon: Smartphone, label: 'Check-in Mobile', path: '/mobile-checkin', roles: ['admin', 'promoter', 'operador'] },
-    { icon: ShoppingCart, label: 'PDV', path: '/pdv', roles: ['admin', 'promoter'] },
-    { icon: BarChart3, label: 'Dashboard PDV', path: '/pdv/dashboard', roles: ['admin', 'promoter'] },
-    { icon: Users, label: 'Listas & Convidados', path: '/listas', roles: ['admin', 'promoter'] },
-    { icon: DollarSign, label: 'Caixa & Financeiro', path: '/financeiro', roles: ['admin', 'promoter'] },
-    { icon: Trophy, label: 'Ranking & Gamificação', path: '/ranking', roles: ['admin', 'promoter'] },
-    { icon: Users, label: 'Usuários', path: '/usuarios', roles: ['admin'] },
-    { icon: Building2, label: 'Empresas', path: '/empresas', roles: ['admin'] },
-    { icon: FileText, label: 'Relatórios', path: '/relatorios', roles: ['admin', 'promoter'] },
-    { icon: Settings, label: 'Configurações', path: '/configuracoes', roles: ['admin'] },
+    { 
+      icon: BarChart3, 
+      label: 'Dashboard', 
+      path: '/app/dashboard', 
+      roles: ['admin', 'promoter', 'operador'],
+      description: 'Visão geral do sistema'
+    },
+    { 
+      icon: Calendar, 
+      label: 'Eventos', 
+      path: '/app/eventos', 
+      roles: ['admin', 'promoter'],
+      description: 'Gerenciar eventos'
+    },
+    { 
+      icon: ShoppingCart, 
+      label: 'Vendas', 
+      path: '/app/vendas', 
+      roles: ['admin', 'promoter', 'operador'],
+      description: 'Sistema de vendas'
+    },
+    { 
+      icon: UserCheck, 
+      label: 'Check-in Inteligente', 
+      path: '/app/checkin', 
+      roles: ['admin', 'promoter', 'operador'],
+      description: 'Check-in de participantes'
+    },
+    { 
+      icon: Smartphone, 
+      label: 'Check-in Mobile', 
+      path: '/app/mobile-checkin', 
+      roles: ['admin', 'promoter', 'operador'],
+      description: 'Check-in via dispositivos móveis'
+    },
+    { 
+      icon: ShoppingCart, 
+      label: 'PDV', 
+      path: '/app/pdv', 
+      roles: ['admin', 'promoter'],
+      description: 'Ponto de venda'
+    },
+    { 
+      icon: Users, 
+      label: 'Listas & Convidados', 
+      path: '/app/listas', 
+      roles: ['admin', 'promoter'],
+      description: 'Gerenciar listas de convidados'
+    },
+    { 
+      icon: DollarSign, 
+      label: 'Caixa & Financeiro', 
+      path: '/app/financeiro', 
+      roles: ['admin', 'promoter'],
+      description: 'Controle financeiro'
+    },
+    { 
+      icon: Trophy, 
+      label: 'Ranking & Gamificação', 
+      path: '/app/ranking', 
+      roles: ['admin', 'promoter'],
+      description: 'Sistema de pontuação'
+    },
+    { 
+      icon: Users, 
+      label: 'Usuários', 
+      path: '/app/usuarios', 
+      roles: ['admin'],
+      description: 'Gerenciar usuários do sistema'
+    },
+    { 
+      icon: Building2, 
+      label: 'Empresas', 
+      path: '/app/empresas', 
+      roles: ['admin'],
+      description: 'Gerenciar empresas'
+    },
+    { 
+      icon: FileText, 
+      label: 'Relatórios', 
+      path: '/app/relatorios', 
+      roles: ['admin', 'promoter'],
+      description: 'Relatórios e análises'
+    },
+    { 
+      icon: Settings, 
+      label: 'Configurações', 
+      path: '/app/configuracoes', 
+      roles: ['admin'],
+      description: 'Configurações do sistema'
+    },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(usuario?.tipo || '')
   );
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const sidebarVariants = {
+    open: { width: sidebarCollapsed ? 80 : 280 },
+    closed: { width: 280 }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:inset-0
-      `}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Sistema de Eventos</h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-5 w-5" />
-          </button>
+      <motion.div 
+        variants={sidebarVariants}
+        animate={sidebarCollapsed ? 'open' : 'closed'}
+        className={`
+          fixed inset-y-0 left-0 z-50 bg-sidebar border-r border-sidebar-border shadow-premium-lg transform transition-transform duration-300 ease-in-out flex flex-col
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:static lg:inset-0
+        `}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between h-16 px-6 border-b border-sidebar-border">
+          {!sidebarCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center space-x-2"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
+                <Calendar className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-lg font-heading font-bold text-sidebar-foreground">
+                  Sistema Universal
+                </h1>
+                <p className="text-xs text-sidebar-foreground/60">
+                  de Eventos
+                </p>
+              </div>
+            </motion.div>
+          )}
+          
+          <div className="flex items-center space-x-2">
+            {!sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+            
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex p-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <nav className="mt-6 px-3">
-          <div className="space-y-1">
-            {filteredMenuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 overflow-y-auto">
+          <div className="space-y-2">
+            {filteredMenuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <motion.div
+                  key={item.path}
+                  whileHover={{ x: 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Link
+                    to={item.path}
+                    className={`
+                      group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
+                      ${isActive 
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      }
+                    `}
+                    onClick={() => setSidebarOpen(false)}
+                    title={sidebarCollapsed ? item.label : undefined}
+                  >
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
+                        layoutId="activeTab"
+                        initial={false}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30
+                        }}
+                      />
+                    )}
+                    
+                    <div className="relative z-10 flex items-center w-full">
+                      <item.icon className={`
+                        ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
+                        ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
+                      `} />
+                      
+                      {!sidebarCollapsed && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="flex-1 min-w-0"
+                        >
+                          <div className="truncate">{item.label}</div>
+                          {!isActive && (
+                            <div className="text-xs opacity-60 truncate mt-0.5">
+                              {item.description}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center mb-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {usuario?.nome}
-              </p>
-              <p className="text-xs text-gray-500 truncate">
-                {usuario?.email}
-              </p>
-              <p className="text-xs text-gray-400 capitalize">
-                {usuario?.tipo}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-700 rounded-md hover:bg-red-50 transition-colors"
+        {/* User Profile */}
+        {!sidebarCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 border-t border-sidebar-border"
           >
-            <LogOut className="mr-3 h-4 w-4" />
-            Sair
-          </button>
-        </div>
-      </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center w-full p-3 text-sm bg-sidebar-accent rounded-lg hover:bg-sidebar-accent/80 transition-colors group">
+                  <Avatar className="h-8 w-8 mr-3">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {getInitials(usuario?.nome || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {usuario?.nome}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                        {usuario?.tipo}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <ChevronDown className="h-4 w-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground transition-colors" />
+                </button>
+              </DropdownMenuTrigger>
+              
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm text-muted-foreground">
+                    {usuario?.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+                  </p>
+                </div>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-80'}`}>
         {/* Top bar */}
-        <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                Empresa: {usuario?.empresa_id}
-              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              
+              <form onSubmit={handleSearch} className="hidden sm:flex items-center space-x-2 max-w-sm">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-9 bg-muted/50 border-0 focus:bg-background"
+                  />
+                </div>
+              </form>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative" 
+                onClick={handleNotifications}
+                title="Ver notificações"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center">
+                  3
+                </span>
+              </Button>
+              
+              <ThemeToggle />
+              
+              <div className="hidden sm:block text-sm text-muted-foreground">
+                {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children || <Outlet />}
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-900">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            {children || <Outlet />}
+          </motion.div>
         </main>
       </div>
     </div>

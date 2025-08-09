@@ -92,8 +92,7 @@ async def enviar_convite(
     """
     try:
         evento = db.query(Evento).filter(
-            Evento.id == request.evento_id,
-            Evento.empresa_id == usuario_atual.empresa_id
+            Evento.id == request.evento_id
         ).first()
         
         if not evento:
@@ -147,8 +146,7 @@ async def enviar_convites_massa(
     """
     try:
         evento = db.query(Evento).filter(
-            Evento.id == request.evento_id,
-            Evento.empresa_id == usuario_atual.empresa_id
+            Evento.id == request.evento_id
         ).first()
         
         if not evento:
@@ -226,8 +224,7 @@ async def listar_convites_evento(
     """
     try:
         evento = db.query(Evento).filter(
-            Evento.id == evento_id,
-            Evento.empresa_id == usuario_atual.empresa_id
+            Evento.id == evento_id
         ).first()
         
         if not evento:

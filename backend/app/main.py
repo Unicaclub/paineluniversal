@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -175,3 +176,4 @@ async def root():
         "documentacao": "/docs",
         "timestamp": datetime.now().isoformat()
     }
+
