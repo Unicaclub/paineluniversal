@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -22,7 +22,31 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Disable CORS. Do not remove this for full-stack development.
+# Middleware personalizado para CORS adicional
+@app.middleware("http")
+async def cors_handler(request: Request, call_next):
+    # Se é um request OPTIONS (preflight), responder diretamente
+    if request.method == "OPTIONS":
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        return response
+    
+    # Para outros requests, processar normalmente
+    response = await call_next(request)
+    
+    # Adicionar headers CORS à resposta
+    origin = request.headers.get("Origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
+# Configuração CORS para desenvolvimento e produção
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -30,12 +54,27 @@ app.add_middleware(
         "http://localhost:5173", 
         "http://127.0.0.1:5173",
         "https://frontend-painel-universal-production.up.railway.app",
+        "https://backend-painel-universal-production.up.railway.app",
+        # Wildcards para Railway
         "https://*.railway.app",
-        "*"  # Permissivo para desenvolvimento
+        "https://*.up.railway.app", 
+        # Permissivo para desenvolvimento
+        "*"
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
+    expose_headers=["*"],
 )
 
 app.add_middleware(LoggingMiddleware)
@@ -85,6 +124,22 @@ async def healthz():
         "mensagem": "Sistema de Gestão de Eventos funcionando",
         "timestamp": datetime.now().isoformat(),
         "environment": "production" if os.getenv("RAILWAY_ENVIRONMENT") else "development"
+    }
+
+@app.options("/api/{path:path}")
+async def handle_cors_preflight(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "CORS preflight OK"}
+
+@app.get("/api/health")
+async def api_health():
+    """Health check específico para API"""
+    return {
+        "status": "ok",
+        "api": "Sistema Universal",
+        "version": "1.0.0",
+        "cors": "enabled",
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/setup-inicial")
