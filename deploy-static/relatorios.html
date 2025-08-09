@@ -3,132 +3,927 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatórios - Sistema Supremo</title>
+    <title>Sistema Supremo - Financeiro</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6B46C1">
-    <link rel="stylesheet" href="/assets/css/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6B46C1;
+            --primary-dark: #553C9A;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --dark: #1F2937;
+            --dark-light: #374151;
+            --gray: #6B7280;
+            --gray-light: #D1D5DB;
+            --white: #FFFFFF;
+            --bg-dark: #111827;
+            --bg-card: #1F2937;
+            --border: #374151;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            color: var(--primary);
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-right: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--dark);
+            color: var(--text-primary);
+            border-right-color: var(--primary);
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 1.1em;
+        }
+
+        .nav-submenu {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        .nav-submenu .nav-link {
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--bg-card);
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breadcrumb {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .page-title {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .relatorio-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            padding: 0 30px;
+        }
+
+        .relatorio-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .relatorio-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .relatorio-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .filtros-relatorio {
+            display: grid;
+            grid-template-columns: 200px 200px 1fr auto;
+            gap: 15px;
+            align-items: end;
+            padding: 20px 30px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--dark-light);
+            color: var(--text-primary);
+        }
+
+        .estado-vazio {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            min-height: 400px;
+            text-align: center;
+        }
+
+        .estado-vazio-icon {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+            background: var(--gray);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: var(--text-primary);
+        }
+
+        .estado-vazio-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .obs-text {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 15px 30px;
+            margin: 20px 30px;
+            color: var(--warning);
+            font-size: 14px;
+        }
+
+        .relatorios-gerenciais {
+            padding: 30px;
+        }
+
+        .gerencial-header {
+            margin-bottom: 30px;
+        }
+
+        .gerencial-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .gerencial-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .relatorios-table {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .table-header {
+            background: var(--dark);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 100px 200px 120px;
+            gap: 20px;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .relatorio-row {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 100px 200px 120px;
+            gap: 20px;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.3s ease;
+        }
+
+        .relatorio-row:hover {
+            background: var(--dark);
+        }
+
+        .relatorio-row:last-child {
+            border-bottom: none;
+        }
+
+        .relatorio-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .relatorio-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .hora-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .email-cell {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .toggle-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: var(--border);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 19px;
+            height: 19px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(25px);
+        }
+
+        .edit-icon {
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-icon:hover {
+            background: var(--dark-light);
+            color: var(--primary);
+        }
+
+        .salvar-section {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .btn-salvar {
+            background: var(--success);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-salvar:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .filtros-recebiveis {
+            display: grid;
+            grid-template-columns: 150px 150px 200px auto auto;
+            gap: 15px;
+            align-items: end;
+            padding: 20px 30px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .toggle-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .exportar-dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--dark-light);
+        }
+
+        .filtros-avancados {
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filtros-avancados:hover {
+            background: var(--dark-light);
+            color: var(--primary);
+        }
+
+        @media (max-width: 1200px) {
+            .filtros-relatorio {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .filtros-recebiveis {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: 1;
+            }
+            
+            .filtros-relatorio,
+            .filtros-recebiveis {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .table-header,
+            .relatorio-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .relatorio-tabs {
+                padding: 0 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <aside class="sidebar">
+        <!-- Sidebar -->
+        <nav class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <span>🚀</span>
-                    Sistema Supremo
-                </div>
+                <div class="logo">🚀 Sistema Supremo</div>
             </div>
-            
-            <nav class="nav-menu">
-                <div class="nav-item">
+            <ul class="nav-menu">
+                <li class="nav-item">
                     <a href="/dashboard" class="nav-link">
                         <span class="nav-icon">📊</span>
                         Dashboard
                     </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/cardapio" class="nav-link">
-                        <span class="nav-icon">🍽️</span>
-                        Cardápio
-                    </a>
-                </div>
-                <div class="nav-item">
+                </li>
+                <li class="nav-item">
                     <a href="/equipe" class="nav-link">
                         <span class="nav-icon">👥</span>
                         Equipe
                     </a>
-                </div>
-                <div class="nav-item">
-                    <a href="/cashless" class="nav-link">
-                        <span class="nav-icon">💳</span>
-                        Cashless
+                    <ul class="nav-submenu">
+                        <li><a href="/equipe" class="nav-link">Colaboradores</a></li>
+                        <li><a href="/equipe" class="nav-link">Cargos</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="/cardapio" class="nav-link">
+                        <span class="nav-icon">🍽️</span>
+                        Cardápio
                     </a>
-                </div>
-                <div class="nav-item">
+                    <ul class="nav-submenu">
+                        <li><a href="/cardapio" class="nav-link">Cardápios</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="/cashless" class="nav-link">
+                        <span class="nav-icon">🛒</span>
+                        Gestão de venda
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="/relatorios" class="nav-link active">
-                        <span class="nav-icon">📈</span>
+                        <span class="nav-icon">📊</span>
                         Relatórios
                     </a>
-                </div>
-            </nav>
-        </aside>
-        
+                    <ul class="nav-submenu">
+                        <li><a href="#" class="nav-link active">Venda</a></li>
+                        <li><a href="#" class="nav-link">Cartões</a></li>
+                        <li><a href="#" class="nav-link">Caixa</a></li>
+                        <li><a href="#" class="nav-link">Ficha</a></li>
+                        <li><a href="#" class="nav-link">Gerencial</a></li>
+                        <li><a href="#" class="nav-link">Financeiro</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Conteúdo Principal -->
         <main class="main-content">
-            <header class="header">
-                <h1 class="page-title">Relatórios e Analytics</h1>
-                <div class="user-info">
-                    <span id="userName">Administrador Demo</span>
-                    <button class="logout-btn" onclick="logout()">Sair</button>
+            <!-- Header -->
+            <div class="header">
+                <div class="breadcrumb">
+                    <a href="#">Home</a> > <a href="#">Relatórios</a> > <a href="#">Venda</a> > <span>Por bandeira</span>
                 </div>
-            </header>
-            
-            <div class="content-area">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Relatórios Gerados</span>
-                            <span class="stat-icon">📄</span>
-                        </div>
-                        <div class="stat-value">156</div>
-                        <div class="stat-change positive">
-                            <span>↗</span>
-                            +23% este mês
-                        </div>
+                <h1 class="page-title">Relatórios</h1>
+            </div>
+
+            <!-- Seção de Vendas -->
+            <div id="vendas-section" class="tab-section">
+                <!-- Tabs de Relatórios de Venda -->
+                <div class="relatorio-tabs">
+                    <div class="relatorio-tab active" onclick="selecionarTab('por-bandeira')">Por bandeira</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-produto-tipo')">Por produto e tipo pagamento</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-operador')">Por operador</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-tipo-venda')">Por tipo de venda</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-produto')">Por produto</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-dia')">Por dia</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('detalhada')">Detalhada</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-producao')">Por produção</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('saida')">Saída</div>
+                    <div class="relatorio-tab" onclick="selecionarTab('por-tipo-pagamento')">Por tipo de pagamento</div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filtros-relatorio">
+                    <div class="form-group">
+                        <select class="form-control" id="periodoSelect">
+                            <option value="">Selecione período</option>
+                            <option value="03/08/2025 22:46:22">03/08/2025 22:46:22</option>
+                            <option value="02/08/2025 23:10:54">02/08/2025 23:10:54</option>
+                            <option value="01/08/2025 23:08:38">01/08/2025 23:08:38</option>
+                            <option value="27/07/2025 22:34:41">27/07/2025 22:34:41</option>
+                            <option value="26/07/2025 22:29:53">26/07/2025 22:29:53</option>
+                        </select>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Dados Processados</span>
-                            <span class="stat-icon">💾</span>
-                        </div>
-                        <div class="stat-value">2.4GB</div>
-                        <div class="stat-change positive">
-                            <span>↗</span>
-                            +18% vs mês anterior
-                        </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="09/08/2025 - 09/08/2025" id="dataCustomizada">
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Exportações</span>
-                            <span class="stat-icon">📤</span>
-                        </div>
-                        <div class="stat-value">89</div>
-                        <div class="stat-change positive">
-                            <span>↗</span>
-                            +12% esta semana
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Tempo Médio</span>
-                            <span class="stat-icon">⏱️</span>
-                        </div>
-                        <div class="stat-value">2.3s</div>
-                        <div class="stat-change negative">
-                            <span>↘</span>
-                            -15% vs média
-                        </div>
+                    <div></div>
+                    <div>
+                        <button class="btn btn-primary">BUSCAR</button>
                     </div>
                 </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">📊 Central de Relatórios</h3>
+
+                <!-- Área de Conteúdo -->
+                <div class="content-area">
+                    <div class="obs-text">
+                        <strong>Obs:</strong> Esse relatório apresenta apenas o que foi transacionado com a Meep.
                     </div>
-                    <div style="text-align: center; padding: 40px;">
-                        <div style="font-size: 4em; margin-bottom: 20px;">📈</div>
-                        <h3 style="margin-bottom: 15px;">Analytics Avançado</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 30px;">
-                            Sistema completo de relatórios e analytics em desenvolvimento.
+
+                    <div class="estado-vazio">
+                        <div class="estado-vazio-icon">📋</div>
+                        <div class="estado-vazio-text">Não há dados para exibição</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Cartões -->
+            <div id="cartoes-section" class="tab-section" style="display: none;">
+                <div class="relatorio-tabs">
+                    <div class="relatorio-tab active">Saldo Cartões</div>
+                    <div class="relatorio-tab">Saldo Negativo</div>
+                    <div class="relatorio-tab">Recarga Detalhada</div>
+                    <div class="relatorio-tab">Solicitações de reembolso</div>
+                </div>
+
+                <div class="content-area">
+                    <div style="padding: 30px;">
+                        <h2 style="color: var(--text-primary); margin-bottom: 20px;">RELATÓRIO SALDO CARTÕES</h2>
+                        
+                        <div class="filtros-relatorio" style="margin-bottom: 30px;">
+                            <div class="form-group">
+                                <select class="form-control">
+                                    <option>Filtrar por caixa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select class="form-control">
+                                    <option>Filtrar por grupos de cartão</option>
+                                </select>
+                            </div>
+                            <div></div>
+                            <div>
+                                <button class="btn btn-primary">BUSCAR</button>
+                            </div>
+                        </div>
+
+                        <div class="estado-vazio">
+                            <div class="estado-vazio-icon">💳</div>
+                            <div class="estado-vazio-text">Não há dados para exibição</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Caixa -->
+            <div id="caixa-section" class="tab-section" style="display: none;">
+                <div class="relatorio-tabs">
+                    <div class="relatorio-tab active">Cancelamento</div>
+                    <div class="relatorio-tab">Comissão</div>
+                    <div class="relatorio-tab">Fechamento</div>
+                    <div class="relatorio-tab">Sangria e suprimento</div>
+                </div>
+
+                <div class="filtros-relatorio">
+                    <div class="form-group">
+                        <label class="form-label">Filtrar por *</label>
+                        <select class="form-control">
+                            <option>Selecione filtro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Buscar">
+                    </div>
+                    <div class="filtros-avancados">
+                        <span>🔽</span>
+                        <span>Filtros avançados</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary">BUSCAR</button>
+                    </div>
+                </div>
+
+                <div class="content-area">
+                    <div class="estado-vazio">
+                        <div class="estado-vazio-icon">🗃️</div>
+                        <div class="estado-vazio-text">Não há dados para exibição</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Ticket -->
+            <div id="ticket-section" class="tab-section" style="display: none;">
+                <div class="relatorio-tabs">
+                    <div class="relatorio-tab active">Reimpressão</div>
+                    <div class="relatorio-tab">Produção</div>
+                    <div class="relatorio-tab">Validados</div>
+                </div>
+
+                <div class="content-area">
+                    <div class="estado-vazio">
+                        <div class="estado-vazio-icon">🎫</div>
+                        <div class="estado-vazio-text">Não há dados para exibição</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção Gerencial -->
+            <div id="gerencial-section" class="tab-section" style="display: none;">
+                <div class="relatorios-gerenciais">
+                    <div class="gerencial-header">
+                        <h2 class="gerencial-title">RELATÓRIOS GERENCIAIS</h2>
+                        <p class="gerencial-description">
+                            Você receberá um e-mail para cada relatório configurado na hora definida com um anexo em PDF. Se preferir receber no e-mail todos os relatórios em um único anexo habilite o botão ao lado. 
+                            Limite de horário de agendamento: 06:00-18:00, de segunda à sexta-feira.
                         </p>
-                        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                            <span class="badge badge-primary">Vendas</span>
-                            <span class="badge badge-primary">Financeiro</span>
-                            <span class="badge badge-primary">Clientes</span>
-                            <span class="badge badge-primary">Estoque</span>
-                            <span class="badge badge-primary">Performance</span>
+                    </div>
+
+                    <div class="relatorios-table">
+                        <div class="table-header">
+                            <div>Relatório</div>
+                            <div>Hora</div>
+                            <div>E-mails</div>
+                            <div>Habilitado</div>
                         </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Crescimento de vendas</h4>
+                                <p>Relatório com informações das vendas do mês, com comparativo com os meses anteriores.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Análise de produtos</h4>
+                                <p>Relatório com informações dos top 10 produtos mais vendidos e dos 10 produtos menos vendidos.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Validação de fichas</h4>
+                                <p>Relatório com informações de fichas geradas / fichas utilizadas.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Posição de estoque</h4>
+                                <p>Relatório com informações sobre a posição do seu estoque de produtos.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Crescimento da base de clientes</h4>
+                                <p>Relatório com informações sobre o crescimento da base de clientes.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relatorio-row">
+                            <div class="relatorio-info">
+                                <h4>Comparativo de vendas entre unidades</h4>
+                                <p>Relatório com o comparativo de vendas entre unidades e total de vendas global.</p>
+                            </div>
+                            <div class="hora-cell">
+                                <span>✏️</span>
+                                <span>6</span>
+                            </div>
+                            <div class="email-cell">toretomal@icloud.com</div>
+                            <div class="toggle-cell">
+                                <div class="toggle-switch active" onclick="toggleRelatorio(this)">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="salvar-section">
+                        <button class="btn-salvar">💾 Salvar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção Financeiro -->
+            <div id="financeiro-section" class="tab-section" style="display: none;">
+                <div class="relatorio-tabs">
+                    <div class="relatorio-tab active">Recebíveis</div>
+                    <div class="relatorio-tab">Split</div>
+                    <div class="relatorio-tab">Split agrupado</div>
+                    <div class="relatorio-tab">Transações</div>
+                    <div class="relatorio-tab">Saque</div>
+                </div>
+
+                <div class="filtros-recebiveis">
+                    <div class="form-group">
+                        <label class="form-label">Início *</label>
+                        <input type="text" class="form-control" placeholder="dd/mm/aaaa --:--" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fim *</label>
+                        <input type="text" class="form-control" placeholder="dd/mm/aaaa --:--" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Conta bancária *</label>
+                        <select class="form-control" required>
+                            <option>Selecione conta bancária</option>
+                        </select>
+                    </div>
+                    <div class="toggle-group">
+                        <input type="checkbox" class="toggle-checkbox" id="localCorrente">
+                        <label for="localCorrente">Considerar apenas local corrente?</label>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="content-area">
+                    <div class="estado-vazio">
+                        <div class="estado-vazio-icon">💰</div>
+                        <div class="estado-vazio-text">Não há dados para exibição</div>
                     </div>
                 </div>
             </div>
@@ -136,24 +931,147 @@
     </div>
 
     <script>
+        // Dados de exemplo
+        let relatoriosAtivos = {
+            vendas: true,
+            cartoes: false,
+            caixa: false,
+            ticket: false,
+            gerencial: false,
+            financeiro: false
+        };
+
+        // Função para alternar entre seções principais
+        function mostrarSecao(secao) {
+            // Ocultar todas as seções
+            document.querySelectorAll('.tab-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Mostrar seção selecionada
+            document.getElementById(secao + '-section').style.display = 'block';
+            
+            // Atualizar estado ativo
+            relatoriosAtivos = Object.keys(relatoriosAtivos).reduce((acc, key) => {
+                acc[key] = key === secao;
+                return acc;
+            }, {});
+        }
+
+        // Função para alternar tabs de relatórios
+        function selecionarTab(tab) {
+            // Remover active de todas as tabs
+            document.querySelectorAll('.relatorio-tab').forEach(tabEl => {
+                tabEl.classList.remove('active');
+            });
+            
+            // Ativar tab selecionada
+            event.target.classList.add('active');
+            
+            console.log('Tab selecionada:', tab);
+        }
+
+        // Função para toggle de relatórios gerenciais
+        function toggleRelatorio(toggleEl) {
+            toggleEl.classList.toggle('active');
+            
+            const isActive = toggleEl.classList.contains('active');
+            console.log('Relatório', isActive ? 'ativado' : 'desativado');
+        }
+
         // Verificar autenticação
         function checkAuth() {
             const auth = localStorage.getItem('sistema_supremo_auth');
             if (!auth) {
-                window.location.href = '/login';
+                // Para demonstração, criar dados de usuário fictício
+                const demoAuth = {
+                    user: {
+                        nome: 'Usuário Demo',
+                        email: 'demo@sistema.com'
+                    }
+                };
+                localStorage.setItem('sistema_supremo_auth', JSON.stringify(demoAuth));
+                console.log('Usuário demo criado para demonstração');
                 return;
             }
             
             const authData = JSON.parse(auth);
-            document.getElementById('userName').textContent = authData.user.nome;
+            if (authData && authData.user && authData.user.nome) {
+                // Atualizar nome do usuário se disponível
+                console.log('Usuário logado:', authData.user.nome);
+            }
         }
-        
-        // Logout
-        function logout() {
-            localStorage.removeItem('sistema_supremo_auth');
-            window.location.href = '/login';
-        }
-        
+
+        // Adicionar listeners para navegação na sidebar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listener para links da sidebar
+            document.querySelectorAll('.nav-submenu .nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const texto = this.textContent.toLowerCase();
+                    
+                    // Mapear texto para seção
+                    const mapeamento = {
+                        'venda': 'vendas',
+                        'cartões': 'cartoes', 
+                        'caixa': 'caixa',
+                        'ficha': 'ticket',
+                        'gerencial': 'gerencial',
+                        'financeiro': 'financeiro'
+                    };
+                    
+                    const secao = mapeamento[texto];
+                    if (secao) {
+                        mostrarSecao(secao);
+                        
+                        // Atualizar breadcrumb
+                        const breadcrumb = document.querySelector('.breadcrumb');
+                        breadcrumb.innerHTML = `<a href="#">Home</a> > <a href="#">Relatórios</a> > <span>${texto.charAt(0).toUpperCase() + texto.slice(1)}</span>`;
+                    }
+                    
+                    // Atualizar active na sidebar
+                    document.querySelectorAll('.nav-submenu .nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Filtros com período personalizado
+            document.getElementById('periodoSelect').addEventListener('change', function() {
+                if (this.value) {
+                    document.getElementById('dataCustomizada').value = this.value;
+                }
+            });
+
+            // Simular busca
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                if (btn.textContent.includes('BUSCAR') || btn.textContent.includes('Buscar')) {
+                    btn.addEventListener('click', function() {
+                        console.log('Executando busca...');
+                        // Aqui seria implementada a lógica real de busca
+                    });
+                }
+            });
+
+            // Simular exportação
+            document.querySelectorAll('.dropdown-toggle').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const menu = this.nextElementSibling;
+                    menu.classList.toggle('show');
+                });
+            });
+
+            // Fechar dropdown ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.exportar-dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
+
+            console.log('Sistema Financeiro carregado!');
+        });
+
         // Inicializar
         checkAuth();
     </script>
