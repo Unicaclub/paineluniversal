@@ -39,10 +39,28 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
     };
   }, [eventoSelecionado]);
 
+  const getWebSocketUrl = () => {
+    // Detectar se está em produção pela URL ou variável de ambiente
+    const hostname = window.location.hostname;
+    const isProd = import.meta.env.PROD || 
+                  hostname.includes('railway.app') || 
+                  hostname.includes('netlify.app') ||
+                  hostname.includes('vercel.app');
+    
+    if (isProd) {
+      // Produção: URL do Railway com wss:// para conexão segura
+      return 'wss://backend-painel-universal-production.up.railway.app';
+    } else {
+      // Desenvolvimento: localhost
+      return 'ws://localhost:8000';
+    }
+  };
+
   const conectarWebSocket = () => {
     if (!eventoSelecionado) return;
     
-    const wsUrl = `ws://localhost:8000/api/checkin/ws/${eventoSelecionado}`;
+    const baseWsUrl = getWebSocketUrl();
+    const wsUrl = `${baseWsUrl}/api/checkin/ws/${eventoSelecionado}`;
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {

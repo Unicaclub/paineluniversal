@@ -6,6 +6,23 @@ class WebSocketService {
   private reconnectInterval = 3000;
   private listeners: { [key: string]: ((data: any) => void)[] } = {};
 
+  private getWebSocketUrl() {
+    // Detectar se está em produção pela URL ou variável de ambiente
+    const hostname = window.location.hostname;
+    const isProd = import.meta.env.PROD || 
+                  hostname.includes('railway.app') || 
+                  hostname.includes('netlify.app') ||
+                  hostname.includes('vercel.app');
+    
+    if (isProd) {
+      // Produção: URL do Railway com wss:// para conexão segura
+      return 'wss://backend-painel-universal-production.up.railway.app';
+    } else {
+      // Desenvolvimento: localhost
+      return 'ws://localhost:8000';
+    }
+  }
+
   connect(eventoId: number) {
     this.eventoId = eventoId;
     this.connectWebSocket();
@@ -14,7 +31,8 @@ class WebSocketService {
   private connectWebSocket() {
     if (!this.eventoId) return;
 
-    const wsUrl = `ws://localhost:8000/api/ws/${this.eventoId}`;
+    const baseWsUrl = this.getWebSocketUrl();
+    const wsUrl = `${baseWsUrl}/api/ws/${this.eventoId}`;
     
     try {
       this.ws = new WebSocket(wsUrl);
