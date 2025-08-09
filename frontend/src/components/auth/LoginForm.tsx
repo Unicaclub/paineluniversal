@@ -74,7 +74,7 @@ const LoginForm: React.FC = () => {
           description: "Redirecionando para o dashboard...",
           duration: 2000,
         });
-        setTimeout(() => navigate('/dashboard'), 1000);
+        setTimeout(() => navigate('/app/dashboard'), 1000);
       } else if (result.needsVerification) {
         setNeedsVerification(true);
         setVerificationMessage(result.message);

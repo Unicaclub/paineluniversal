@@ -51,7 +51,7 @@ const LoginForm: React.FC = () => {
       const result = await login(cpfNumbers, senha, codigoVerificacao);
 
       if (result.success) {
-        navigate('/dashboard');
+        navigate('/app/dashboard');
       } else if (result.needsVerification) {
         setNeedsVerification(true);
         setVerificationMessage(result.message);

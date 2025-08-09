@@ -78,91 +78,91 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { 
       icon: BarChart3, 
       label: 'Dashboard', 
-      path: '/dashboard', 
+      path: '/app/dashboard', 
       roles: ['admin', 'promoter', 'operador'],
       description: 'Visão geral do sistema'
     },
     { 
       icon: Calendar, 
       label: 'Eventos', 
-      path: '/eventos', 
+      path: '/app/eventos', 
       roles: ['admin', 'promoter'],
       description: 'Gerenciar eventos'
     },
     { 
       icon: ShoppingCart, 
       label: 'Vendas', 
-      path: '/vendas', 
+      path: '/app/vendas', 
       roles: ['admin', 'promoter', 'operador'],
       description: 'Sistema de vendas'
     },
     { 
       icon: UserCheck, 
       label: 'Check-in Inteligente', 
-      path: '/checkin', 
+      path: '/app/checkin', 
       roles: ['admin', 'promoter', 'operador'],
       description: 'Check-in de participantes'
     },
     { 
       icon: Smartphone, 
       label: 'Check-in Mobile', 
-      path: '/mobile-checkin', 
+      path: '/app/mobile-checkin', 
       roles: ['admin', 'promoter', 'operador'],
       description: 'Check-in via dispositivos móveis'
     },
     { 
       icon: ShoppingCart, 
       label: 'PDV', 
-      path: '/pdv', 
+      path: '/app/pdv', 
       roles: ['admin', 'promoter'],
       description: 'Ponto de venda'
     },
     { 
       icon: Users, 
       label: 'Listas & Convidados', 
-      path: '/listas', 
+      path: '/app/listas', 
       roles: ['admin', 'promoter'],
       description: 'Gerenciar listas de convidados'
     },
     { 
       icon: DollarSign, 
       label: 'Caixa & Financeiro', 
-      path: '/financeiro', 
+      path: '/app/financeiro', 
       roles: ['admin', 'promoter'],
       description: 'Controle financeiro'
     },
     { 
       icon: Trophy, 
       label: 'Ranking & Gamificação', 
-      path: '/ranking', 
+      path: '/app/ranking', 
       roles: ['admin', 'promoter'],
       description: 'Sistema de pontuação'
     },
     { 
       icon: Users, 
       label: 'Usuários', 
-      path: '/usuarios', 
+      path: '/app/usuarios', 
       roles: ['admin'],
       description: 'Gerenciar usuários do sistema'
     },
     { 
       icon: Building2, 
       label: 'Empresas', 
-      path: '/empresas', 
+      path: '/app/empresas', 
       roles: ['admin'],
       description: 'Gerenciar empresas'
     },
     { 
       icon: FileText, 
       label: 'Relatórios', 
-      path: '/relatorios', 
+      path: '/app/relatorios', 
       roles: ['admin', 'promoter'],
       description: 'Relatórios e análises'
     },
     { 
       icon: Settings, 
       label: 'Configurações', 
-      path: '/configuracoes', 
+      path: '/app/configuracoes', 
       roles: ['admin'],
       description: 'Configurações do sistema'
     },

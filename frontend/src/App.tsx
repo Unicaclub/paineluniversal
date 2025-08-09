@@ -17,6 +17,7 @@ import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
 import { UsuariosModule } from './components/usuarios';
 import PublicRegisterPage from './components/auth/PublicRegisterPage';
+import LandingPage from './components/landing/LandingPage';
 import './App.css';
 
 function App() {
@@ -25,57 +26,58 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<PublicRegisterPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
-              path="/*"
+              path="/app/*"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/eventos" element={
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="/" element={<Navigate to="dashboard" replace />} />
+                      <Route path="eventos" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <EventosModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/vendas" element={
+                      <Route path="vendas" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                           <SalesModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/checkin" element={
+                      <Route path="checkin" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                           <CheckinModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/checkin-inteligente" element={
+                      <Route path="checkin-inteligente" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                           <CheckinModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/mobile-checkin" element={
+                      <Route path="mobile-checkin" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
                           <MobileCheckinModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/pdv" element={
+                      <Route path="pdv" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <PDVModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/pdv/dashboard" element={
+                      <Route path="pdv/dashboard" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <DashboardPDV eventoId={1} />
                         </ProtectedRoute>
                       } />
-                      <Route path="/usuarios" element={
+                      <Route path="usuarios" element={
                         <ProtectedRoute requiredRoles={['admin']}>
                           <UsuariosModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/empresas" element={
+                      <Route path="empresas" element={
                         <ProtectedRoute requiredRoles={['admin']}>
                           <div className="p-8 text-center animate-fade-in">
                             <h1 className="text-2xl font-heading font-bold text-foreground">Módulo de Empresas</h1>
@@ -83,27 +85,27 @@ function App() {
                           </div>
                         </ProtectedRoute>
                       } />
-                      <Route path="/listas" element={
+                      <Route path="listas" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <ListasModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/financeiro" element={
+                      <Route path="financeiro" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <CaixaEvento />
                         </ProtectedRoute>
                       } />
-                      <Route path="/ranking" element={
+                      <Route path="ranking" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <RankingModule />
                         </ProtectedRoute>
                       } />
-                      <Route path="/relatorios" element={
+                      <Route path="relatorios" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <DashboardAvancado />
                         </ProtectedRoute>
                       } />
-                      <Route path="/configuracoes" element={
+                      <Route path="configuracoes" element={
                         <ProtectedRoute requiredRoles={['admin']}>
                           <div className="p-8 text-center animate-fade-in">
                             <h1 className="text-2xl font-heading font-bold text-foreground">Configurações</h1>

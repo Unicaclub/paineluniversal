@@ -12,9 +12,9 @@ const getApiBaseUrl = () => {
     console.log('🚀 Modo produção - URL Backend:', backendUrl);
     return backendUrl;
   } else {
-    // Em desenvolvimento, usar proxy local
-    console.log('🔧 Modo desenvolvimento - usando proxy local');
-    return '';
+    // Em desenvolvimento, sempre usar localhost direto (sem proxy)
+    console.log('🔧 Modo desenvolvimento - usando localhost direto');
+    return 'http://localhost:8000';
   }
 };
 
