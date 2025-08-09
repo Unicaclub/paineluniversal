@@ -6,6 +6,7 @@ from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
 from ..auth import autenticar_usuario, criar_access_token, gerar_codigo_verificacao, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
+from ..services.email_service import email_service
 
 router = APIRouter()
 security = HTTPBearer()
@@ -38,9 +39,17 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         codigo = gerar_codigo_verificacao()
         codigos_verificacao[login_data.cpf] = codigo
         
+        # Enviar código por email
+        email_enviado = await email_service.send_verification_code(
+            to_email=usuario.email,
+            to_name=usuario.nome,
+            verification_code=codigo
+        )
+        
+        # Sempre retorna sucesso em modo teste
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
-            detail=f"Código de verificação enviado. Use: {codigo}"
+            detail=f"🧪 MODO TESTE: Código de verificação gerado. Verifique o console do backend para o código: {codigo}"
         )
     
     codigo_armazenado = codigos_verificacao.get(login_data.cpf)
@@ -104,6 +113,12 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         db.commit()
         db.refresh(novo_usuario)
         
+        # Enviar email de boas-vindas
+        await email_service.send_welcome_email(
+            to_email=novo_usuario.email,
+            to_name=novo_usuario.nome
+        )
+        
         return novo_usuario
         
     except Exception as e:
@@ -136,9 +151,17 @@ async def solicitar_codigo_verificacao(cpf: str, db: Session = Depends(get_db)):
     codigo = gerar_codigo_verificacao()
     codigos_verificacao[cpf] = codigo
     
+    # Enviar código por email
+    email_enviado = await email_service.send_verification_code(
+        to_email=usuario.email,
+        to_name=usuario.nome,
+        verification_code=codigo
+    )
+    
+    # Sempre retorna sucesso em modo teste
     return {
-        "mensagem": "Código de verificação enviado",
-        "codigo_desenvolvimento": codigo  # Remover em produção
+        "mensagem": f"🧪 MODO TESTE: Código gerado. Verifique o console do backend.",
+        "codigo_desenvolvimento": codigo  # Mostrado em modo teste
     }
 
 @router.post("/setup-inicial")

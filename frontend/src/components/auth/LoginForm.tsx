@@ -19,7 +19,9 @@ import {
   Zap,
   ArrowRight,
   Eye,
-  EyeOff
+  EyeOff,
+  Mail,
+  Clock
 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 
@@ -76,9 +78,15 @@ const LoginForm: React.FC = () => {
       } else if (result.needsVerification) {
         setNeedsVerification(true);
         setVerificationMessage(result.message);
+        
+        // Verificar se é envio por email baseado na mensagem
+        const isEmailSent = result.message.includes('email');
+        
         toast({
-          title: "Código de verificação enviado",
-          description: "Digite o código de 6 dígitos enviado.",
+          title: isEmailSent ? "📧 Código enviado por email" : "Código de verificação enviado",
+          description: isEmailSent 
+            ? "Verifique sua caixa de entrada e spam"
+            : "Digite o código de 6 dígitos enviado.",
           duration: 5000,
         });
       }
@@ -160,7 +168,9 @@ const LoginForm: React.FC = () => {
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {needsVerification 
-              ? 'Digite o código de verificação para continuar'
+              ? (verificationMessage?.includes('email') 
+                  ? '📧 Verifique seu email e digite o código de verificação'
+                  : 'Digite o código de verificação para continuar')
               : 'Faça login para acessar o sistema de gestão'
             }
           </p>
@@ -253,10 +263,24 @@ const LoginForm: React.FC = () => {
                   >
                     {verificationMessage && (
                       <Alert className="border-primary/20 bg-primary/5">
-                        <CheckCircle className="h-4 w-4 text-primary" />
-                        <AlertDescription className="text-foreground">
-                          {verificationMessage}
-                        </AlertDescription>
+                        <div className="flex items-start gap-2">
+                          {verificationMessage.includes('email') ? (
+                            <Mail className="h-4 w-4 text-primary mt-0.5" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
+                          )}
+                          <div className="flex-1">
+                            <AlertDescription className="text-foreground font-medium">
+                              {verificationMessage}
+                            </AlertDescription>
+                            {verificationMessage.includes('email') && (
+                              <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                O código expira em 10 minutos. Verifique também a pasta de spam.
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </Alert>
                     )}
                     

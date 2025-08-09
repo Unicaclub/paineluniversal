@@ -226,12 +226,13 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <motion.div 
-      className="space-y-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="dashboard-container">
+      <motion.div 
+        className="main-content space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
       {/* Header */}
       <motion.div 
         className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
@@ -240,10 +241,10 @@ const Dashboard: React.FC = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="space-y-1">
-          <h1 className="text-3xl font-heading font-bold text-foreground">
+          <h1 className="text-3xl font-heading font-bold dashboard-title">
             {getGreeting()}, {usuario?.nome}! 👋
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dashboard-subtitle">
             Aqui está o resumo das suas atividades no Sistema Universal de Eventos.
           </p>
         </div>
@@ -276,7 +277,7 @@ const Dashboard: React.FC = () => {
       </motion.div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="metrics-grid">
         {[
           {
             title: 'Total de Eventos',
@@ -323,10 +324,10 @@ const Dashboard: React.FC = () => {
             animate="visible"
             whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           >
-            <Card className="premium-card relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/80">
+            <Card className="premium-card relative overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-5`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {card.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${card.gradient} bg-opacity-10`}>
@@ -334,11 +335,11 @@ const Dashboard: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-heading font-bold text-foreground mb-1">
+                <div className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-1">
                   {typeof card.value === 'string' ? card.value : card.value.toLocaleString()}
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {card.subtitle}
                   </p>
                   <div className="flex items-center text-xs">
@@ -366,9 +367,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <Card className="premium-card">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
                 <Activity className="h-5 w-5 mr-2 text-primary" />
                 Vendas nas Últimas 24h
               </CardTitle>
@@ -419,9 +420,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <Card className="premium-card">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
                 <BarChart3 className="h-5 w-5 mr-2 text-primary" />
                 Receita - Últimos 7 Dias
               </CardTitle>
@@ -473,7 +474,7 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <Card className="premium-card">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Zap className="h-5 w-5 mr-2 text-primary" />
@@ -526,9 +527,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
         >
-          <Card className="premium-card">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
                 <Trophy className="h-5 w-5 mr-2 text-primary" />
                 Top Promoters
               </CardTitle>
@@ -582,9 +583,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
         >
-          <Card className="premium-card">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-gray-900 dark:text-white">
                 <Activity className="h-5 w-5 mr-2 text-primary" />
                 Status do Sistema
               </CardTitle>
@@ -638,7 +639,7 @@ const Dashboard: React.FC = () => {
       >
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-gray-900 dark:text-white">
               <Calendar className="h-5 w-5 mr-2 text-primary" />
               Eventos Recentes
             </CardTitle>
@@ -696,7 +697,7 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

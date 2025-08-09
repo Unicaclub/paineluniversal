@@ -167,7 +167,7 @@ class EventoBase(BaseModel):
     capacidade_maxima: Optional[int] = None
 
 class EventoCreate(EventoBase):
-    empresa_id: int
+    empresa_id: Optional[int] = None
 
 class Evento(EventoBase):
     id: int

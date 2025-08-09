@@ -182,7 +182,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -426,7 +426,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-900">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -38,16 +38,36 @@ async def criar_evento(
             detail="Acesso negado: apenas admins e promoters podem criar eventos"
         )
     
-    # Role-based permission check simplified - promoters can create events for any empresa
-    
     if evento.data_evento <= datetime.now():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data do evento deve ser futura"
         )
     
+    # Se não foi especificada uma empresa, usar a primeira empresa disponível ou criar uma padrão
+    empresa_id = evento.empresa_id
+    if not empresa_id:
+        from ..models import Empresa
+        primeira_empresa = db.query(Empresa).filter(Empresa.ativa == True).first()
+        if not primeira_empresa:
+            # Criar empresa padrão se não existir nenhuma
+            empresa_padrao = Empresa(
+                nome="Empresa Padrão",
+                cnpj="00000000000100",
+                email="contato@paineluniversal.com",
+                telefone="(11) 99999-9999",
+                ativa=True
+            )
+            db.add(empresa_padrao)
+            db.commit()
+            db.refresh(empresa_padrao)
+            empresa_id = empresa_padrao.id
+        else:
+            empresa_id = primeira_empresa.id
+    
     evento_data = evento.dict()
     evento_data['criador_id'] = usuario_atual.id
+    evento_data['empresa_id'] = empresa_id
     
     db_evento = Evento(**evento_data)
     db.add(db_evento)

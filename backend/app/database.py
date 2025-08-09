@@ -10,6 +10,15 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    # Configurações de Email
+    email_host: str = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    email_port: int = int(os.getenv("EMAIL_PORT", "587"))
+    email_user: str = os.getenv("EMAIL_USER", "")
+    email_password: str = os.getenv("EMAIL_PASSWORD", "")
+    email_from: str = os.getenv("EMAIL_FROM", "")
+    email_from_name: str = os.getenv("EMAIL_FROM_NAME", "Sistema Universal")
+    email_use_tls: bool = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+    
     class Config:
         env_file = ".env"
 
