@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -77,16 +77,20 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({
     }
   }, [isOpen, movimentacao]);
 
-  const carregarPromoters = async () => {
+  const carregarPromoters = useCallback(async () => {
     try {
       const promotersData = await usuarioService.listarPromoters();
       setPromoters(promotersData);
     } catch (error) {
       console.error('Erro ao carregar promoters:', error);
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    carregarPromoters();
+  }, [carregarPromoters]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!eventoId) {
@@ -143,7 +147,7 @@ const MovimentacaoModal: React.FC<MovimentacaoModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, eventoId, movimentacao, onSuccess, onClose, toast]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

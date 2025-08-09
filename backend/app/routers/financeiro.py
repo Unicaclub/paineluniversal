@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Response
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, case
 from typing import List, Optional
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -75,10 +75,12 @@ async def listar_movimentacoes(
     data_inicio: Optional[str] = "",
     data_fim: Optional[str] = "",
     status: Optional[str] = "",
+    page: int = 1,
+    page_size: int = 50,
     db: Session = Depends(get_db),
     usuario_atual: Usuario = Depends(obter_usuario_atual)
 ):
-    """Listar movimentações financeiras do evento"""
+    """Listar movimentações financeiras do evento com paginação"""
     
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
     if not evento:
@@ -110,7 +112,8 @@ async def listar_movimentacoes(
     if status and status.strip():
         query = query.filter(MovimentacaoFinanceira.status == status)
     
-    movimentacoes = query.order_by(MovimentacaoFinanceira.criado_em.desc()).all()
+    offset = (page - 1) * page_size
+    movimentacoes = query.order_by(MovimentacaoFinanceira.criado_em.desc()).offset(offset).limit(page_size).all()
     
     return movimentacoes
 
@@ -211,7 +214,7 @@ async def obter_dashboard_financeiro(
     db: Session = Depends(get_db),
     usuario_atual: Usuario = Depends(obter_usuario_atual)
 ):
-    """Dashboard financeiro do evento"""
+    """Dashboard financeiro do evento - Otimizado"""
     
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
     if not evento:
@@ -220,42 +223,49 @@ async def obter_dashboard_financeiro(
     if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(status_code=403, detail="Acesso negado: apenas admins e promoters podem acessar este recurso")
     
-    total_entradas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
-        MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "entrada",
-        MovimentacaoFinanceira.status == "aprovada"
-    ).scalar() or Decimal('0.00')
+    financial_summary = db.query(
+        func.sum(case(
+            (and_(MovimentacaoFinanceira.tipo == "entrada", MovimentacaoFinanceira.status == "aprovada"), 
+             MovimentacaoFinanceira.valor), else_=0
+        )).label('total_entradas'),
+        func.sum(case(
+            (and_(MovimentacaoFinanceira.tipo == "saida", MovimentacaoFinanceira.status == "aprovada"), 
+             MovimentacaoFinanceira.valor), else_=0
+        )).label('total_saidas')
+    ).filter(MovimentacaoFinanceira.evento_id == evento_id).first()
     
-    total_saidas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
-        MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "saida",
-        MovimentacaoFinanceira.status == "aprovada"
-    ).scalar() or Decimal('0.00')
+    vendas_summary = db.query(
+        func.coalesce(func.sum(Transacao.valor), 0).label('vendas_listas'),
+        func.coalesce(func.sum(VendaPDV.valor_final), 0).label('vendas_pdv')
+    ).select_from(
+        Transacao.outerjoin(VendaPDV, VendaPDV.evento_id == Transacao.evento_id)
+    ).filter(
+        or_(
+            and_(Transacao.evento_id == evento_id, Transacao.status == "aprovada"),
+            and_(VendaPDV.evento_id == evento_id, VendaPDV.status == "aprovada")
+        )
+    ).first()
     
-    total_vendas_listas = db.query(func.sum(Transacao.valor)).filter(
-        Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
-    ).scalar() or Decimal('0.00')
+    total_vendas_listas = vendas_summary.vendas_listas or Decimal('0.00')
+    total_vendas_pdv = vendas_summary.vendas_pdv or Decimal('0.00')
     
-    total_vendas_pdv = db.query(func.sum(VendaPDV.valor_final)).filter(
-        VendaPDV.evento_id == evento_id,
-        VendaPDV.status == "aprovada"
-    ).scalar() or Decimal('0.00')
-    
+    total_entradas = financial_summary.total_entradas or Decimal('0.00')
+    total_saidas = financial_summary.total_saidas or Decimal('0.00')
     total_vendas = total_vendas_listas + total_vendas_pdv
     saldo_atual = total_entradas + total_vendas - total_saidas
     lucro_prejuizo = saldo_atual
     
-    caixa = db.query(CaixaEvento).filter(
-        CaixaEvento.evento_id == evento_id,
-        CaixaEvento.status == "aberto"
-    ).first()
-    
-    status_caixa = "aberto" if caixa else "fechado"
-    
-    movimentacoes_recentes = db.query(MovimentacaoFinanceira).filter(
+    caixa_and_recent = db.query(
+        CaixaEvento.status.label('caixa_status'),
+        MovimentacaoFinanceira
+    ).outerjoin(
+        CaixaEvento, and_(CaixaEvento.evento_id == evento_id, CaixaEvento.status == "aberto")
+    ).filter(
         MovimentacaoFinanceira.evento_id == evento_id
     ).order_by(MovimentacaoFinanceira.criado_em.desc()).limit(5).all()
+    
+    status_caixa = "aberto" if any(row.caixa_status == "aberto" for row in caixa_and_recent) else "fechado"
+    movimentacoes_recentes = [row.MovimentacaoFinanceira for row in caixa_and_recent if row.MovimentacaoFinanceira]
     
     categorias_despesas = db.query(
         MovimentacaoFinanceira.categoria,

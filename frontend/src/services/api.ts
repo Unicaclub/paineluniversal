@@ -167,6 +167,11 @@ export const usuarioService = {
     return response.data;
   },
 
+  async listarPromoters(): Promise<Usuario[]> {
+    const response = await api.get('/api/usuarios/?tipo=promoter');
+    return response.data;
+  },
+
   async getById(id: number): Promise<Usuario> {
     const response = await api.get(`/api/usuarios/${id}`);
     return response.data;
@@ -222,6 +227,11 @@ export const empresaService = {
 // Serviços de eventos
 export const eventoService = {
   async getAll(): Promise<Evento[]> {
+    const response = await api.get('/api/eventos/');
+    return response.data;
+  },
+
+  async listar(): Promise<Evento[]> {
     const response = await api.get('/api/eventos/');
     return response.data;
   },
@@ -336,14 +346,40 @@ export const gamificacaoService = {
 
 // Serviços de financeiro
 export const financeiroService = {
-  async obterDashboard(eventoId?: number): Promise<any> {
-    const params = eventoId ? { evento_id: eventoId } : {};
-    const response = await api.get('/api/financeiro/dashboard', { params });
+  async obterDashboard(eventoId: number): Promise<any> {
+    const response = await api.get(`/api/financeiro/dashboard/${eventoId}`);
     return response.data;
   },
 
   async criarMovimentacao(movimentacao: any): Promise<any> {
     const response = await api.post('/api/financeiro/movimentacoes', movimentacao);
+    return response.data;
+  },
+
+  async listarMovimentacoes(eventoId: number, filtros: any = {}, page: number = 1, pageSize: number = 50): Promise<any[]> {
+    const params = { 
+      ...filtros, 
+      page, 
+      page_size: pageSize 
+    };
+    const response = await api.get(`/api/financeiro/movimentacoes/${eventoId}`, { params });
+    return response.data;
+  },
+
+  async atualizarMovimentacao(id: number, movimentacao: any): Promise<any> {
+    const response = await api.put(`/api/financeiro/movimentacoes/${id}`, movimentacao);
+    return response.data;
+  },
+
+  async exportarRelatorio(eventoId: number, formato: string, dataInicio?: string, dataFim?: string): Promise<Blob> {
+    const params: any = {};
+    if (dataInicio) params.data_inicio = dataInicio;
+    if (dataFim) params.data_fim = dataFim;
+    
+    const response = await api.get(`/api/financeiro/relatorio/${eventoId}/export/${formato}`, {
+      params,
+      responseType: 'blob'
+    });
     return response.data;
   },
 

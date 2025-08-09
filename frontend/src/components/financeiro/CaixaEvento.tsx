@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -48,6 +48,8 @@ const CaixaEvento: React.FC = () => {
   const [dashboard, setDashboard] = useState<DashboardFinanceiro | null>(null);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoFinanceira[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [filtros, setFiltros] = useState({
     tipo: '',
     categoria: '',
@@ -59,21 +61,10 @@ const CaixaEvento: React.FC = () => {
   const [movimentacaoModal, setMovimentacaoModal] = useState<{ open: boolean; movimentacao: MovimentacaoFinanceira | null }>({ open: false, movimentacao: null });
   const [comprovanteModal, setComprovanteModal] = useState<{ open: boolean; movimentacao: MovimentacaoFinanceira | null }>({ open: false, movimentacao: null });
 
-  useEffect(() => {
-    carregarEventos();
-  }, []);
-
-  useEffect(() => {
-    if (eventoSelecionado) {
-      carregarDashboard();
-      carregarMovimentacoes();
-    }
-  }, [eventoSelecionado, filtros]);
-
-  const carregarEventos = async () => {
+  const carregarEventos = useCallback(async () => {
     try {
       const eventosData = await eventoService.listar();
-      setEventos(eventosData.filter(e => e.status === 'ativo'));
+      setEventos(eventosData.filter((e: any) => e.status === 'ativo'));
       if (eventosData.length > 0) {
         setEventoSelecionado(eventosData[0].id);
       }
@@ -84,9 +75,9 @@ const CaixaEvento: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  const carregarDashboard = async () => {
+  const carregarDashboard = useCallback(async () => {
     if (!eventoSelecionado) return;
     
     try {
@@ -99,18 +90,32 @@ const CaixaEvento: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [eventoSelecionado, toast]);
 
-  const carregarMovimentacoes = async () => {
+  useEffect(() => {
+    carregarEventos();
+  }, [carregarEventos]);
+
+  useEffect(() => {
+    if (eventoSelecionado) {
+      carregarDashboard();
+      carregarMovimentacoes();
+    }
+  }, [eventoSelecionado, filtros, currentPage, carregarDashboard, carregarMovimentacoes]);
+
+  const carregarMovimentacoes = useCallback(async () => {
     if (!eventoSelecionado) return;
     
     try {
       setLoading(true);
       const movimentacoesData = await financeiroService.listarMovimentacoes(
         eventoSelecionado, 
-        filtros
+        filtros,
+        currentPage,
+        50
       );
       setMovimentacoes(movimentacoesData);
+      setTotalPages(Math.max(1, Math.ceil(movimentacoesData.length / 50)));
     } catch (error) {
       toast({
         title: "Erro",
@@ -120,9 +125,9 @@ const CaixaEvento: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [eventoSelecionado, filtros, currentPage, toast]);
 
-  const handleExportar = async (formato: 'pdf' | 'excel' | 'csv') => {
+  const handleExportar = useCallback(async (formato: 'pdf' | 'excel' | 'csv') => {
     if (!eventoSelecionado) return;
     
     try {
@@ -151,9 +156,9 @@ const CaixaEvento: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [eventoSelecionado, filtros.data_inicio, filtros.data_fim, toast]);
 
-  const getTipoColor = (tipo: string) => {
+  const getTipoColor = useCallback((tipo: string) => {
     const colors: { [key: string]: string } = {
       'entrada': 'bg-green-100 text-green-800',
       'saida': 'bg-red-100 text-red-800',
@@ -163,23 +168,23 @@ const CaixaEvento: React.FC = () => {
       'receita_listas': 'bg-teal-100 text-teal-800'
     };
     return colors[tipo] || 'bg-gray-100 text-gray-800';
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     const colors: { [key: string]: string } = {
       'pendente': 'bg-yellow-100 text-yellow-800',
       'aprovada': 'bg-green-100 text-green-800',
       'cancelada': 'bg-red-100 text-red-800'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
-  };
+  }, []);
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = useCallback((value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
-  };
+  }, []);
 
   return (
     <div className="space-y-6 p-4">
@@ -468,6 +473,30 @@ const CaixaEvento: React.FC = () => {
                   </div>
                 </div>
               ))}
+              
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1 || loading}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages || loading}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
