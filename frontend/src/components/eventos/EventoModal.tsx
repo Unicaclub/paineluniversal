@@ -53,10 +53,15 @@ const EventoModal: React.FC<EventoModalProps> = ({
         empresa_id: evento.empresa_id
       });
     } else {
+      // Para novo evento, usar uma data padrão (1 hora no futuro)
+      const agora = new Date();
+      agora.setHours(agora.getHours() + 1);
+      const dataDefault = agora.toISOString().slice(0, 16);
+      
       setFormData({
         nome: '',
         descricao: '',
-        data_evento: '',
+        data_evento: dataDefault,
         local: '',
         endereco: '',
         limite_idade: 18,
@@ -75,7 +80,13 @@ const EventoModal: React.FC<EventoModalProps> = ({
       newErrors.nome = 'Nome é obrigatório';
     }
 
-    if (!formData.data_evento) {
+    console.log('🔍 Validando data do evento:', {
+      data_evento: formData.data_evento,
+      isEmpty: !formData.data_evento,
+      isTrimmedEmpty: !formData.data_evento?.trim()
+    });
+
+    if (!formData.data_evento || !formData.data_evento.trim()) {
       newErrors.data_evento = 'Data do evento é obrigatória';
     } else {
       const dataEvento = new Date(formData.data_evento);
@@ -100,6 +111,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
       newErrors.capacidade_maxima = 'Capacidade máxima deve ser maior que zero';
     }
 
+    console.log('📝 Erros de validação encontrados:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -107,7 +119,11 @@ const EventoModal: React.FC<EventoModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 Iniciando submissão do formulário');
+    console.log('📝 FormData antes da validação:', formData);
+    
     if (!validateForm()) {
+      console.log('❌ Validação falhou');
       return;
     }
 
@@ -117,6 +133,13 @@ const EventoModal: React.FC<EventoModalProps> = ({
     try {
       const dataEvento = new Date(formData.data_evento);
       
+      console.log('🔄 Convertendo data:', {
+        original: formData.data_evento,
+        parsed: dataEvento,
+        iso: dataEvento.toISOString(),
+        isValid: !isNaN(dataEvento.getTime())
+      });
+      
       const eventoData = {
         ...formData,
         data_evento: dataEvento.toISOString(),
@@ -125,9 +148,21 @@ const EventoModal: React.FC<EventoModalProps> = ({
         empresa_id: Number(formData.empresa_id)
       };
       
+      console.log('📤 Dados finais sendo enviados:', eventoData);
+      
       await onSave(eventoData);
       
+      console.log('✅ Evento salvo com sucesso!');
+      
     } catch (error: any) {
+      console.error('❌ Erro ao salvar evento:', error);
+      console.error('📊 Detalhes do erro:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       let errorMessage = 'Erro ao salvar evento';
       
       if (error.response?.data?.detail) {
@@ -143,6 +178,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
   };
 
   const handleInputChange = (field: string, value: any) => {
+    console.log(`🔄 Campo alterado: ${field} = ${value}`);
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
