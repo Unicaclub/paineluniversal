@@ -296,36 +296,37 @@ const PDVModule = () => {
   console.log('Busca atual:', busca);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-      {/* Produtos */}
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Produtos</CardTitle>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Buscar produto ou código de barras..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    buscarProduto(busca);
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button onClick={() => buscarProduto(busca)}>
-                Buscar
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
-              {produtosFiltrados.map(produto => (
-                <Card 
-                  key={produto.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => adicionarAoCarrinho(produto)}
+    <div className="w-full h-full p-4 sm:p-6 lg:p-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        {/* Produtos */}
+        <div className="xl:col-span-2">
+          <Card className="bg-card border border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Produtos</CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="Buscar produto ou código de barras..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      buscarProduto(busca);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button onClick={() => buscarProduto(busca)} className="w-full sm:w-auto">
+                  Buscar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+                {produtosFiltrados.map(produto => (
+                  <Card 
+                    key={produto.id} 
+                    className="cursor-pointer hover:shadow-md transition-shadow bg-card/50 hover:bg-card"
+                    onClick={() => adicionarAoCarrinho(produto)}
                 >
                   <CardContent className="p-3">
                     <div className="text-sm font-medium truncate">

@@ -193,15 +193,16 @@ const EventosModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestão de Eventos</h1>
+    <div className="w-full h-full p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestão de Eventos</h1>
         <Button 
           onClick={() => {
             setEventoSelecionado(null);
             setModalAberto(true);
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Novo Evento
@@ -209,20 +210,20 @@ const EventosModule: React.FC = () => {
       </div>
 
       {error && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertDescription className="text-red-800">{error}</AlertDescription>
+        <Alert className="border-destructive/50 bg-destructive/10">
+          <AlertDescription className="text-destructive">{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+          <AlertDescription className="text-green-800 dark:text-green-400">{success}</AlertDescription>
         </Alert>
       )}
 
-      <Card>
+      <Card className="bg-card border border-border">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <span>Buscar e Filtrar</span>
             <Button
               variant="outline"

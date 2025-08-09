@@ -226,13 +226,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="dashboard-container">
-      <motion.div 
-        className="main-content space-y-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+    <div className="w-full h-full p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <motion.div 
         className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
@@ -241,17 +235,17 @@ const Dashboard: React.FC = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="space-y-1">
-          <h1 className="text-3xl font-heading font-bold dashboard-title">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-foreground">
             {getGreeting()}, {usuario?.nome}! 👋
           </h1>
-          <p className="dashboard-subtitle">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Aqui está o resumo das suas atividades no Sistema Universal de Eventos.
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Select value={eventoSelecionado} onValueChange={setEventoSelecionado}>
-            <SelectTrigger className="w-64 bg-background">
+            <SelectTrigger className="w-full sm:w-64 bg-background">
               <SelectValue placeholder="Todos os eventos" />
             </SelectTrigger>
             <SelectContent>
@@ -269,6 +263,7 @@ const Dashboard: React.FC = () => {
             variant="outline" 
             size="sm"
             disabled={isRefreshing}
+            className="shrink-0"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Atualizar
@@ -277,7 +272,8 @@ const Dashboard: React.FC = () => {
       </motion.div>
 
       {/* KPI Cards */}
-      <div className="metrics-grid">
+      {/* Métricas Principais */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {[
           {
             title: 'Total de Eventos',
@@ -324,10 +320,10 @@ const Dashboard: React.FC = () => {
             animate="visible"
             whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           >
-            <Card className="premium-card relative overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="relative overflow-hidden border border-border bg-card shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-5`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   {card.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${card.gradient} bg-opacity-10`}>
@@ -335,11 +331,11 @@ const Dashboard: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-3xl font-heading font-bold text-gray-900 dark:text-white mb-1">
+                <div className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-1">
                   {typeof card.value === 'string' ? card.value : card.value.toLocaleString()}
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {card.subtitle}
                   </p>
                   <div className="flex items-center text-xs">
@@ -361,15 +357,17 @@ const Dashboard: React.FC = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Gráficos e Análises */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Vendas por Hora */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <Card className="bg-card border border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <CardTitle className="flex items-center text-foreground">
                 <Activity className="h-5 w-5 mr-2 text-primary" />
                 Vendas nas Últimas 24h
               </CardTitle>
@@ -378,7 +376,7 @@ const Dashboard: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={vendasPorHora}>
                   <defs>
                     <linearGradient id="vendas" x1="0" y1="0" x2="0" y2="1">
@@ -637,9 +635,9 @@ const Dashboard: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.5 }}
       >
-        <Card className="premium-card">
+        <Card className="bg-card border border-border shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center text-gray-900 dark:text-white">
+            <CardTitle className="flex items-center text-foreground">
               <Calendar className="h-5 w-5 mr-2 text-primary" />
               Eventos Recentes
             </CardTitle>
@@ -653,18 +651,18 @@ const Dashboard: React.FC = () => {
                 {eventos.slice(0, 5).map((evento, index) => (
                   <motion.div 
                     key={evento.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50 hover:bg-card transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-border bg-card/50 hover:bg-card transition-colors gap-3"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1 + index * 0.1 }}
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-6 w-6 text-primary-foreground" />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shrink-0">
+                        <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-foreground">{evento.nome}</h3>
-                        <p className="text-sm text-muted-foreground">{evento.local}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-foreground truncate">{evento.nome}</h3>
+                        <p className="text-sm text-muted-foreground truncate">{evento.local}</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(evento.data_evento).toLocaleDateString('pt-BR')}
                         </p>
@@ -696,7 +694,6 @@ const Dashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </motion.div>
       </motion.div>
     </div>
   );

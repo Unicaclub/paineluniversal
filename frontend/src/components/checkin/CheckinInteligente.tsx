@@ -241,36 +241,37 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
   }, [eventoSelecionado]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 h-screen bg-gray-50">
-      <div className="lg:col-span-2 flex flex-col">
-        <Card className="mb-4 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5" />
-              Check-in Inteligente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <Button
-                variant={metodoCheckin === 'cpf' ? 'default' : 'outline'}
-                onClick={() => setMetodoCheckin('cpf')}
-                className="h-12 text-lg"
-              >
-                📱 CPF
-              </Button>
-              <Button
-                variant={metodoCheckin === 'qr' ? 'default' : 'outline'}
-                onClick={() => setMetodoCheckin('qr')}
-                className="h-12 text-lg"
-              >
-                <Scan className="h-5 w-5 mr-2" />
-                QR Code
-              </Button>
-            </div>
+    <div className="w-full h-full p-4 sm:p-6 lg:p-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        <div className="xl:col-span-2 flex flex-col space-y-4 sm:space-y-6">
+          <Card className="shadow-lg bg-card border border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <UserCheck className="h-5 w-5" />
+                Check-in Inteligente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <Button
+                  variant={metodoCheckin === 'cpf' ? 'default' : 'outline'}
+                  onClick={() => setMetodoCheckin('cpf')}
+                  className="h-12 text-sm sm:text-lg"
+                >
+                  📱 CPF
+                </Button>
+                <Button
+                  variant={metodoCheckin === 'qr' ? 'default' : 'outline'}
+                  onClick={() => setMetodoCheckin('qr')}
+                  className="h-12 text-sm sm:text-lg"
+                >
+                  <Scan className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  QR Code
+                </Button>
+              </div>
 
-            {metodoCheckin === 'cpf' ? (
-              <div className="space-y-4">
+              {metodoCheckin === 'cpf' ? (
+                <div className="space-y-4">
                 <div>
                   <Label htmlFor="cpf">CPF</Label>
                   <Input
