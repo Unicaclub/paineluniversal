@@ -4,19 +4,20 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from jinja2 import Template
 from typing import Optional
-from ..database import settings
+import os
 
 logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
-        self.smtp_server = settings.email_host
-        self.smtp_port = settings.email_port
-        self.username = settings.email_user
-        self.password = settings.email_password
-        self.from_email = settings.email_from or settings.email_user
-        self.from_name = settings.email_from_name
-        self.use_tls = settings.email_use_tls
+        # Configurações de email usando variáveis de ambiente diretamente
+        self.smtp_server = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+        self.smtp_port = int(os.getenv("EMAIL_PORT", "587"))
+        self.username = os.getenv("EMAIL_USER", "")
+        self.password = os.getenv("EMAIL_PASSWORD", "")
+        self.from_email = os.getenv("EMAIL_FROM", "") or self.username
+        self.from_name = os.getenv("EMAIL_FROM_NAME", "Sistema Universal")
+        self.use_tls = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
         
         # MODO TESTE ATIVADO - Email real desativado para testes
         self.test_mode = True

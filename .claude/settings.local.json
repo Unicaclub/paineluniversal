@@ -10,7 +10,8 @@
       "Bash(npm install:*)",
       "Bash(npm run lint)",
       "Bash(find:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

@@ -7,6 +7,15 @@ import sys
 import uvicorn
 import logging
 
+# Importar app para verificar se tudo está funcionando
+try:
+    from app.main import app
+    logger = logging.getLogger(__name__)
+    logger.info("✅ Aplicação importada com sucesso")
+except ImportError as e:
+    print(f"❌ Erro ao importar aplicação: {e}")
+    sys.exit(1)
+
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
