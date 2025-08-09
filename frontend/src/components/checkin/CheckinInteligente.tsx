@@ -435,6 +435,7 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

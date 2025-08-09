@@ -351,10 +351,10 @@ const PDVModule = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
 
-      {/* Carrinho e Pagamento */}
-      <div className="space-y-4">
+        {/* Carrinho e Pagamento */}
+        <div className="space-y-4">
         {/* Carrinho */}
         <Card>
           <CardHeader>
@@ -407,8 +407,10 @@ const PDVModule = () => {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* Dados do Cliente */}
+        <div>
         <Card>
           <CardHeader>
             <CardTitle>Cliente</CardTitle>
@@ -498,8 +500,9 @@ const PDVModule = () => {
             </Button>
           </CardContent>
         </Card>
+        </div>
+        </div>
       </div>
-    </div>
   );
 };
 
