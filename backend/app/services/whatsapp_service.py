@@ -345,6 +345,145 @@ Precisa de ajuda? Entre em contato com a organização.
         except Exception as e:
             logger.error(f"Erro ao notificar N8N: {e}")
 
+    async def send_meep_notification(self, phone: str, tipo: str, dados: dict):
+        """Enviar notificações MEEP específicas"""
+        
+        templates = {
+            "checkin_confirmado": """
+✅ *CHECK-IN CONFIRMADO*
+
+Evento: {evento_nome}
+Nome: {cliente_nome}
+Horário: {horario}
+Local: {local}
+
+Seu QR Code de acesso foi ativado!
+Apresente na entrada do evento.
+            """,
+            "capacidade_alerta": """
+⚠️ *ALERTA DE CAPACIDADE*
+
+Evento: {evento_nome}
+Ocupação atual: {ocupacao}%
+Capacidade máxima: {capacidade}
+
+Recomendação: {recomendacao}
+            """,
+            "previsao_ia": """
+🤖 *PREVISÃO IA - PRÓXIMAS HORAS*
+
+Evento: {evento_nome}
+Pico esperado: {pico_hora}
+Checkins previstos: {checkins_previstos}
+Confiança: {confianca}%
+
+Prepare-se para o movimento!
+            """
+        }
+        
+        if tipo not in templates:
+            return {"status": "error", "message": "Template não encontrado"}
+        
+        try:
+            mensagem = templates[tipo].format(**dados)
+            resultado = await self._send_whatsapp_message(phone, mensagem)
+            
+            await self.notify_n8n("meep_notification", {
+                "tipo": tipo,
+                "phone": phone,
+                "dados": dados,
+                "resultado": resultado
+            })
+            
+            return resultado
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar notificação MEEP: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def processar_comando_meep(self, phone: str, comando: str, db):
+        """Processar comandos MEEP específicos"""
+        
+        comando = comando.strip().upper()
+        
+        if comando.startswith("STATUS"):
+            return await self._processar_status_evento(phone, comando, db)
+        elif comando.startswith("CAPACIDADE"):
+            return await self._processar_consulta_capacidade(phone, comando, db)
+        elif comando.startswith("PREVISAO"):
+            return await self._processar_previsao_ia(phone, comando, db)
+        else:
+            return await self._send_help_meep(phone)
+
+    async def _processar_status_evento(self, phone: str, comando: str, db):
+        """Processar comando STATUS EVENTO"""
+        
+        try:
+            parts = comando.split()
+            if len(parts) < 2:
+                return await self._send_error_message(phone, "Use: STATUS [ID_EVENTO]")
+            
+            evento_id = int(parts[1])
+            
+            from ..models import Evento, Checkin
+            from sqlalchemy import func
+            evento = db.query(Evento).filter(Evento.id == evento_id).first()
+            
+            if not evento:
+                return await self._send_error_message(phone, "Evento não encontrado")
+            
+            total_checkins = db.query(func.count(Checkin.id)).filter(
+                Checkin.evento_id == evento_id
+            ).scalar() or 0
+            
+            ocupacao = (total_checkins / evento.capacidade_maxima * 100) if evento.capacidade_maxima else 0
+            
+            status_msg = f"""
+📊 *STATUS DO EVENTO*
+
+🎉 {evento.nome}
+📅 {evento.data_evento.strftime('%d/%m/%Y %H:%M')}
+📍 {evento.local}
+
+👥 Check-ins: {total_checkins}
+🏢 Capacidade: {evento.capacidade_maxima}
+📈 Ocupação: {ocupacao:.1f}%
+
+Status: {"🟢 Normal" if ocupacao < 80 else "🟡 Atenção" if ocupacao < 95 else "🔴 Lotado"}
+            """
+            
+            await self._send_whatsapp_message(phone, status_msg)
+            return {"status": "status_sent"}
+            
+        except Exception as e:
+            return await self._send_error_message(phone, f"Erro ao consultar status: {str(e)}")
+
+    async def _send_help_meep(self, phone: str):
+        """Enviar ajuda para comandos MEEP"""
+        
+        help_msg = """
+🤖 *COMANDOS MEEP DISPONÍVEIS*
+
+📊 *STATUS [ID_EVENTO]*
+Consulta status atual do evento
+
+📈 *CAPACIDADE [ID_EVENTO]*
+Verifica ocupação e capacidade
+
+🔮 *PREVISAO [ID_EVENTO]*
+Previsão IA para próximas horas
+
+Exemplos:
+STATUS 1
+CAPACIDADE 1
+PREVISAO 1
+
+💡 Dica: Use apenas números para o ID do evento
+        """
+        
+        await self._send_whatsapp_message(phone, help_msg)
+        return {"status": "help_sent"}
+
     async def get_session_status(self) -> Dict[str, Any]:
         """Retorna status da sessão WhatsApp"""
         return {

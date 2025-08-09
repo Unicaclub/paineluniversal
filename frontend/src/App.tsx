@@ -28,6 +28,11 @@ import EntradaEstoque from './components/estoque/EntradaEstoque';
 import SaidaEstoque from './components/estoque/SaidaEstoque';
 import MotivoEstoque from './components/estoque/MotivoEstoque';
 import IntegracaoEstoque from './components/estoque/IntegracaoEstoque';
+import DashboardMEEP from './components/meep/DashboardMEEP';
+import ValidacaoCPF from './components/meep/ValidacaoCPF';
+import CheckinMEEP from './components/meep/CheckinMEEP';
+import AnalyticsMEEP from './components/meep/AnalyticsMEEP';
+import EquipamentosMEEP from './components/meep/EquipamentosMEEP';
 import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
@@ -192,6 +197,31 @@ function App() {
                       <Route path="/estoque/integracao" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <IntegracaoEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/meep" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <DashboardMEEP eventoId={1} />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/meep/cpf" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <ValidacaoCPF />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/meep/checkin" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <CheckinMEEP />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/meep/analytics" element={
+                        <ProtectedRoute requiredRoles={['admin']}>
+                          <AnalyticsMEEP />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/meep/equipamentos" element={
+                        <ProtectedRoute requiredRoles={['admin']}>
+                          <EquipamentosMEEP />
                         </ProtectedRoute>
                       } />
                       <Route path="/configuracoes" element={

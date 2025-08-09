@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:14-3.2
+    environment:
+      POSTGRES_DB: paineluniversal
+      POSTGRES_USER: painel_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - painel_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U painel_user -d paineluniversal"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - painel_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  fastapi-backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://painel_user:${POSTGRES_PASSWORD}@postgres:5432/paineluniversal
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - painel_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  meep-service:
+    build:
+      context: ./meep-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://painel_user:${POSTGRES_PASSWORD}@postgres:5432/paineluniversal
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      API_RECEITA_FEDERAL_URL: ${API_RECEITA_FEDERAL_URL}
+      API_RECEITA_TOKEN: ${API_RECEITA_TOKEN}
+      CPF_SALT: ${CPF_SALT}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - painel_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://fastapi-backend:8000/api
+      VITE_MEEP_API_URL: http://meep-service:3001/api
+    depends_on:
+      - fastapi-backend
+      - meep-service
+    ports:
+      - "3000:3000"
+    networks:
+      - painel_network
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - fastapi-backend
+      - meep-service
+    networks:
+      - painel_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  painel_network:
+    driver: bridge
