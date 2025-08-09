@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -103,7 +104,7 @@ app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatóri
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(cupons.router, prefix="/api/cupons", tags=["Cupons"])
 app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
-app.include_router(pdv.router, prefix="/api")
+app.include_router(pdv.router, prefix="/api", tags=["PDV"])
 app.include_router(financeiro.router, prefix="/api")
 app.include_router(gamificacao.router, prefix="/api")
 
@@ -167,66 +168,6 @@ async def cors_test(request: Request):
         "timestamp": datetime.now().isoformat()
     }
 
-@app.post("/setup-inicial")
-async def setup_inicial_temp(db: Session = Depends(get_db)):
-    from .models import Empresa, Usuario, TipoUsuario
-    from .auth import gerar_hash_senha
-    
-    try:
-        # Verificar se já existe empresa
-        empresa_existente = db.query(Empresa).first()
-        if empresa_existente:
-            return {"message": "Sistema já foi inicializado", "empresa": empresa_existente.nome}
-        
-        # Criar empresa
-        empresa = Empresa(
-            nome="Painel Universal - Empresa Demo",
-            cnpj="00000000000100",
-            email="contato@paineluniversal.com",
-            telefone="(11) 99999-9999",
-            endereco="Endereço da empresa demo"
-        )
-        db.add(empresa)
-        db.commit()
-        db.refresh(empresa)
-        
-        # Criar usuário admin
-        admin = Usuario(
-            cpf="00000000000",
-            nome="Administrador Sistema",
-            email="admin@paineluniversal.com",
-            telefone="(11) 99999-0000",
-            senha_hash=gerar_hash_senha("0000"),
-            tipo=TipoUsuario.ADMIN
-        )
-        db.add(admin)
-        
-        # Criar usuário promoter
-        promoter = Usuario(
-            cpf="11111111111",
-            nome="Promoter Demo",
-            email="promoter@paineluniversal.com",
-            telefone="(11) 99999-1111",
-            senha_hash=gerar_hash_senha("promoter123"),
-            tipo=TipoUsuario.PROMOTER
-        )
-        db.add(promoter)
-        
-        db.commit()
-        
-        return {
-            "message": "Sistema inicializado com sucesso!",
-            "empresa": empresa.nome,
-            "usuarios_criados": [
-                {"cpf": "00000000000", "nome": admin.nome, "tipo": "admin", "senha": "0000"},
-                {"cpf": "11111111111", "nome": promoter.nome, "tipo": "promoter", "senha": "promoter123"}
-            ]
-        }
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao inicializar sistema: {str(e)}")
-
 @app.get("/")
 async def root():
     return {
@@ -235,3 +176,4 @@ async def root():
         "documentacao": "/docs",
         "timestamp": datetime.now().isoformat()
     }
+
