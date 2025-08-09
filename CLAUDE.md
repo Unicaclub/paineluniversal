@@ -21,19 +21,26 @@ poetry run pytest --cov=app --cov-report=html -v      # Run tests with coverage
 poetry run pytest tests/test_specific.py -v           # Run specific test file
 poetry run python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)"  # Create database tables
 
+# Alternative startup methods
+python run_server.py               # Alternative server startup
+python start_backend.py            # Another alternative startup method
+
 # Database migrations (if needed)
 python apply_postgresql_migration.py                   # Apply PostgreSQL migrations
 python apply_remove_empresa_migration.py               # Remove empresa_id column (if needed)
+python make_empresa_optional_migration.py              # Make empresa_id optional
 ```
 
 ### Frontend (React/TypeScript)
 ```bash
 cd frontend
 npm install          # Install dependencies
-npm run dev          # Run development server (port 3000, proxies to backend:8000)
-npm run build        # Build for production
+npm run dev          # Run development server (port 5173, proxies to backend:8000 or Railway)
+npm run build        # Build for production  
+npm run build-with-types  # Build with TypeScript compilation
 npm run lint         # Run ESLint
-npm start           # Preview production build
+npm run preview      # Preview production build (port 4173)
+npm start           # Alias for preview
 ```
 
 ### Full Stack Deployment
@@ -61,18 +68,21 @@ npm start           # Preview production build
 
 ### Frontend Structure (`/frontend`)
 - **React Router**: Role-based route protection and navigation
-- **UI Framework**: Custom components using Radix UI primitives with Tailwind CSS
+- **UI Framework**: Custom components using Radix UI primitives with Tailwind CSS  
 - **PWA Support**: Progressive Web App with service worker via Vite PWA plugin
 - **Key Features**:
   - Dashboard with real-time metrics
   - Event management interface
   - Check-in system (regular and mobile-optimized)
-  - Point-of-sale interface
+  - Point-of-sale interface  
   - Guest list management
   - Financial reporting
   - Gamification/ranking system
-- **State Management**: Context API for authentication
-- **Build Optimization**: Manual chunk splitting for vendor, UI, charts, and forms
+  - Landing page for public access
+- **State Management**: Context API for authentication and theming
+- **Build Optimization**: Manual chunk splitting (vendor, radix, charts, router, forms, ui)
+- **Development Proxy**: Configured to proxy `/api` requests to Railway production backend
+- **Testing**: Jest with React Testing Library setup
 
 ### Database Schema
 - **User System**: Independent user accounts based on CPF (Brazilian tax ID) for security
@@ -98,12 +108,14 @@ npm start           # Preview production build
 
 ## Development Notes
 - **Environment**: Uses SQLite for development, PostgreSQL for production (configured via DATABASE_URL)
-- **Frontend Proxy**: Proxies API calls to `http://localhost:8000` in development
-- **CORS**: Fully open for development (disabled for full-stack development) 
-- **Database Setup**: Migrations handled via direct model metadata creation
+- **Frontend Proxy**: Proxies API calls to Railway production backend in development (`https://backend-painel-universal-production.up.railway.app`)
+- **CORS**: Ultra-robust CORS implementation with custom middleware for maximum compatibility
+- **Database Setup**: Migrations handled via direct model metadata creation and dedicated migration scripts
 - **Testing**: Backend uses pytest with async support and coverage reporting
 - **TypeScript**: Strict configuration with comprehensive type checking
 - **PWA**: Progressive Web App capabilities with service worker caching
+- **Authentication**: JWT-based with CPF validation and role-based access control
+- **Error Handling**: Global exception handlers with CORS-aware responses
 
 ## Recent Architecture Changes
 - **User Independence**: Users can be created without company association (empresa_id removed from required fields)
@@ -113,3 +125,19 @@ npm start           # Preview production build
 ## Database Migrations
 - **Production Setup**: Use `backend/apply_postgresql_migration.py` or `backend/remove_empresa_id_migration.sql` for PostgreSQL
 - **Development**: SQLite migrations are handled automatically via SQLAlchemy metadata
+- **Available Migration Scripts**:
+  - `apply_migration.py` - General migration application
+  - `make_empresa_optional_migration.py` - Make empresa_id optional for users
+  - `migrate_empresa_id_nullable.py` - Update existing records to allow null empresa_id
+  - `recreate_table_migration.py` - Recreate tables with new schema
+  - Specific SQL files for PostgreSQL production environments
+
+## Special Features
+- **Landing Page Integration**: Includes a separate landing page module in `/landing-unique` for marketing
+- **Multi-Environment Support**: Different configurations for development (SQLite) and production (PostgreSQL)
+- **Real-time Communication**: WebSocket implementation for live updates in PDV and check-in systems  
+- **CPF Security**: All user operations are tied to CPF for enhanced security and Brazilian compliance
+- **QR Code Generation**: Automatic QR code generation for tickets and check-ins
+- **Email Integration**: Email service for notifications and receipts
+- **WhatsApp Integration**: Automated WhatsApp messaging capabilities
+- **Deployment Scripts**: PowerShell (Windows) and Bash (Unix) scripts for easy deployment

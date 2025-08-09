@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -81,10 +83,10 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
         
         # Em desenvolvimento ou para máxima compatibilidade
         if not os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("CORS_ULTRA_PERMISSIVE", "false").lower() == "true":
-            logger.info("🔓 CORS Ultra-Permissivo ativado")
+            logger.info("CORS Ultra-Permissivo ativado")
             return ["*"]
         
-        logger.info(f"🔒 CORS Restritivo ativado com {len(base_origins)} origens permitidas")
+        logger.info(f"CORS Restritivo ativado com {len(base_origins)} origens permitidas")
         return base_origins
     
     def _create_cors_response(self, request: Request, status_code: int = 200, content: str = ""):
@@ -133,11 +135,11 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         
         # Log detalhado para debug
-        logger.info(f"🌐 CORS Request - {method} {path} | Origin: {origin}")
+        logger.info(f"CORS Request - {method} {path} | Origin: {origin}")
         
         # Tratar requisições OPTIONS (preflight)
         if method == "OPTIONS":
-            logger.info(f"✅ Handling OPTIONS preflight for {path}")
+            logger.info(f"Handling OPTIONS preflight for {path}")
             return self._create_cors_response(request, 200, '{"status": "ok"}')
         
         try:
@@ -147,12 +149,12 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
             # Adicionar headers CORS à resposta
             self._add_cors_headers(response, origin or "*")
             
-            logger.info(f"✅ Response sent with CORS headers - Status: {response.status_code}")
+            logger.info(f"Response sent with CORS headers - Status: {response.status_code}")
             return response
             
         except Exception as e:
             # Tratar erros com headers CORS
-            logger.error(f"❌ Error in request {method} {path}: {str(e)}")
+            logger.error(f"Error in request {method} {path}: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             
             error_response = JSONResponse(
@@ -205,7 +207,7 @@ async def websocket_pdv_endpoint(websocket: WebSocket, evento_id: int):
     """WebSocket para PDV com verificação de origem"""
     # Verificar origem do WebSocket se necessário
     origin = websocket.headers.get("origin")
-    logger.info(f"🔌 WebSocket connection from origin: {origin}")
+    logger.info(f"WebSocket connection from origin: {origin}")
     
     await manager.connect(websocket, evento_id)
     try:
@@ -219,7 +221,7 @@ async def websocket_pdv_endpoint(websocket: WebSocket, evento_id: int):
 async def websocket_checkin_endpoint(websocket: WebSocket, evento_id: int):
     """WebSocket para Check-in com verificação de origem"""
     origin = websocket.headers.get("origin")
-    logger.info(f"🔌 WebSocket checkin connection from origin: {origin}")
+    logger.info(f"WebSocket checkin connection from origin: {origin}")
     
     await manager.connect(websocket, evento_id)
     try:
@@ -327,7 +329,7 @@ async def options_catch_all(request: Request, full_path: str):
     requested_method = request.headers.get("access-control-request-method", "")
     requested_headers = request.headers.get("access-control-request-headers", "")
     
-    logger.info(f"🎯 OPTIONS catch-all: /{full_path} | Origin: {origin} | Method: {requested_method}")
+    logger.info(f"OPTIONS catch-all: /{full_path} | Origin: {origin} | Method: {requested_method}")
     
     return JSONResponse(
         content={"message": "OPTIONS handled by catch-all"},
@@ -438,7 +440,7 @@ async def root():
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handler global de exceções com headers CORS"""
-    logger.error(f"🚨 Global exception: {str(exc)}")
+    logger.error(f"Global exception: {str(exc)}")
     logger.error(f"Traceback: {traceback.format_exc()}")
     
     return JSONResponse(
@@ -453,6 +455,68 @@ async def global_exception_handler(request: Request, exc: Exception):
             "Access-Control-Allow-Methods": "*",
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Allow-Credentials": "false"
+        }
+    )
+
+# 🚨 HANDLER PARA ERROS DE VALIDAÇÃO (PYDANTIC) COM CORS
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handler para erros de validação Pydantic com CORS e detalhes"""
+    logger.error(f"VALIDATION ERROR: {str(exc)}")
+    logger.error(f"Request URL: {request.url}")
+    logger.error(f"Request method: {request.method}")
+    logger.error(f"Request headers: {dict(request.headers)}")
+    
+    # Capturar corpo da requisição para debug
+    try:
+        body = await request.body()
+        logger.error(f"Request body: {body.decode('utf-8')}")
+    except Exception as body_error:
+        logger.error(f"Could not read request body: {body_error}")
+    
+    # Processar erros de validação
+    errors_detail = []
+    for error in exc.errors():
+        field = " -> ".join(str(loc) for loc in error["loc"])
+        message = error["msg"]
+        error_type = error["type"]
+        errors_detail.append(f"{field}: {message} (tipo: {error_type})")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Validation Error", 
+            "message": "Dados inválidos enviados na requisição",
+            "details": errors_detail,
+            "raw_errors": exc.errors(),
+            "timestamp": datetime.now().isoformat()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*", 
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "false"
+        }
+    )
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    """Handler para erros de validação diretos do Pydantic"""
+    logger.error(f"PYDANTIC VALIDATION ERROR: {str(exc)}")
+    logger.error(f"Request URL: {request.url}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Pydantic Validation Error",
+            "message": "Erro de validação nos dados",
+            "details": exc.errors(),
+            "timestamp": datetime.now().isoformat()
+        },
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
         }
     )
 

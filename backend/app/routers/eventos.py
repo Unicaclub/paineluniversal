@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_
@@ -24,6 +24,82 @@ from ..auth import obter_usuario_atual, verificar_permissao_admin
 
 router = APIRouter()
 
+@router.post("/test", response_model=EventoSchema)
+async def criar_evento_teste(
+    evento: EventoCreate,
+    db: Session = Depends(get_db)
+):
+    """TESTE: Criar novo evento SEM autenticação para debug"""
+    
+    print("=" * 50)
+    print("TESTE CRIANDO EVENTO - SEM AUTENTICACAO")
+    print(f"Dados recebidos: {evento.dict()}")
+    print(f"Nome: {evento.nome}")
+    print(f"Data do evento: {evento.data_evento} (tipo: {type(evento.data_evento)})")
+    print(f"Local: {evento.local}")
+    print(f"Endereco: {evento.endereco}")
+    print(f"Limite idade: {evento.limite_idade}")
+    print(f"Capacidade: {evento.capacidade_maxima}")
+    print(f"Empresa ID: {evento.empresa_id}")
+    print("=" * 50)
+    
+    # Para teste, criar um usuário fake
+    from ..models import Usuario, TipoUsuario
+    usuario_teste = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.ADMIN).first()
+    if not usuario_teste:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Nenhum usuário admin encontrado para teste"
+        )
+    
+    # Se não foi especificada uma empresa, usar a primeira empresa disponível ou criar uma padrão
+    empresa_id = evento.empresa_id
+    if not empresa_id:
+        from ..models import Empresa
+        primeira_empresa = db.query(Empresa).filter(Empresa.ativa == True).first()
+        if not primeira_empresa:
+            # Criar empresa padrão se não existir nenhuma
+            empresa_padrao = Empresa(
+                nome="Empresa Padrão",
+                cnpj="00000000000100",
+                email="contato@paineluniversal.com",
+                telefone="(11) 99999-9999",
+                ativa=True
+            )
+            db.add(empresa_padrao)
+            db.commit()
+            db.refresh(empresa_padrao)
+            empresa_id = empresa_padrao.id
+        else:
+            empresa_id = primeira_empresa.id
+    
+    try:
+        evento_data = evento.dict()
+        evento_data['criador_id'] = usuario_teste.id
+        evento_data['empresa_id'] = empresa_id
+        
+        print(f"Dados finais do evento: {evento_data}")
+        
+        db_evento = Evento(**evento_data)
+        db.add(db_evento)
+        db.commit()
+        db.refresh(db_evento)
+        
+        print(f"TESTE: Evento criado com sucesso: ID {db_evento.id}")
+        
+        return db_evento
+        
+    except Exception as e:
+        print(f"TESTE ERRO ao criar evento no banco: {e}")
+        print(f"TESTE Tipo do erro: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao criar evento: {str(e)}"
+        )
+
 @router.post("/", response_model=EventoSchema)
 async def criar_evento(
     evento: EventoCreate,
@@ -32,9 +108,18 @@ async def criar_evento(
 ):
     """Criar novo evento"""
     
-    print(f"🎫 Criando evento: {evento.nome}")
-    print(f"📅 Data do evento: {evento.data_evento}")
-    print(f"👤 Usuário: {usuario_atual.nome} ({usuario_atual.tipo.value})")
+    print("=" * 50)
+    print("CRIANDO EVENTO - DEBUG DETALHADO")
+    print(f"Dados recebidos: {evento.dict()}")
+    print(f"Nome: {evento.nome}")
+    print(f"Data do evento: {evento.data_evento} (tipo: {type(evento.data_evento)})")
+    print(f"Local: {evento.local}")
+    print(f"Endereco: {evento.endereco}")
+    print(f"Limite idade: {evento.limite_idade}")
+    print(f"Capacidade: {evento.capacidade_maxima}")
+    print(f"Empresa ID: {evento.empresa_id}")
+    print(f"Usuario: {usuario_atual.nome} ({usuario_atual.tipo.value}) - ID: {usuario_atual.id}")
+    print("=" * 50)
     
     if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
@@ -50,7 +135,7 @@ async def criar_evento(
                 detail="Data do evento deve ser futura"
             )
     except Exception as e:
-        print(f"❌ Erro ao validar data: {e}")
+        print(f"ERRO ao validar data: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data do evento inválida"
@@ -82,19 +167,19 @@ async def criar_evento(
         evento_data['criador_id'] = usuario_atual.id
         evento_data['empresa_id'] = empresa_id
         
-        print(f"📝 Dados finais do evento: {evento_data}")
+        print(f"Dados finais do evento: {evento_data}")
         
         db_evento = Evento(**evento_data)
         db.add(db_evento)
         db.commit()
         db.refresh(db_evento)
         
-        print(f"✅ Evento criado com sucesso: ID {db_evento.id}")
+        print(f"Evento criado com sucesso: ID {db_evento.id}")
         
         return db_evento
         
     except Exception as e:
-        print(f"💥 Erro ao criar evento no banco: {e}")
+        print(f"ERRO ao criar evento no banco: {e}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -629,3 +714,4 @@ async def exportar_evento_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=evento_{evento_id}_relatorio.pdf"}
     )
+# Forced reload
