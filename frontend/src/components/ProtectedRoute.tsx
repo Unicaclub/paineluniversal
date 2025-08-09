@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/portal" replace />;
   }
 
   if (requiredRoles.length > 0 && usuario && !requiredRoles.includes(usuario.tipo)) {

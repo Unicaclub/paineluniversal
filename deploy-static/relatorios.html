@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Sistema Supremo</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6B46C1">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span>🚀</span>
+                    Sistema Supremo
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cardapio" class="nav-link">
+                        <span class="nav-icon">🍽️</span>
+                        Cardápio
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/equipe" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        Equipe
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cashless" class="nav-link">
+                        <span class="nav-icon">💳</span>
+                        Cashless
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/relatorios" class="nav-link active">
+                        <span class="nav-icon">📈</span>
+                        Relatórios
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1 class="page-title">Relatórios e Analytics</h1>
+                <div class="user-info">
+                    <span id="userName">Administrador Demo</span>
+                    <button class="logout-btn" onclick="logout()">Sair</button>
+                </div>
+            </header>
+            
+            <div class="content-area">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Relatórios Gerados</span>
+                            <span class="stat-icon">📄</span>
+                        </div>
+                        <div class="stat-value">156</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +23% este mês
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Dados Processados</span>
+                            <span class="stat-icon">💾</span>
+                        </div>
+                        <div class="stat-value">2.4GB</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +18% vs mês anterior
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Exportações</span>
+                            <span class="stat-icon">📤</span>
+                        </div>
+                        <div class="stat-value">89</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +12% esta semana
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Tempo Médio</span>
+                            <span class="stat-icon">⏱️</span>
+                        </div>
+                        <div class="stat-value">2.3s</div>
+                        <div class="stat-change negative">
+                            <span>↘</span>
+                            -15% vs média
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 Central de Relatórios</h3>
+                    </div>
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📈</div>
+                        <h3 style="margin-bottom: 15px;">Analytics Avançado</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                            Sistema completo de relatórios e analytics em desenvolvimento.
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                            <span class="badge badge-primary">Vendas</span>
+                            <span class="badge badge-primary">Financeiro</span>
+                            <span class="badge badge-primary">Clientes</span>
+                            <span class="badge badge-primary">Estoque</span>
+                            <span class="badge badge-primary">Performance</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Verificar autenticação
+        function checkAuth() {
+            const auth = localStorage.getItem('sistema_supremo_auth');
+            if (!auth) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            const authData = JSON.parse(auth);
+            document.getElementById('userName').textContent = authData.user.nome;
+        }
+        
+        // Logout
+        function logout() {
+            localStorage.removeItem('sistema_supremo_auth');
+            window.location.href = '/login';
+        }
+        
+        // Inicializar
+        checkAuth();
+    </script>
+</body>
+</html>

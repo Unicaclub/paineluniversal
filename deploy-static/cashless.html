@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Cashless - Sistema Supremo</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6B46C1">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span>🚀</span>
+                    Sistema Supremo
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cardapio" class="nav-link">
+                        <span class="nav-icon">🍽️</span>
+                        Cardápio
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/equipe" class="nav-link">
+                        <span class="nav-icon">👥</span>
+                        Equipe
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cashless" class="nav-link active">
+                        <span class="nav-icon">💳</span>
+                        Cashless
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/relatorios" class="nav-link">
+                        <span class="nav-icon">📈</span>
+                        Relatórios
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1 class="page-title">Sistema Cashless</h1>
+                <div class="user-info">
+                    <span id="userName">Administrador Demo</span>
+                    <button class="logout-btn" onclick="logout()">Sair</button>
+                </div>
+            </header>
+            
+            <div class="content-area">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Cartões Ativos</span>
+                            <span class="stat-icon">💳</span>
+                        </div>
+                        <div class="stat-value">1.247</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +12.5% vs semana passada
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Saldo Total</span>
+                            <span class="stat-icon">💰</span>
+                        </div>
+                        <div class="stat-value">R$ 45.230</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +8.7% vs ontem
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Recargas Hoje</span>
+                            <span class="stat-icon">⚡</span>
+                        </div>
+                        <div class="stat-value">89</div>
+                        <div class="stat-change positive">
+                            <span>↗</span>
+                            +15.3% vs ontem
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Consumo Médio</span>
+                            <span class="stat-icon">📊</span>
+                        </div>
+                        <div class="stat-value">R$ 36,25</div>
+                        <div class="stat-change negative">
+                            <span>↘</span>
+                            -2.1% vs média
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🚧 Módulo em Desenvolvimento</h3>
+                    </div>
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">💳</div>
+                        <h3 style="margin-bottom: 15px;">Sistema Cashless</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                            Funcionalidades de gestão de cartões, recargas e consumo em desenvolvimento.
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                            <span class="badge badge-primary">Emissão de Cartões</span>
+                            <span class="badge badge-primary">Recargas</span>
+                            <span class="badge badge-primary">Bloqueios</span>
+                            <span class="badge badge-primary">Relatórios</span>
+                            <span class="badge badge-primary">QR Code</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Verificar autenticação
+        function checkAuth() {
+            const auth = localStorage.getItem('sistema_supremo_auth');
+            if (!auth) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            const authData = JSON.parse(auth);
+            document.getElementById('userName').textContent = authData.user.nome;
+        }
+        
+        // Logout
+        function logout() {
+            localStorage.removeItem('sistema_supremo_auth');
+            window.location.href = '/login';
+        }
+        
+        // Inicializar
+        checkAuth();
+    </script>
+</body>
+</html>

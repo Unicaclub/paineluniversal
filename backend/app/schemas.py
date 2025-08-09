@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
 from typing import Optional, List
 from decimal import Decimal
-from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
+from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, StatusColaborador
 import re
 
 
@@ -745,3 +745,61 @@ class FiltrosRanking(BaseModel):
     badge_nivel: Optional[str] = None
     tipo_ranking: Optional[str] = "geral"
     limit: int = 20
+
+class CargoBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    nivel_hierarquico: int = 4
+    permissoes: dict = {}
+
+class CargoCreate(CargoBase):
+    empresa_id: int
+
+class CargoUpdate(BaseModel):
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    nivel_hierarquico: Optional[int] = None
+    permissoes: Optional[dict] = None
+
+class Cargo(CargoBase):
+    id: int
+    ativo: bool
+    empresa_id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class ColaboradorBase(BaseModel):
+    nome: str
+    email: EmailStr
+    cpf: str
+    telefone: Optional[str] = None
+    cargo_id: int
+    data_admissao: date
+    status: StatusColaborador = StatusColaborador.ATIVO
+
+class ColaboradorCreate(ColaboradorBase):
+    empresa_id: int
+
+class ColaboradorUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    cpf: Optional[str] = None
+    telefone: Optional[str] = None
+    cargo_id: Optional[int] = None
+    data_admissao: Optional[date] = None
+    status: Optional[StatusColaborador] = None
+
+class Colaborador(ColaboradorBase):
+    id: int
+    empresa_id: int
+    foto_perfil: Optional[str] = None
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    criado_por: Optional[int] = None
+    cargo: Optional[Cargo] = None
+    
+    class Config:
+        from_attributes = True

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum, Date
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum, Date, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -26,6 +26,11 @@ class TipoUsuario(enum.Enum):
     ADMIN = "admin"
     PROMOTER = "promoter"
     CLIENTE = "cliente"
+
+class StatusColaborador(enum.Enum):
+    ATIVO = "ativo"
+    INATIVO = "inativo"
+    SUSPENSO = "suspenso"
 
 class Empresa(Base):
     __tablename__ = "empresas"
@@ -61,6 +66,7 @@ class Usuario(Base):
     promocoes = relationship("PromoterEvento", back_populates="promoter")
     transacoes = relationship("Transacao", back_populates="usuario")
     checkins = relationship("Checkin", back_populates="usuario")
+    colaboradores_criados = relationship("Colaborador", back_populates="criador")
 
 class Evento(Base):
     __tablename__ = "eventos"
@@ -533,3 +539,40 @@ class MetricaPromoter(Base):
     
     promoter = relationship("Usuario")
     evento = relationship("Evento")
+
+class Cargo(Base):
+    __tablename__ = "cargos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), unique=True, nullable=False)
+    descricao = Column(Text)
+    nivel_hierarquico = Column(Integer, default=4)
+    permissoes = Column(JSON, default={})
+    ativo = Column(Boolean, default=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    colaboradores = relationship("Colaborador", back_populates="cargo")
+    empresa = relationship("Empresa")
+
+class Colaborador(Base):
+    __tablename__ = "colaboradores"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False)
+    cpf = Column(String(14), unique=True, nullable=False)
+    telefone = Column(String(20))
+    cargo_id = Column(Integer, ForeignKey("cargos.id"), nullable=False)
+    data_admissao = Column(Date, nullable=False)
+    status = Column(Enum(StatusColaborador), default=StatusColaborador.ATIVO)
+    foto_perfil = Column(String(500))
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    
+    cargo = relationship("Cargo", back_populates="colaboradores")
+    empresa = relationship("Empresa")
+    criador = relationship("Usuario", back_populates="colaboradores_criados")

@@ -22,7 +22,8 @@ import {
   ChevronDown,
   Bell,
   Search,
-  Zap
+  Zap,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -51,7 +52,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/portal');
   };
 
   const handleNotifications = () => {
@@ -84,11 +85,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       description: 'Visão geral do sistema'
     },
     { 
-      icon: Zap, 
+      icon: BarChart3, 
       label: 'Dashboard Supremo', 
       path: '/dashboard-supremo', 
       roles: ['admin', 'promoter'],
       description: 'Dashboard integrado cashless'
+    },
+    { 
+      icon: Calendar, 
+      label: 'Eventos Supremo', 
+      path: '/eventos-supremo', 
+      roles: ['admin', 'promoter'],
+      description: 'Gestão avançada de eventos'
+    },
+    { 
+      icon: Users, 
+      label: 'Clientes Supremo', 
+      path: '/clientes-supremo', 
+      roles: ['admin', 'promoter'],
+      description: 'Gestão de clientes cashless'
+    },
+    { 
+      icon: CreditCard, 
+      label: 'Cartões Supremo', 
+      path: '/cartoes-supremo', 
+      roles: ['admin', 'promoter'],
+      description: 'Gestão de cartões/comandas'
+    },
+    { 
+      icon: Zap, 
+      label: 'Operações Supremo', 
+      path: '/operacoes-supremo', 
+      roles: ['admin', 'promoter'],
+      description: 'Recarga, Consumo, Caixa, Relatórios'
     },
     { 
       icon: Calendar, 
@@ -152,6 +181,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: '/usuarios', 
       roles: ['admin'],
       description: 'Gerenciar usuários do sistema'
+    },
+    { 
+      icon: Users, 
+      label: 'Gestão de Equipe', 
+      path: '/equipe', 
+      roles: ['admin'],
+      description: 'Colaboradores e cargos'
     },
     { 
       icon: Building2, 
@@ -356,7 +392,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {usuario?.email}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+                    {usuario?.nome || 'Sistema Universal'}
                   </p>
                 </div>
                 
@@ -427,7 +463,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <ThemeToggle />
               
               <div className="hidden sm:block text-sm text-muted-foreground">
-                {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+                {usuario?.nome || 'Sistema Universal'}
               </div>
             </div>
           </div>

@@ -4,8 +4,13 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import LoginForm from './components/auth/LoginForm';
+import LoginPortal from './components/auth/LoginPortal';
 import Dashboard from './components/dashboard/Dashboard';
 import DashboardSupremo from './components/supremo/DashboardSupremo';
+import EventosSupremo from './components/supremo/EventosSupremo';
+import ClientesSupremo from './components/supremo/ClientesSupremo';
+import CartoesSupremo from './components/supremo/CartoesSupremo';
+import OperacoesSupremo from './components/supremo/OperacoesSupremo';
 import QRCodeManager from './components/supremo/QRCodeManager';
 import TestPage from './components/test/TestPage';
 import SalesModule from './components/sales/SalesModule';
@@ -19,6 +24,7 @@ import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
 import { UsuariosModule } from './components/usuarios';
+import EquipeModule from './components/equipe/EquipeModule';
 import PublicRegisterPage from './components/auth/PublicRegisterPage';
 import './App.css';
 
@@ -29,8 +35,9 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginForm />} />
+            <Route path="/portal" element={<LoginPortal />} />
             <Route path="/register" element={<PublicRegisterPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/portal" replace />} />
             <Route
               path="/*"
               element={
@@ -41,6 +48,26 @@ function App() {
                       <Route path="/dashboard-supremo" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <DashboardSupremo />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/eventos-supremo" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <EventosSupremo />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/clientes-supremo" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <ClientesSupremo />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/cartoes-supremo" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <CartoesSupremo />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/operacoes-supremo" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <OperacoesSupremo />
                         </ProtectedRoute>
                       } />
                       <Route path="/test-supremo" element={<DashboardSupremo />} />
@@ -84,6 +111,11 @@ function App() {
                       <Route path="/usuarios" element={
                         <ProtectedRoute requiredRoles={['admin']}>
                           <UsuariosModule />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/equipe" element={
+                        <ProtectedRoute requiredRoles={['admin']}>
+                          <EquipeModule />
                         </ProtectedRoute>
                       } />
                       <Route path="/empresas" element={

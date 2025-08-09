@@ -554,4 +554,70 @@ export const pdvService = {
   }
 };
 
+export const equipeService = {
+  async listarColaboradores(filtros?: {
+    cargo_id?: number;
+    status?: string;
+    nome?: string;
+    email?: string;
+  }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.cargo_id) params.append('cargo_id', filtros.cargo_id.toString());
+    if (filtros?.status) params.append('status', filtros.status);
+    if (filtros?.nome) params.append('nome', filtros.nome);
+    if (filtros?.email) params.append('email', filtros.email);
+    
+    const response = await api.get(`/api/equipe/colaboradores?${params}`);
+    return response.data;
+  },
+
+  async obterColaborador(id: number): Promise<any> {
+    const response = await api.get(`/api/equipe/colaboradores/${id}`);
+    return response.data;
+  },
+
+  async criarColaborador(colaboradorData: any): Promise<any> {
+    const response = await api.post('/api/equipe/colaboradores', colaboradorData);
+    return response.data;
+  },
+
+  async atualizarColaborador(id: number, colaboradorData: any): Promise<any> {
+    const response = await api.put(`/api/equipe/colaboradores/${id}`, colaboradorData);
+    return response.data;
+  },
+
+  async excluirColaborador(id: number): Promise<void> {
+    await api.delete(`/api/equipe/colaboradores/${id}`);
+  },
+
+  async listarCargos(): Promise<any[]> {
+    const response = await api.get('/api/equipe/cargos');
+    return response.data;
+  },
+
+  async obterCargo(id: number): Promise<any> {
+    const response = await api.get(`/api/equipe/cargos/${id}`);
+    return response.data;
+  },
+
+  async criarCargo(cargoData: any): Promise<any> {
+    const response = await api.post('/api/equipe/cargos', cargoData);
+    return response.data;
+  },
+
+  async atualizarCargo(id: number, cargoData: any): Promise<any> {
+    const response = await api.put(`/api/equipe/cargos/${id}`, cargoData);
+    return response.data;
+  },
+
+  async excluirCargo(id: number): Promise<void> {
+    await api.delete(`/api/equipe/cargos/${id}`);
+  },
+
+  async obterEstatisticas(): Promise<any> {
+    const response = await api.get('/api/equipe/estatisticas');
+    return response.data;
+  }
+};
+
 export default api;

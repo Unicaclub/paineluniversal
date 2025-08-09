@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Equipe - Sistema Supremo</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6B46C1">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <style>
+        .equipe-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 30px;
+            gap: 2px;
+        }
+        
+        .equipe-tab {
+            padding: 12px 20px;
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px 8px 0 0;
+            text-decoration: none;
+        }
+        
+        .equipe-tab:hover {
+            background: var(--dark-light);
+            color: var(--text-primary);
+        }
+        
+        .equipe-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .colaboradores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .colaborador-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .colaborador-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .colaborador-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .colaborador-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .colaborador-info h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .colaborador-info p {
+            margin: 2px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .colaborador-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            font-size: 12px;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .colaborador-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .colaborador-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .cargos-table {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .filters-section {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: end;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .colaboradores-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span>🚀</span>
+                    Sistema Supremo
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a href="/dashboard" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cardapio" class="nav-link">
+                        <span class="nav-icon">🍽️</span>
+                        Cardápio
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/equipe" class="nav-link active">
+                        <span class="nav-icon">👥</span>
+                        Equipe
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/cashless" class="nav-link">
+                        <span class="nav-icon">💳</span>
+                        Cashless
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/relatorios" class="nav-link">
+                        <span class="nav-icon">📈</span>
+                        Relatórios
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1 class="page-title">Gestão de Equipe</h1>
+                <div class="user-info">
+                    <span id="userName">Administrador Demo</span>
+                    <button class="logout-btn" onclick="logout()">Sair</button>
+                </div>
+            </header>
+            
+            <!-- Tabs de Equipe -->
+            <div class="equipe-tabs">
+                <a href="#colaboradores" class="equipe-tab active" data-tab="colaboradores">
+                    👥 Colaboradores
+                </a>
+                <a href="#cargos" class="equipe-tab" data-tab="cargos">
+                    🏷️ Cargos
+                </a>
+            </div>
+            
+            <div class="content-area">
+                <!-- Tab Colaboradores -->
+                <div id="tab-colaboradores" class="tab-content active">
+                    <!-- Estatísticas -->
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-value">24</div>
+                            <div class="stat-label">Total de Colaboradores</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">22</div>
+                            <div class="stat-label">Ativos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">2</div>
+                            <div class="stat-label">Inativos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">Cargos</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros e Ações -->
+                    <div class="filters-section">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-input" id="searchColaborador" placeholder="Buscar colaboradores...">
+                        </div>
+                        <div class="form-group mb-0">
+                            <select class="form-select" id="filtroCargo">
+                                <option value="">Todos os cargos</option>
+                                <option value="gerente">Gerente</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="operador">Operador</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="abrirModal('modalNovoColaborador')">
+                            ➕ Novo Colaborador
+                        </button>
+                    </div>
+                    
+                    <!-- Grid de Colaboradores -->
+                    <div class="colaboradores-grid">
+                        <div class="colaborador-card">
+                            <div class="colaborador-header">
+                                <div class="colaborador-avatar">JS</div>
+                                <div class="colaborador-info">
+                                    <h3>João Silva</h3>
+                                    <p>joao.silva@empresa.com</p>
+                                    <span class="badge badge-success">Ativo</span>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Cargo</div>
+                                    <div class="detail-value">Gerente</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">CPF</div>
+                                    <div class="detail-value">123.456.789-00</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telefone</div>
+                                    <div class="detail-value">(11) 99999-9999</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Admissão</div>
+                                    <div class="detail-value">15/01/2024</div>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-actions">
+                                <button class="btn btn-outline">✏️ Editar</button>
+                                <button class="btn btn-warning">⏸️ Suspender</button>
+                                <button class="btn btn-danger">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                        
+                        <div class="colaborador-card">
+                            <div class="colaborador-header">
+                                <div class="colaborador-avatar">MS</div>
+                                <div class="colaborador-info">
+                                    <h3>Maria Santos</h3>
+                                    <p>maria.santos@empresa.com</p>
+                                    <span class="badge badge-success">Ativo</span>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Cargo</div>
+                                    <div class="detail-value">Supervisora</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">CPF</div>
+                                    <div class="detail-value">987.654.321-00</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telefone</div>
+                                    <div class="detail-value">(11) 88888-8888</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Admissão</div>
+                                    <div class="detail-value">20/02/2024</div>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-actions">
+                                <button class="btn btn-outline">✏️ Editar</button>
+                                <button class="btn btn-warning">⏸️ Suspender</button>
+                                <button class="btn btn-danger">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                        
+                        <div class="colaborador-card">
+                            <div class="colaborador-header">
+                                <div class="colaborador-avatar">PO</div>
+                                <div class="colaborador-info">
+                                    <h3>Pedro Oliveira</h3>
+                                    <p>pedro.oliveira@empresa.com</p>
+                                    <span class="badge badge-warning">Suspenso</span>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Cargo</div>
+                                    <div class="detail-value">Operador</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">CPF</div>
+                                    <div class="detail-value">456.789.123-00</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telefone</div>
+                                    <div class="detail-value">(11) 77777-7777</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Admissão</div>
+                                    <div class="detail-value">10/03/2024</div>
+                                </div>
+                            </div>
+                            
+                            <div class="colaborador-actions">
+                                <button class="btn btn-outline">✏️ Editar</button>
+                                <button class="btn btn-success">▶️ Reativar</button>
+                                <button class="btn btn-danger">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Cargos -->
+                <div id="tab-cargos" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h2>Cargos e Permissões</h2>
+                        <button class="btn btn-primary" onclick="abrirModal('modalNovoCargo')">
+                            ➕ Novo Cargo
+                        </button>
+                    </div>
+                    
+                    <div class="cargos-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Cargo</th>
+                                    <th>Nível</th>
+                                    <th>Colaboradores</th>
+                                    <th>Permissões</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <strong>Administrador</strong>
+                                        <br><small class="text-secondary">Acesso total ao sistema</small>
+                                    </td>
+                                    <td><span class="badge badge-danger">1</span></td>
+                                    <td>2</td>
+                                    <td>
+                                        <span class="badge badge-success">Todas (15)</span>
+                                    </td>
+                                    <td><span class="badge badge-success">Ativo</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">✏️</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Gerente</strong>
+                                        <br><small class="text-secondary">Gestão operacional</small>
+                                    </td>
+                                    <td><span class="badge badge-warning">2</span></td>
+                                    <td>3</td>
+                                    <td>
+                                        <span class="badge badge-primary">12 de 15</span>
+                                    </td>
+                                    <td><span class="badge badge-success">Ativo</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">✏️</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Supervisor</strong>
+                                        <br><small class="text-secondary">Supervisão de equipe</small>
+                                    </td>
+                                    <td><span class="badge badge-primary">3</span></td>
+                                    <td>5</td>
+                                    <td>
+                                        <span class="badge badge-primary">8 de 15</span>
+                                    </td>
+                                    <td><span class="badge badge-success">Ativo</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">✏️</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Operador</strong>
+                                        <br><small class="text-secondary">Operações básicas</small>
+                                    </td>
+                                    <td><span class="badge badge-secondary">4</span></td>
+                                    <td>14</td>
+                                    <td>
+                                        <span class="badge badge-primary">5 de 15</span>
+                                    </td>
+                                    <td><span class="badge badge-success">Ativo</span></td>
+                                    <td>
+                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 12px;">✏️</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal Novo Colaborador -->
+    <div class="modal-overlay" id="modalNovoColaborador">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Colaborador</h2>
+                <button class="close-btn" onclick="fecharModal('modalNovoColaborador')">✕</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Nome Completo</label>
+                <input type="text" class="form-input" placeholder="Ex: João Silva">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" placeholder="joao@empresa.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">CPF</label>
+                    <input type="text" class="form-input" placeholder="000.000.000-00" maxlength="14">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input type="text" class="form-input" placeholder="(11) 99999-9999">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Cargo</label>
+                    <select class="form-select">
+                        <option>Selecione um cargo</option>
+                        <option value="gerente">Gerente</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="operador">Operador</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Data de Admissão</label>
+                <input type="date" class="form-input">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                <button class="btn btn-outline" onclick="fecharModal('modalNovoColaborador')">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarColaborador()">Salvar Colaborador</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Novo Cargo -->
+    <div class="modal-overlay" id="modalNovoCargo">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Cargo</h2>
+                <button class="close-btn" onclick="fecharModal('modalNovoCargo')">✕</button>
+            </div>
+            
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="abrirTab('descricao')">Descrição</button>
+                <button class="modal-tab" onclick="abrirTab('permissoes')">Permissões</button>
+            </div>
+            
+            <div class="tab-content active" id="tab-descricao">
+                <div class="form-group">
+                    <label class="form-label">Nome do Cargo</label>
+                    <input type="text" class="form-input" placeholder="Ex: Coordenador">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-textarea" placeholder="Descrição das responsabilidades do cargo"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Nível Hierárquico</label>
+                    <select class="form-select">
+                        <option value="1">1 - Administrador</option>
+                        <option value="2">2 - Gerente</option>
+                        <option value="3">3 - Supervisor</option>
+                        <option value="4" selected>4 - Operacional</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="tab-permissoes">
+                <h4 style="margin-bottom: 20px;">Permissões do Sistema</h4>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="card">
+                        <h5>Dashboard</h5>
+                        <label><input type="checkbox"> Visualizar</label><br>
+                        <label><input type="checkbox"> Exportar</label>
+                    </div>
+                    
+                    <div class="card">
+                        <h5>Eventos</h5>
+                        <label><input type="checkbox"> Criar</label><br>
+                        <label><input type="checkbox"> Editar</label><br>
+                        <label><input type="checkbox"> Excluir</label><br>
+                        <label><input type="checkbox"> Visualizar</label>
+                    </div>
+                    
+                    <div class="card">
+                        <h5>Clientes</h5>
+                        <label><input type="checkbox"> Criar</label><br>
+                        <label><input type="checkbox"> Editar</label><br>
+                        <label><input type="checkbox"> Excluir</label><br>
+                        <label><input type="checkbox"> Visualizar</label><br>
+                        <label><input type="checkbox"> Exportar</label>
+                    </div>
+                    
+                    <div class="card">
+                        <h5>Financeiro</h5>
+                        <label><input type="checkbox"> Caixa</label><br>
+                        <label><input type="checkbox"> Relatórios</label><br>
+                        <label><input type="checkbox"> Configurar</label>
+                    </div>
+                    
+                    <div class="card">
+                        <h5>Equipe</h5>
+                        <label><input type="checkbox"> Gerenciar Colaboradores</label><br>
+                        <label><input type="checkbox"> Gerenciar Cargos</label><br>
+                        <label><input type="checkbox"> Definir Permissões</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                <button class="btn btn-outline" onclick="fecharModal('modalNovoCargo')">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarCargo()">Salvar Cargo</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/equipe.js"></script>
+    <script>
+        // Verificar autenticação
+        function checkAuth() {
+            const auth = localStorage.getItem('sistema_supremo_auth');
+            if (!auth) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            const authData = JSON.parse(auth);
+            document.getElementById('userName').textContent = authData.user.nome;
+        }
+        
+        // Logout
+        function logout() {
+            localStorage.removeItem('sistema_supremo_auth');
+            window.location.href = '/login';
+        }
+        
+        // Inicializar
+        checkAuth();
+    </script>
+</body>
+</html>
