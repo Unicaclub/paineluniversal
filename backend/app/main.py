@@ -41,8 +41,6 @@ def get_allowed_origins():
         # URLs possíveis do frontend
         "https://painel-universal.up.railway.app",
         "https://frontend-painel-universal.up.railway.app",
-        # Para testes
-        "https://web-production-*.up.railway.app",
     ]
     
     # Em desenvolvimento, permitir todas as origens
@@ -50,12 +48,8 @@ def get_allowed_origins():
         logger.info("Ambiente de desenvolvimento detectado - CORS permissivo")
         return ["*"]
     
-    # Em produção Railway, permitir origens específicas + todas as do Railway como fallback
-    railway_origins = [
-        "https://*.up.railway.app",
-        "https://frontend-painel-universal-production.up.railway.app",
-        "*"  # Temporariamente permitir todas até identificar a URL exata
-    ]
+    # Em produção Railway, permitir origens específicas + wildcards como fallback
+    railway_origins = base_origins + ["*"]  # Temporariamente permitir todas até identificar problemas
     
     logger.info(f"Ambiente de produção Railway detectado - CORS com origens: {railway_origins}")
     return railway_origins
