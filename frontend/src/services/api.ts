@@ -167,7 +167,7 @@ export interface EventoCreate {
   data_evento: string;
   local: string;
   endereco?: string;
-  limite_idade?: number;
+  limite_idade: number;
   capacidade_maxima?: number;
   empresa_id?: number;
 }

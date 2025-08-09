@@ -166,6 +166,16 @@ class EventoBase(BaseModel):
     limite_idade: int = 18
     capacidade_maxima: Optional[int] = None
 
+    @validator('data_evento')
+    def validar_data_evento(cls, v):
+        if isinstance(v, str):
+            try:
+                # Converter string ISO para datetime se necessário
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except ValueError:
+                raise ValueError('Formato de data inválido. Use ISO 8601 format.')
+        return v
+
 class EventoCreate(EventoBase):
     empresa_id: Optional[int] = None
 

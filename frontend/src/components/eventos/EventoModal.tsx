@@ -108,7 +108,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
       newErrors.limite_idade = 'Limite de idade deve estar entre 0 e 100 anos';
     }
 
-    if (formData.capacidade_maxima <= 0) {
+    if (formData.capacidade_maxima !== undefined && formData.capacidade_maxima <= 0) {
       newErrors.capacidade_maxima = 'Capacidade máxima deve ser maior que zero';
     }
 
@@ -174,7 +174,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
         throw new Error('Data inválida');
       }
       
-      // Preparar dados limpos para envio
+      // Preparar dados limpos para envio - garantir formato datetime correto
       const eventoData: any = {
         nome: formData.nome.trim(),
         descricao: formData.descricao?.trim() || undefined,
