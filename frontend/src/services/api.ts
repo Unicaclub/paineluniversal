@@ -2,21 +2,32 @@ import axios from 'axios';
 
 // Configuração da URL da API baseada no ambiente
 const getApiBaseUrl = () => {
-  // Detectar se está em produção
-  const isProd = import.meta.env.PROD || window.location.hostname.includes('railway.app');
+  // Detectar se está em produção pela URL ou variável de ambiente
+  const hostname = window.location.hostname;
+  const isProd = import.meta.env.PROD || 
+                hostname.includes('railway.app') || 
+                hostname.includes('netlify.app') ||
+                hostname.includes('vercel.app');
   
   if (isProd) {
-    // 🔥 EM PRODUÇÃO: Usar URL completa do backend DIRETO
-    console.log('🚀 Modo produção - URL backend direta (sem CORS via middleware)');
+    // 🔥 EM PRODUÇÃO: URL completa do backend Railway
+    console.log('🚀 PRODUÇÃO: URL backend Railway direta');
     return 'https://backend-painel-universal-production.up.railway.app';
   } else {
-    // 🔧 EM DESENVOLVIMENTO: Usar localhost com middleware CORS
-    console.log('🔧 Modo desenvolvimento - localhost com middleware CORS');
+    // 🔧 EM DESENVOLVIMENTO: localhost
+    console.log('🔧 DESENVOLVIMENTO: localhost');
     return 'http://localhost:8000';
   }
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+// 🔧 DEBUG: Log da configuração da API
+console.log('🔧 API Configuration:');
+console.log('  - hostname:', window.location.hostname);
+console.log('  - import.meta.env.PROD:', import.meta.env.PROD);
+console.log('  - API_BASE_URL:', API_BASE_URL);
+console.log('  - User Agent:', navigator.userAgent.slice(0, 50));
 
 // Instância pública da API (sem autenticação automática)
 export const publicApi = axios.create({

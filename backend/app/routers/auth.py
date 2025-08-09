@@ -36,6 +36,14 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     try:
         print(f"🔐 Tentativa de login para CPF: {login_data.cpf[:3]}***{login_data.cpf[-3:]}")
         
+        # Verificar se os dados foram recebidos corretamente
+        if not login_data.cpf or not login_data.senha:
+            print(f"❌ Dados incompletos: CPF={bool(login_data.cpf)}, Senha={bool(login_data.senha)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CPF e senha são obrigatórios"
+            )
+        
         usuario = autenticar_usuario(login_data.cpf, login_data.senha, db)
         if not usuario:
             print(f"❌ Usuário não encontrado ou senha incorreta")
@@ -53,6 +61,10 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         print(f"Tipo do erro: {type(e)}")
         import traceback
         traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno do servidor: {str(e)}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno do servidor: {str(e)}"

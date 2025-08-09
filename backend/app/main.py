@@ -26,38 +26,33 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# 🔥 MIDDLEWARE PERSONALIZADO PARA SUBSTITUIR CORS
+# 🔥 MIDDLEWARE SIMPLIFICADO PARA CORS
 @app.middleware("http")
-async def custom_cors_middleware(request: Request, call_next):
-    """Middleware personalizado que substitui CORS e resolve todos os problemas"""
-    
-    # Log da requisição
-    origin = request.headers.get("origin")
-    method = request.method
-    logger.info(f"🌐 Request: {method} {request.url.path} from {origin}")
+async def simple_cors_middleware(request: Request, call_next):
+    """Middleware CORS simplificado e seguro"""
     
     # Para requisições OPTIONS (preflight)
-    if method == "OPTIONS":
-        logger.info(f"✅ PREFLIGHT handled for {request.url.path}")
+    if request.method == "OPTIONS":
         response = Response()
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Max-Age"] = "86400"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         response.status_code = 200
         return response
     
     # Processar requisição normal
-    response = await call_next(request)
-    
-    # Adicionar headers CORS em todas as respostas
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Expose-Headers"] = "*"
-    
-    logger.info(f"✅ Response: {response.status_code} with CORS headers")
-    return response
+    try:
+        response = await call_next(request)
+        
+        # Adicionar headers CORS básicos
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        
+        return response
+    except Exception as e:
+        logger.error(f"❌ Erro no middleware: {str(e)}")
+        raise
 
 app.add_middleware(LoggingMiddleware)
 
