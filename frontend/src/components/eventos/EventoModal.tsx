@@ -27,8 +27,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
     local: '',
     endereco: '',
     limite_idade: 18,
-    capacidade_maxima: 100,
-    empresa_id: 1
+    capacidade_maxima: 100
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,8 +64,7 @@ const EventoModal: React.FC<EventoModalProps> = ({
         local: '',
         endereco: '',
         limite_idade: 18,
-        capacidade_maxima: 100,
-        empresa_id: 1
+        capacidade_maxima: 100
       });
     }
     setErrors({});
@@ -157,9 +155,9 @@ const EventoModal: React.FC<EventoModalProps> = ({
       const eventoData = {
         ...formData,
         data_evento: dataEvento.toISOString(),
-        limite_idade: Number(formData.limite_idade),
-        capacidade_maxima: Number(formData.capacidade_maxima),
-        empresa_id: Number(formData.empresa_id) || 1
+        limite_idade: Number(formData.limite_idade) || 18,
+        capacidade_maxima: formData.capacidade_maxima && formData.capacidade_maxima > 0 ? Number(formData.capacidade_maxima) : undefined,
+        empresa_id: formData.empresa_id && formData.empresa_id > 0 ? Number(formData.empresa_id) : undefined
       };
       
       console.log('📤 Dados finais sendo enviados:', eventoData);
