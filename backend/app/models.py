@@ -227,6 +227,19 @@ class Produto(Base):
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
     categoria = Column(String(100))
     imagem_url = Column(String(500))
+    
+    categoria_estoque_id = Column(Integer, ForeignKey("categorias_estoque.id"))
+    localizacao = Column(String(100))
+    peso = Column(Numeric(8, 3))
+    dimensoes = Column(JSON)
+    data_validade = Column(Date)
+    lote = Column(String(50))
+    custo_medio = Column(Numeric(10, 2))
+    margem_lucro = Column(Numeric(5, 2))
+    giro_estoque = Column(Numeric(8, 2))
+    abc_classificacao = Column(String(1))
+    sazonalidade = Column(JSON)
+    
     evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
@@ -234,8 +247,11 @@ class Produto(Base):
     
     evento = relationship("Evento")
     empresa = relationship("Empresa")
+    categoria_estoque = relationship("CategoriaEstoque", back_populates="produtos")
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
+    previsoes_demanda = relationship("PrevisaoDemanda")
+    alertas = relationship("AlertaEstoque")
 
 class Comanda(Base):
     __tablename__ = "comandas"
@@ -576,3 +592,95 @@ class Colaborador(Base):
     cargo = relationship("Cargo", back_populates="colaboradores")
     empresa = relationship("Empresa")
     criador = relationship("Usuario", back_populates="colaboradores_criados")
+
+class CategoriaEstoque(Base):
+    __tablename__ = "categorias_estoque"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), nullable=False)
+    descricao = Column(Text)
+    icone = Column(String(50))
+    cor = Column(String(7))
+    ativa = Column(Boolean, default=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    produtos = relationship("Produto", back_populates="categoria_estoque")
+    empresa = relationship("Empresa")
+
+class PrevisaoDemanda(Base):
+    __tablename__ = "previsoes_demanda"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, ForeignKey("produtos.id"), nullable=False)
+    data_previsao = Column(Date, nullable=False)
+    quantidade_prevista = Column(Integer, nullable=False)
+    confianca_percentual = Column(Numeric(5, 2), nullable=False)
+    fatores_influencia = Column(JSON)
+    algoritmo_usado = Column(String(50))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    produto = relationship("Produto")
+
+class AlertaEstoque(Base):
+    __tablename__ = "alertas_estoque"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, ForeignKey("produtos.id"), nullable=False)
+    tipo_alerta = Column(String(50), nullable=False)
+    nivel_criticidade = Column(String(20), nullable=False)
+    mensagem = Column(Text, nullable=False)
+    ativo = Column(Boolean, default=True)
+    data_resolucao = Column(DateTime(timezone=True))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    produto = relationship("Produto")
+
+class ReposicaoAutomatica(Base):
+    __tablename__ = "reposicoes_automaticas"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, ForeignKey("produtos.id"), nullable=False)
+    fornecedor_id = Column(Integer, ForeignKey("fornecedores.id"))
+    quantidade_sugerida = Column(Integer, nullable=False)
+    ponto_reposicao = Column(Integer, nullable=False)
+    lote_economico = Column(Integer, nullable=False)
+    status = Column(String(20), default="pendente")
+    aprovado_por = Column(Integer, ForeignKey("usuarios.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    produto = relationship("Produto")
+    aprovador = relationship("Usuario")
+
+class Fornecedor(Base):
+    __tablename__ = "fornecedores"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    cnpj = Column(String(18), unique=True)
+    email = Column(String(255))
+    telefone = Column(String(20))
+    endereco = Column(Text)
+    lead_time_medio = Column(Integer, default=7)
+    avaliacao = Column(Numeric(3, 2), default=5.0)
+    ativo = Column(Boolean, default=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    empresa = relationship("Empresa")
+    produtos = relationship("ProdutoFornecedor", back_populates="fornecedor")
+
+class ProdutoFornecedor(Base):
+    __tablename__ = "produtos_fornecedores"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, ForeignKey("produtos.id"), nullable=False)
+    fornecedor_id = Column(Integer, ForeignKey("fornecedores.id"), nullable=False)
+    codigo_fornecedor = Column(String(50))
+    preco_custo = Column(Numeric(10, 2))
+    lote_minimo = Column(Integer, default=1)
+    lead_time = Column(Integer, default=7)
+    preferencial = Column(Boolean, default=False)
+    
+    produto = relationship("Produto")
+    fornecedor = relationship("Fornecedor", back_populates="produtos")

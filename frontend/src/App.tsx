@@ -20,6 +20,14 @@ import MobileCheckinModule from './components/mobile/MobileCheckinModule';
 import PDVModule from './components/pdv/PDVModule';
 import DashboardPDV from './components/pdv/DashboardPDV';
 import DashboardAvancado from './components/dashboard/DashboardAvancado';
+import DashboardEstoque from './components/estoque/DashboardEstoque';
+import InventarioModule from './components/estoque/InventarioModule';
+import AutomacaoEstoque from './components/estoque/AutomacaoEstoque';
+import PosicaoEstoque from './components/estoque/PosicaoEstoque';
+import EntradaEstoque from './components/estoque/EntradaEstoque';
+import SaidaEstoque from './components/estoque/SaidaEstoque';
+import MotivoEstoque from './components/estoque/MotivoEstoque';
+import IntegracaoEstoque from './components/estoque/IntegracaoEstoque';
 import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
@@ -144,6 +152,46 @@ function App() {
                       <Route path="/relatorios" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <DashboardAvancado />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <DashboardEstoque eventoId={1} />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/inventario" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <InventarioModule />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/automacao" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <AutomacaoEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/posicao" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <PosicaoEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/entrada" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <EntradaEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/saida" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <SaidaEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/motivo" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <MotivoEstoque />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/estoque/integracao" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <IntegracaoEstoque />
                         </ProtectedRoute>
                       } />
                       <Route path="/configuracoes" element={

@@ -803,3 +803,103 @@ class Colaborador(ColaboradorBase):
     
     class Config:
         from_attributes = True
+
+class CategoriaEstoqueBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    icone: Optional[str] = None
+    cor: Optional[str] = "#6B46C1"
+    ativa: bool = True
+
+class CategoriaEstoqueCreate(CategoriaEstoqueBase):
+    empresa_id: int
+
+class CategoriaEstoque(CategoriaEstoqueBase):
+    id: int
+    empresa_id: int
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PrevisaoDemandaBase(BaseModel):
+    produto_id: int
+    data_previsao: date
+    quantidade_prevista: int
+    confianca_percentual: Decimal
+    fatores_influencia: List[str] = []
+    algoritmo_usado: str = "time_series_ml"
+
+class PrevisaoDemanda(PrevisaoDemandaBase):
+    id: int
+    criado_em: datetime
+    produto_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class AlertaEstoqueBase(BaseModel):
+    produto_id: int
+    tipo_alerta: str
+    nivel_criticidade: str
+    mensagem: str
+    ativo: bool = True
+
+class AlertaEstoque(AlertaEstoqueBase):
+    id: int
+    data_resolucao: Optional[datetime] = None
+    criado_em: datetime
+    produto_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class DashboardEstoquePremium(BaseModel):
+    valor_total_estoque: Decimal
+    giro_estoque_medio: Decimal
+    acuracia_estoque: Decimal
+    produtos_criticos: int
+    previsao_demanda_7dias: List[dict]
+    alertas_ativos: List[AlertaEstoque]
+    top_produtos_giro: List[dict]
+    analise_abc: dict
+    metricas_ia: dict
+
+class FornecedorBase(BaseModel):
+    nome: str
+    cnpj: Optional[str] = None
+    email: Optional[str] = None
+    telefone: Optional[str] = None
+    endereco: Optional[str] = None
+    lead_time_medio: int = 7
+    avaliacao: Decimal = Decimal('5.0')
+
+class FornecedorCreate(FornecedorBase):
+    empresa_id: int
+
+class Fornecedor(FornecedorBase):
+    id: int
+    ativo: bool
+    empresa_id: int
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ReposicaoAutomaticaBase(BaseModel):
+    produto_id: int
+    fornecedor_id: Optional[int] = None
+    quantidade_sugerida: int
+    ponto_reposicao: int
+    lote_economico: int
+
+class ReposicaoAutomatica(ReposicaoAutomaticaBase):
+    id: int
+    status: str
+    aprovado_por: Optional[int] = None
+    criado_em: datetime
+    produto_nome: Optional[str] = None
+    fornecedor_nome: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
