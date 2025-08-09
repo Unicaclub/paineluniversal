@@ -31,10 +31,18 @@ app = FastAPI(
 def get_allowed_origins():
     """Retorna as origens permitidas baseado no ambiente"""
     base_origins = [
+        # URLs de desenvolvimento
         "http://localhost:3000",
         "http://localhost:5173", 
         "http://127.0.0.1:5173",
+        # URLs de produção Railway
         "https://frontend-painel-universal-production.up.railway.app",
+        "https://backend-painel-universal-production.up.railway.app",
+        # URLs possíveis do frontend
+        "https://painel-universal.up.railway.app",
+        "https://frontend-painel-universal.up.railway.app",
+        # Para testes
+        "https://web-production-*.up.railway.app",
     ]
     
     # Em desenvolvimento, permitir todas as origens
@@ -42,8 +50,15 @@ def get_allowed_origins():
         logger.info("Ambiente de desenvolvimento detectado - CORS permissivo")
         return ["*"]
     
-    logger.info(f"Ambiente de produção detectado - CORS restritivo: {base_origins}")
-    return base_origins
+    # Em produção Railway, permitir origens específicas + todas as do Railway como fallback
+    railway_origins = [
+        "https://*.up.railway.app",
+        "https://frontend-painel-universal-production.up.railway.app",
+        "*"  # Temporariamente permitir todas até identificar a URL exata
+    ]
+    
+    logger.info(f"Ambiente de produção Railway detectado - CORS com origens: {railway_origins}")
+    return railway_origins
 
 # Middleware de debug para CORS
 @app.middleware("http")
@@ -53,6 +68,16 @@ async def cors_debug_middleware(request: Request, call_next):
     method = request.method
     
     logger.info(f"CORS Debug - Method: {method}, Origin: {origin}, Path: {request.url.path}")
+    
+    # Para requisições OPTIONS (preflight), retornar resposta CORS válida
+    if method == "OPTIONS":
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = origin or "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "3600"
+        logger.info(f"CORS Preflight respondido para origin: {origin}")
+        return response
     
     response = await call_next(request)
     
@@ -70,9 +95,10 @@ is_development = not os.getenv("RAILWAY_ENVIRONMENT")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=not is_development,  # Só permitir credentials em produção com origens específicas
+    allow_credentials=False,  # Desabilitar credentials temporariamente para evitar problemas
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allow_headers=[
+        "*",  # Permitir todos os headers temporariamente
         "Accept",
         "Accept-Language", 
         "Content-Language",
