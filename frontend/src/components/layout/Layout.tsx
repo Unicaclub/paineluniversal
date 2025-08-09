@@ -176,13 +176,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const sidebarVariants = {
-    open: { width: sidebarCollapsed ? 80 : 280 },
-    closed: { width: 280 }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-background flex">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -197,11 +192,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <motion.div 
-        variants={sidebarVariants}
-        animate={sidebarCollapsed ? 'open' : 'closed'}
+      <aside 
         className={`
-          fixed inset-y-0 left-0 z-50 bg-sidebar border-r border-sidebar-border shadow-premium-lg transform transition-transform duration-300 ease-in-out flex flex-col
+          ${sidebarCollapsed ? 'w-20' : 'w-70'} 
+          bg-sidebar border-r border-sidebar-border shadow-lg
+          fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out 
+          flex flex-col
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:inset-0
         `}
@@ -372,10 +368,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </DropdownMenu>
           </motion.div>
         )}
-      </motion.div>
+      </aside>
 
-      {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-80'}`}>
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -426,12 +422,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 bg-background">
+        <main className="flex-1 overflow-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="w-full h-full"
+            className="h-full"
           >
             {children || <Outlet />}
           </motion.div>

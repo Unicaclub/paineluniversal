@@ -292,4 +292,18 @@ body {
   flex-direction: column;
 }
 
-/* Remove conflicting dashboard styles */
+/* Layout System */
+.sidebar-collapsed {
+  width: 5rem !important;
+}
+
+.sidebar-expanded {
+  width: 17.5rem !important;
+}
+
+/* Responsive sidebar widths */
+@media (min-width: 1024px) {
+  .w-70 {
+    width: 17.5rem;
+  }
+}
