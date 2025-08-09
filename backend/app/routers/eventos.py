@@ -127,18 +127,38 @@ async def criar_evento(
             detail="Acesso negado: apenas admins e promoters podem criar eventos"
         )
     
-    # Validação de data mais robusta
+    # Validação de data mais robusta com timezone awareness
     try:
-        if evento.data_evento <= datetime.now():
+        from datetime import timezone
+        
+        # Garantir que ambas as datas tenham timezone para comparação
+        agora = datetime.now(timezone.utc)
+        data_evento = evento.data_evento
+        
+        # Se a data do evento não tem timezone, assumir UTC
+        if data_evento.tzinfo is None:
+            data_evento = data_evento.replace(tzinfo=timezone.utc)
+        
+        print(f"VALIDAÇÃO DATA:")
+        print(f"  Agora (UTC): {agora}")
+        print(f"  Evento: {data_evento}")
+        print(f"  É futura: {data_evento > agora}")
+        
+        if data_evento <= agora:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Data do evento deve ser futura"
+                detail=f"Data do evento deve ser futura. Evento: {data_evento}, Agora: {agora}"
             )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         print(f"ERRO ao validar data: {e}")
+        print(f"Tipo da data do evento: {type(evento.data_evento)}")
+        print(f"Valor da data do evento: {evento.data_evento}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data do evento inválida"
+            detail=f"Data do evento inválida: {str(e)}"
         )
     
     # Se não foi especificada uma empresa, usar a primeira empresa disponível ou criar uma padrão

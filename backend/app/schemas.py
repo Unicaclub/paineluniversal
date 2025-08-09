@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, validator
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional, List
 from decimal import Decimal
 from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
@@ -170,10 +170,29 @@ class EventoBase(BaseModel):
     def validar_data_evento(cls, v):
         if isinstance(v, str):
             try:
-                # Converter string ISO para datetime se necessário
-                return datetime.fromisoformat(v.replace('Z', '+00:00'))
-            except ValueError:
-                raise ValueError('Formato de data inválido. Use ISO 8601 format.')
+                # Tentar diferentes formatos de data
+                # 1. ISO com Z
+                if v.endswith('Z'):
+                    return datetime.fromisoformat(v.replace('Z', '+00:00'))
+                
+                # 2. ISO com timezone
+                if '+' in v or v.endswith('Z'):
+                    return datetime.fromisoformat(v)
+                
+                # 3. ISO sem timezone (assumir UTC)
+                dt = datetime.fromisoformat(v)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt
+                
+            except ValueError as e:
+                print(f"Erro ao converter data '{v}': {e}")
+                raise ValueError(f'Formato de data inválido: {v}. Use ISO 8601 format (ex: 2025-08-09T20:00:00Z)')
+        
+        # Se já é datetime, garantir que tenha timezone
+        if isinstance(v, datetime) and v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        
         return v
 
 class EventoCreate(EventoBase):
