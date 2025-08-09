@@ -174,13 +174,23 @@ const EventoModal: React.FC<EventoModalProps> = ({
         throw new Error('Data inválida');
       }
       
-      const eventoData = {
-        ...formData,
+      // Preparar dados limpos para envio
+      const eventoData: any = {
+        nome: formData.nome.trim(),
+        descricao: formData.descricao?.trim() || undefined,
         data_evento: dataEvento.toISOString(),
+        local: formData.local.trim(),
+        endereco: formData.endereco?.trim() || undefined,
         limite_idade: Number(formData.limite_idade) || 18,
         capacidade_maxima: formData.capacidade_maxima && formData.capacidade_maxima > 0 ? Number(formData.capacidade_maxima) : undefined
-        // empresa_id removido - será opcional no backend
       };
+
+      // Remover campos undefined para enviar payload limpo
+      Object.keys(eventoData).forEach(key => {
+        if (eventoData[key] === undefined) {
+          delete eventoData[key];
+        }
+      });
       
       console.log('📤 Dados finais sendo enviados:', eventoData);
       
