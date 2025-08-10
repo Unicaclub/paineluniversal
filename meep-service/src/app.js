@@ -47,6 +47,7 @@ app.use('/api/meep/validacao', require('./routes/validacao'));
 app.use('/api/meep/analytics', require('./routes/analytics'));
 app.use('/api/meep/equipamentos', require('./routes/equipamentos'));
 app.use('/api/meep/mapa-operacao', require('./routes/mapaOperacao'));
+app.use('/api/erp', require('./routes/erp'));
 
 app.get('/health', (req, res) => {
     res.json({

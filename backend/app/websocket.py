@@ -136,3 +136,38 @@ async def notify_cartao_update(evento_id: int, cartao_data: dict):
         "data": cartao_data,
         "timestamp": datetime.now().isoformat()
     })
+
+async def broadcast_erp_kpis(data):
+    """Broadcast ERP KPIs update to all connected clients"""
+    await manager.broadcast_to_event(0, {
+        "type": "kpis_atualizados",
+        "data": data
+    })
+
+async def broadcast_nova_venda(venda):
+    """Broadcast new sale to all connected clients"""
+    await manager.broadcast_to_event(0, {
+        "type": "nova_venda",
+        "data": venda
+    })
+
+async def broadcast_estoque_atualizado(produto):
+    """Broadcast inventory update to all connected clients"""
+    await manager.broadcast_to_event(0, {
+        "type": "estoque_atualizado",
+        "data": produto
+    })
+
+async def broadcast_integracao_sincronizada(integracao):
+    """Broadcast integration sync to all connected clients"""
+    await manager.broadcast_to_event(0, {
+        "type": "integracao_sincronizada",
+        "data": integracao
+    })
+
+async def broadcast_novo_alerta(alerta):
+    """Broadcast new alert to all connected clients"""
+    await manager.broadcast_to_event(0, {
+        "type": "novo_alerta",
+        "data": alerta
+    })

@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # ERP SUPREMO Services
+  erp-backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/erp_supremo
+      - REDIS_URL=redis://redis:6379
+      - TENSORFLOW_ENABLE=true
+    volumes:
+      - ./backend:/app
+      - ./ml_models:/app/ml_models
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - erp-network
+
+  erp-service:
+    build:
+      context: ./meep-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/erp_supremo
+      - REDIS_URL=redis://redis:6379
+      - TENSORFLOW_JS_ENABLE=true
+    volumes:
+      - ./meep-service:/app
+      - ./ml_models:/app/ml_models
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - erp-network
+
+  erp-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001
+      - REACT_APP_MEEP_API_URL=http://localhost:3002
+      - REACT_APP_ERP_MODE=true
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - erp-backend
+      - erp-service
+    networks:
+      - erp-network
+
+  # Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=erp_supremo
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/erp_supremo_migration.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - erp-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - erp-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - erp-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - erp-network
+
+  # TensorFlow Serving
+  tensorflow-serving:
+    image: tensorflow/serving:latest
+    ports:
+      - "8501:8501"
+      - "8500:8500"
+    volumes:
+      - ./ml_models:/models
+    environment:
+      - MODEL_NAME=erp_models
+    networks:
+      - erp-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  erp-network:
+    driver: bridge

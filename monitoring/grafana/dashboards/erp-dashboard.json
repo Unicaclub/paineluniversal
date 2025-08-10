@@ -1,0 +1,63 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ERP SUPREMO Dashboard",
+    "tags": ["erp", "supremo"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Vendas em Tempo Real",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(vendas_total[5m]))",
+            "legendFormat": "Vendas/min"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Previsão de Demanda IA",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "previsao_demanda_ia",
+            "legendFormat": "Demanda Prevista"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Score de Crédito Médio",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "avg(score_credito_ia)",
+            "legendFormat": "Score Médio"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Integrações Ativas",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "integracoes_status",
+            "legendFormat": "Status"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

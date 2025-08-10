@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum, Date, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Numeric, Enum, Date, JSON, ARRAY, Decimal
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 import enum
+from datetime import datetime
 
 class StatusEvento(enum.Enum):
     ATIVO = "ativo"
@@ -1342,3 +1343,293 @@ class WorkflowExecucao(Base):
     workflow = relationship("WorkflowMarketing", back_populates="execucoes")
     cliente = relationship("ClienteEvento")
     evento = relationship("Evento")
+
+
+class EmpresaERP(Base):
+    __tablename__ = "empresas_erp"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    razao_social = Column(String(255), nullable=False)
+    nome_fantasia = Column(String(255))
+    cnpj = Column(String(18), unique=True, nullable=False)
+    inscricao_estadual = Column(String(20))
+    inscricao_municipal = Column(String(20))
+    endereco = Column(JSON, nullable=False)
+    contatos = Column(JSON, default={})
+    configuracoes_fiscais = Column(JSON, default={})
+    regime_tributario = Column(String(50), default='simples_nacional')
+    porte = Column(String(20), default='micro')
+    ativo = Column(Boolean, default=True)
+    data_abertura = Column(Date)
+    capital_social = Column(Decimal(15,2), default=0)
+    atividade_principal = Column(String(10))
+    atividades_secundarias = Column(ARRAY(Text))
+    certificado_digital = Column(JSON)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow)
+
+class PlanoContasIA(Base):
+    __tablename__ = "plano_contas_ia"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    codigo = Column(String(20), unique=True, nullable=False)
+    nome = Column(String(255), nullable=False)
+    tipo = Column(String(20), nullable=False)
+    categoria = Column(String(50))
+    subcategoria = Column(String(50))
+    conta_pai_id = Column(Integer, ForeignKey('plano_contas_ia.id'))
+    nivel = Column(Integer, default=1)
+    aceita_lancamento = Column(Boolean, default=True)
+    natureza = Column(String(10), default='debito')
+    dre_grupo = Column(String(50))
+    balanco_grupo = Column(String(50))
+    tributacao = Column(JSON, default={})
+    centro_custo_obrigatorio = Column(Boolean, default=False)
+    classificacao_ia = Column(String(50))
+    score_relevancia = Column(Integer, default=0)
+    sugestoes_ia = Column(JSON, default={})
+    ativo = Column(Boolean, default=True)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class FluxoCaixaPreditivo(Base):
+    __tablename__ = "fluxo_caixa_preditivo"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    data_referencia = Column(Date, nullable=False)
+    tipo = Column(String(20), nullable=False)
+    categoria = Column(String(50), nullable=False)
+    descricao = Column(Text)
+    valor_entrada = Column(Decimal(15,2), default=0)
+    valor_saida = Column(Decimal(15,2), default=0)
+    saldo_acumulado = Column(Decimal(15,2), default=0)
+    origem = Column(String(50))
+    confiabilidade = Column(Integer, default=100)
+    cenario = Column(String(20), default='realista')
+    modelo_ia_usado = Column(String(50))
+    fatores_influencia = Column(JSON, default={})
+    intervalo_confianca = Column(JSON, default={})
+    observacoes = Column(Text)
+    metadata = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class ConciliacaoBancariaIA(Base):
+    __tablename__ = "conciliacao_bancaria_ia"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    banco_conta_id = Column(Integer)
+    data_conciliacao = Column(Date, nullable=False)
+    extrato_item_id = Column(String(100))
+    lancamento_id = Column(Integer)
+    tipo_matching = Column(String(20))
+    score_confianca = Column(Decimal(5,2))
+    status = Column(String(20), default='pendente')
+    observacoes_ia = Column(Text)
+    aprovado_por = Column(Integer)
+    aprovado_em = Column(DateTime)
+    discrepancias = Column(JSON, default={})
+    sugestoes_correcao = Column(JSON, default={})
+    metadata = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class DREAutomatico(Base):
+    __tablename__ = "dre_automatico"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    periodo_inicio = Column(Date, nullable=False)
+    periodo_fim = Column(Date, nullable=False)
+    receita_bruta = Column(Decimal(15,2), default=0)
+    deducoes_receita = Column(Decimal(15,2), default=0)
+    receita_liquida = Column(Decimal(15,2), default=0)
+    custo_vendas = Column(Decimal(15,2), default=0)
+    lucro_bruto = Column(Decimal(15,2), default=0)
+    despesas_operacionais = Column(Decimal(15,2), default=0)
+    ebitda = Column(Decimal(15,2), default=0)
+    lucro_liquido = Column(Decimal(15,2), default=0)
+    margem_bruta = Column(Decimal(5,2), default=0)
+    margem_liquida = Column(Decimal(5,2), default=0)
+    detalhamento = Column(JSON, default={})
+    comparativo_periodo_anterior = Column(JSON, default={})
+    insights_ia = Column(JSON, default={})
+    alertas = Column(JSON, default=[])
+    gerado_automaticamente = Column(Boolean, default=True)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class PrevisaoDemandaIA(Base):
+    __tablename__ = "previsao_demanda_ia"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    data_previsao = Column(Date, nullable=False)
+    horizonte_dias = Column(Integer, default=30)
+    demanda_prevista = Column(Integer, nullable=False)
+    demanda_minima = Column(Integer)
+    demanda_maxima = Column(Integer)
+    confiabilidade = Column(Decimal(5,2))
+    modelo_usado = Column(String(50))
+    fatores_sazonais = Column(JSON, default={})
+    fatores_externos = Column(JSON, default={})
+    historico_acuracia = Column(Decimal(5,2))
+    ponto_reposicao_sugerido = Column(Integer)
+    estoque_seguranca = Column(Integer)
+    lote_economico = Column(Integer)
+    alertas = Column(JSON, default=[])
+    metadata = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class ClassificacaoABCXYZ(Base):
+    __tablename__ = "classificacao_abc_xyz"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, nullable=False)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    periodo_analise = Column(String(20))
+    classe_abc = Column(String(1))
+    classe_xyz = Column(String(1))
+    valor_vendas = Column(Decimal(15,2))
+    percentual_vendas = Column(Decimal(5,2))
+    quantidade_vendas = Column(Integer)
+    frequencia_vendas = Column(Integer)
+    variabilidade_demanda = Column(Decimal(5,2))
+    coeficiente_variacao = Column(Decimal(5,2))
+    estrategia_sugerida = Column(String(100))
+    prioridade_gestao = Column(String(20))
+    observacoes_ia = Column(Text)
+    data_classificacao = Column(Date, default=datetime.utcnow)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class ClienteAnalise360(Base):
+    __tablename__ = "cliente_analise_360"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    cliente_id = Column(Integer, nullable=False)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    score_credito = Column(Integer)
+    score_fidelidade = Column(Integer)
+    categoria_cliente = Column(String(30))
+    potencial_compra = Column(String(20))
+    risco_churn = Column(Decimal(5,2))
+    valor_vida_estimado = Column(Decimal(15,2))
+    frequencia_compras = Column(Decimal(5,2))
+    ticket_medio = Column(Decimal(10,2))
+    ultima_compra = Column(Date)
+    produtos_favoritos = Column(JSON, default=[])
+    canais_preferidos = Column(JSON, default=[])
+    comportamento_pagamento = Column(JSON, default={})
+    segmentacao_automatica = Column(String(50))
+    recomendacoes_ia = Column(JSON, default=[])
+    alertas = Column(JSON, default=[])
+    data_analise = Column(Date, default=datetime.utcnow)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class SegmentacaoAutomatica(Base):
+    __tablename__ = "segmentacao_automatica"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    nome_segmento = Column(String(100), nullable=False)
+    descricao = Column(Text)
+    criterios_segmentacao = Column(JSON, nullable=False)
+    algoritmo_usado = Column(String(50))
+    quantidade_clientes = Column(Integer, default=0)
+    valor_medio_cliente = Column(Decimal(15,2))
+    potencial_receita = Column(Decimal(15,2))
+    estrategias_sugeridas = Column(JSON, default=[])
+    campanhas_recomendadas = Column(JSON, default=[])
+    ativo = Column(Boolean, default=True)
+    data_criacao = Column(Date, default=datetime.utcnow)
+    ultima_atualizacao = Column(DateTime, default=datetime.utcnow)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+
+class DashboardExecutivo(Base):
+    __tablename__ = "dashboard_executivo"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    usuario_id = Column(Integer)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    tipo = Column(String(30), default='personalizado')
+    configuracao = Column(JSON, nullable=False)
+    kpis_configurados = Column(JSON, default=[])
+    widgets_ativos = Column(JSON, default=[])
+    filtros_padrao = Column(JSON, default={})
+    publico = Column(Boolean, default=False)
+    tags = Column(ARRAY(Text))
+    favorito = Column(Boolean, default=False)
+    acessos = Column(Integer, default=0)
+    ultima_visualizacao = Column(DateTime)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow)
+
+class ConectoresERPNativos(Base):
+    __tablename__ = "conectores_erp_nativos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    nome = Column(String(100), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    provedor = Column(String(100))
+    url_api = Column(String(500))
+    chave_api = Column(Text)
+    token_acesso = Column(Text)
+    configuracoes = Column(JSON, default={})
+    ativa = Column(Boolean, default=False)
+    ultima_sincronizacao = Column(DateTime)
+    status_conexao = Column(String(20), default='desconectado')
+    logs_sync = Column(JSON, default=[])
+    frequencia_sync = Column(String(20), default='manual')
+    mapeamento_campos = Column(JSON, default={})
+    webhook_url = Column(String(500))
+    estatisticas_sync = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow)
+
+class ModelosML(Base):
+    __tablename__ = "modelos_ml"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    nome_modelo = Column(String(100), nullable=False)
+    tipo_modelo = Column(String(50), nullable=False)
+    algoritmo = Column(String(50))
+    versao = Column(String(20))
+    parametros = Column(JSON, default={})
+    metricas_performance = Column(JSON, default={})
+    dados_treinamento = Column(JSON, default={})
+    status = Column(String(20), default='treinando')
+    acuracia = Column(Decimal(5,2))
+    data_treinamento = Column(DateTime)
+    data_deploy = Column(DateTime)
+    ativo = Column(Boolean, default=False)
+    observacoes = Column(Text)
+    metadata = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow)
+
+class PredicoesInsights(Base):
+    __tablename__ = "predicoes_insights_automaticos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    empresa_id = Column(Integer, ForeignKey('empresas_erp.id'))
+    tipo_predicao = Column(String(50), nullable=False)
+    entidade_id = Column(Integer)
+    entidade_tipo = Column(String(50))
+    predicao = Column(JSON, nullable=False)
+    confiabilidade = Column(Decimal(5,2))
+    modelo_usado = Column(String(100))
+    data_predicao = Column(DateTime, default=datetime.utcnow)
+    data_validade = Column(DateTime)
+    status = Column(String(20), default='ativa')
+    acoes_sugeridas = Column(JSON, default=[])
+    impacto_estimado = Column(JSON, default={})
+    feedback_usuario = Column(JSON, default={})
+    acuracia_real = Column(Decimal(5,2))
+    observacoes = Column(Text)
+    metadata = Column(JSON, default={})
+    criado_em = Column(DateTime, default=datetime.utcnow)
