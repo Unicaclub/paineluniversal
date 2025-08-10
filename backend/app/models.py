@@ -32,6 +32,33 @@ class StatusColaborador(enum.Enum):
     INATIVO = "inativo"
     SUSPENSO = "suspenso"
 
+class StatusMesa(enum.Enum):
+    DISPONIVEL = "disponivel"
+    OCUPADA = "ocupada"
+    RESERVADA = "reservada"
+    BLOQUEADA = "bloqueada"
+    MANUTENCAO = "manutencao"
+
+class TipoArea(enum.Enum):
+    BAR = "bar"
+    PISTA = "pista"
+    VIP = "vip"
+    LOUNGE = "lounge"
+    BANHEIRO = "banheiro"
+    ENTRADA = "entrada"
+
+class StatusComandaOperacao(enum.Enum):
+    ABERTA = "aberta"
+    BLOQUEADA = "bloqueada"
+    FECHADA = "fechada"
+    CANCELADA = "cancelada"
+
+class TipoBloqueio(enum.Enum):
+    CLIENTE = "cliente"
+    MESA = "mesa"
+    COMANDA = "comanda"
+    AREA = "area"
+
 class Empresa(Base):
     __tablename__ = "empresas"
     
@@ -779,4 +806,539 @@ class PrevisaoIA(Base):
     dados_historicos = Column(JSON)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     
+    evento = relationship("Evento")
+
+class LayoutEvento(Base):
+    __tablename__ = "layout_evento"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    largura = Column(Integer, nullable=False)
+    altura = Column(Integer, nullable=False)
+    escala = Column(Numeric(5, 2), default=1.0)
+    configuracao = Column(JSON, default={})
+    imagem_fundo = Column(String(500))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    evento = relationship("Evento")
+    areas = relationship("AreaEvento", back_populates="layout")
+
+class AreaEvento(Base):
+    __tablename__ = "areas_evento"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    layout_id = Column(Integer, ForeignKey("layout_evento.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    tipo = Column(Enum(TipoArea), nullable=False)
+    posicao_x = Column(Integer, nullable=False)
+    posicao_y = Column(Integer, nullable=False)
+    largura = Column(Integer, nullable=False)
+    altura = Column(Integer, nullable=False)
+    capacidade_maxima = Column(Integer, default=0)
+    cor = Column(String(7), default='#4299e1')
+    ativa = Column(Boolean, default=True)
+    configuracoes = Column(JSON, default={})
+    restricoes = Column(JSON, default=[])
+    responsavel_id = Column(Integer, ForeignKey("usuarios.id"))
+    
+    layout = relationship("LayoutEvento", back_populates="areas")
+    responsavel = relationship("Usuario")
+    mesas = relationship("Mesa", back_populates="area")
+
+class Mesa(Base):
+    __tablename__ = "mesas"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    area_id = Column(Integer, ForeignKey("areas_evento.id"), nullable=False)
+    numero = Column(String(20), unique=True, nullable=False)
+    nome = Column(String(255))
+    tipo = Column(String(50), default='comum')
+    capacidade_pessoas = Column(Integer, default=4)
+    posicao_x = Column(Integer, nullable=False)
+    posicao_y = Column(Integer, nullable=False)
+    largura = Column(Integer, default=100)
+    altura = Column(Integer, default=100)
+    formato = Column(String(20), default='retangular')
+    status = Column(Enum(StatusMesa), default=StatusMesa.DISPONIVEL)
+    valor_minimo = Column(Numeric(10, 2), default=0)
+    taxa_servico = Column(Numeric(5, 2), default=10)
+    observacoes = Column(Text)
+    configuracoes = Column(JSON, default={})
+    criada_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizada_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    area = relationship("AreaEvento", back_populates="mesas")
+    comandas = relationship("ComandaOperacao", back_populates="mesa")
+
+class ComandaOperacao(Base):
+    __tablename__ = "comandas_operacao"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    mesa_id = Column(Integer, ForeignKey("mesas.id"))
+    numero_comanda = Column(String(20), unique=True, nullable=False)
+    cliente_principal_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"))
+    status = Column(Enum(StatusComandaOperacao), default=StatusComandaOperacao.ABERTA)
+    tipo = Column(String(20), default='mesa')
+    data_abertura = Column(DateTime(timezone=True), server_default=func.now())
+    data_fechamento = Column(DateTime(timezone=True))
+    valor_total = Column(Numeric(10, 2), default=0)
+    valor_pago = Column(Numeric(10, 2), default=0)
+    valor_pendente = Column(Numeric(10, 2), default=0)
+    desconto_aplicado = Column(Numeric(10, 2), default=0)
+    taxa_servico = Column(Numeric(10, 2), default=0)
+    observacoes = Column(Text)
+    funcionario_abertura = Column(Integer, ForeignKey("usuarios.id"))
+    funcionario_fechamento = Column(Integer, ForeignKey("usuarios.id"))
+    configuracoes = Column(JSON, default={})
+    
+    evento = relationship("Evento")
+    mesa = relationship("Mesa", back_populates="comandas")
+    cliente_principal = relationship("ClienteEvento")
+    funcionario_abertura_rel = relationship("Usuario", foreign_keys=[funcionario_abertura])
+    funcionario_fechamento_rel = relationship("Usuario", foreign_keys=[funcionario_fechamento])
+    participantes = relationship("ComandaParticipante", back_populates="comanda")
+    itens = relationship("ComandaItem", back_populates="comanda")
+
+class ComandaParticipante(Base):
+    __tablename__ = "comanda_participantes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    comanda_id = Column(Integer, ForeignKey("comandas_operacao.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"))
+    nome = Column(String(255), nullable=False)
+    telefone = Column(String(20))
+    entrada_em = Column(DateTime(timezone=True), server_default=func.now())
+    saida_em = Column(DateTime(timezone=True))
+    consumo_individual = Column(Numeric(10, 2), default=0)
+    ativo = Column(Boolean, default=True)
+    
+    comanda = relationship("ComandaOperacao", back_populates="participantes")
+    cliente = relationship("ClienteEvento")
+
+class ComandaItem(Base):
+    __tablename__ = "comanda_itens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    comanda_id = Column(Integer, ForeignKey("comandas_operacao.id"), nullable=False)
+    produto_id = Column(Integer)
+    nome_produto = Column(String(255), nullable=False)
+    categoria = Column(String(100))
+    quantidade = Column(Integer, nullable=False, default=1)
+    valor_unitario = Column(Numeric(10, 2), nullable=False)
+    valor_total = Column(Numeric(10, 2), nullable=False)
+    desconto = Column(Numeric(10, 2), default=0)
+    cliente_solicitante_cpf = Column(String(11))
+    funcionario_id = Column(Integer, ForeignKey("usuarios.id"))
+    data_pedido = Column(DateTime(timezone=True), server_default=func.now())
+    data_entrega = Column(DateTime(timezone=True))
+    status = Column(String(20), default='pedido')
+    observacoes = Column(Text)
+    
+    comanda = relationship("ComandaOperacao", back_populates="itens")
+    funcionario = relationship("Usuario")
+
+class Bloqueio(Base):
+    __tablename__ = "bloqueios"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tipo = Column(Enum(TipoBloqueio), nullable=False)
+    referencia_id = Column(String(50), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    motivo = Column(String(255), nullable=False)
+    detalhes = Column(Text)
+    bloqueado_por = Column(Integer, ForeignKey("usuarios.id"))
+    bloqueado_em = Column(DateTime(timezone=True), server_default=func.now())
+    desbloqueado_por = Column(Integer, ForeignKey("usuarios.id"))
+    desbloqueado_em = Column(DateTime(timezone=True))
+    ativo = Column(Boolean, default=True)
+    temporario = Column(Boolean, default=False)
+    expira_em = Column(DateTime(timezone=True))
+    
+    evento = relationship("Evento")
+    bloqueado_por_rel = relationship("Usuario", foreign_keys=[bloqueado_por])
+    desbloqueado_por_rel = relationship("Usuario", foreign_keys=[desbloqueado_por])
+
+class GrupoCartao(Base):
+    __tablename__ = "grupos_cartoes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    cor = Column(String(7), default='#4299e1')
+    limite_consumo = Column(Numeric(10, 2), default=0)
+    desconto_percentual = Column(Numeric(5, 2), default=0)
+    beneficios = Column(JSON, default=[])
+    ativo = Column(Boolean, default=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+    cartoes = relationship("CartaoEvento", back_populates="grupo")
+
+class CartaoEvento(Base):
+    __tablename__ = "cartoes_evento"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    grupo_id = Column(Integer, ForeignKey("grupos_cartoes.id"))
+    numero_cartao = Column(String(20), unique=True, nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"))
+    qr_code = Column(String(255), unique=True)
+    status = Column(String(20), default='ativo')
+    saldo_credito = Column(Numeric(10, 2), default=0)
+    limite_consumo = Column(Numeric(10, 2), default=0)
+    consumo_total = Column(Numeric(10, 2), default=0)
+    data_emissao = Column(DateTime(timezone=True), server_default=func.now())
+    data_bloqueio = Column(DateTime(timezone=True))
+    motivo_bloqueio = Column(Text)
+    configuracoes = Column(JSON, default={})
+    
+    evento = relationship("Evento")
+    grupo = relationship("GrupoCartao", back_populates="cartoes")
+    cliente = relationship("ClienteEvento")
+
+class ProgramaFidelidade(Base):
+    __tablename__ = "programas_fidelidade"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), default='pontos')
+    moeda_virtual = Column(String(50), default='pontos')
+    taxa_conversao = Column(Numeric(10, 4), default=1.0)
+    pontos_por_real = Column(Numeric(10, 2), default=1.0)
+    valor_ponto = Column(Numeric(10, 4), default=0.01)
+    multiplicador_base = Column(Numeric(5, 2), default=1.0)
+    ativo = Column(Boolean, default=True)
+    data_inicio = Column(DateTime(timezone=True), server_default=func.now())
+    data_fim = Column(DateTime(timezone=True))
+    configuracoes = Column(JSON, default={})
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    empresa = relationship("Empresa")
+    niveis = relationship("NivelFidelidade", back_populates="programa")
+    carteiras = relationship("CarteiraFidelidade", back_populates="programa")
+
+class NivelFidelidade(Base):
+    __tablename__ = "niveis_fidelidade"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    programa_id = Column(Integer, ForeignKey("programas_fidelidade.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    cor = Column(String(7), default='#4299e1')
+    icone = Column(String(50))
+    pontos_minimos = Column(Integer, nullable=False, default=0)
+    pontos_maximos = Column(Integer)
+    multiplicador_pontos = Column(Numeric(5, 2), default=1.0)
+    desconto_percentual = Column(Numeric(5, 2), default=0)
+    cashback_percentual = Column(Numeric(5, 2), default=0)
+    beneficios = Column(JSON, default=[])
+    ordem = Column(Integer, nullable=False)
+    ativo = Column(Boolean, default=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    programa = relationship("ProgramaFidelidade", back_populates="niveis")
+    carteiras = relationship("CarteiraFidelidade", back_populates="nivel")
+
+class CarteiraFidelidade(Base):
+    __tablename__ = "carteira_fidelidade"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    programa_id = Column(Integer, ForeignKey("programas_fidelidade.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"), nullable=False)
+    nivel_id = Column(Integer, ForeignKey("niveis_fidelidade.id"), nullable=False)
+    pontos_atuais = Column(Integer, default=0)
+    pontos_totais_ganhos = Column(Integer, default=0)
+    pontos_totais_resgatados = Column(Integer, default=0)
+    saldo_cashback = Column(Numeric(10, 2), default=0)
+    status = Column(String(20), default='ativo')
+    data_ultimo_uso = Column(DateTime(timezone=True))
+    data_expiracao = Column(DateTime(timezone=True))
+    configuracoes = Column(JSON, default={})
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    programa = relationship("ProgramaFidelidade", back_populates="carteiras")
+    cliente = relationship("ClienteEvento")
+    nivel = relationship("NivelFidelidade", back_populates="carteiras")
+    transacoes = relationship("TransacaoFidelidade", back_populates="carteira")
+
+class TransacaoFidelidade(Base):
+    __tablename__ = "transacoes_fidelidade"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    carteira_id = Column(Integer, ForeignKey("carteira_fidelidade.id"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    tipo = Column(String(20), nullable=False)
+    pontos_transacao = Column(Integer, nullable=False)
+    valor_monetario = Column(Numeric(10, 2))
+    multiplicador_aplicado = Column(Numeric(5, 2), default=1.0)
+    descricao = Column(String(500))
+    referencia_externa = Column(String(255))
+    campanha_id = Column(Integer, ForeignKey("campanhas_marketing.id"))
+    promocao_id = Column(Integer, ForeignKey("promocoes.id"))
+    funcionario_id = Column(Integer, ForeignKey("usuarios.id"))
+    metadados = Column(JSON, default={})
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    carteira = relationship("CarteiraFidelidade", back_populates="transacoes")
+    evento = relationship("Evento")
+    funcionario = relationship("Usuario")
+
+class SegmentoCliente(Base):
+    __tablename__ = "segmentos_cliente"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), default='manual')
+    criterios = Column(JSON, default={})
+    cor = Column(String(7), default='#4299e1')
+    icone = Column(String(50))
+    ativo = Column(Boolean, default=True)
+    automatico = Column(Boolean, default=False)
+    frequencia_atualizacao = Column(String(20), default='diario')
+    ultima_atualizacao = Column(DateTime(timezone=True))
+    total_clientes = Column(Integer, default=0)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    empresa = relationship("Empresa")
+    clientes = relationship("ClienteSegmento", back_populates="segmento")
+
+class ClienteSegmento(Base):
+    __tablename__ = "cliente_segmentos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    segmento_id = Column(Integer, ForeignKey("segmentos_cliente.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"), nullable=False)
+    score_segmentacao = Column(Numeric(5, 2))
+    data_inclusao = Column(DateTime(timezone=True), server_default=func.now())
+    data_exclusao = Column(DateTime(timezone=True))
+    ativo = Column(Boolean, default=True)
+    metadados = Column(JSON, default={})
+    
+    segmento = relationship("SegmentoCliente", back_populates="clientes")
+    cliente = relationship("ClienteEvento")
+
+class CampanhaMarketing(Base):
+    __tablename__ = "campanhas_marketing"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    canal = Column(String(50), nullable=False)
+    status = Column(String(20), default='rascunho')
+    segmento_id = Column(Integer, ForeignKey("segmentos_cliente.id"))
+    template_id = Column(Integer, ForeignKey("templates_mensagem.id"))
+    data_inicio = Column(DateTime(timezone=True))
+    data_fim = Column(DateTime(timezone=True))
+    data_envio = Column(DateTime(timezone=True))
+    frequencia = Column(String(20))
+    objetivo = Column(String(100))
+    orcamento = Column(Numeric(10, 2))
+    custo_total = Column(Numeric(10, 2), default=0)
+    total_envios = Column(Integer, default=0)
+    total_aberturas = Column(Integer, default=0)
+    total_cliques = Column(Integer, default=0)
+    total_conversoes = Column(Integer, default=0)
+    receita_gerada = Column(Numeric(10, 2), default=0)
+    configuracoes = Column(JSON, default={})
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    empresa = relationship("Empresa")
+    segmento = relationship("SegmentoCliente")
+    template = relationship("TemplateMensagem")
+    criador = relationship("Usuario")
+
+class TemplateMensagem(Base):
+    __tablename__ = "templates_mensagem"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    canal = Column(String(50), nullable=False)
+    assunto = Column(String(500))
+    conteudo = Column(Text, nullable=False)
+    variaveis = Column(JSON, default=[])
+    configuracoes = Column(JSON, default={})
+    ativo = Column(Boolean, default=True)
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    empresa = relationship("Empresa")
+    criador = relationship("Usuario")
+    campanhas = relationship("CampanhaMarketing", back_populates="template")
+
+class ListaEvento(Base):
+    __tablename__ = "listas_eventos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    tipo = Column(String(50), default='geral')
+    capacidade_maxima = Column(Integer)
+    preco = Column(Numeric(10, 2), default=0)
+    data_inicio_vendas = Column(DateTime(timezone=True))
+    data_fim_vendas = Column(DateTime(timezone=True))
+    ativa = Column(Boolean, default=True)
+    publica = Column(Boolean, default=True)
+    requer_aprovacao = Column(Boolean, default=False)
+    configuracoes = Column(JSON, default={})
+    total_participantes = Column(Integer, default=0)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+    participantes = relationship("ListaParticipante", back_populates="lista")
+
+class ListaParticipante(Base):
+    __tablename__ = "lista_participantes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    lista_id = Column(Integer, ForeignKey("listas_eventos.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"), nullable=False)
+    status = Column(String(20), default='confirmado')
+    data_inscricao = Column(DateTime(timezone=True), server_default=func.now())
+    data_aprovacao = Column(DateTime(timezone=True))
+    valor_pago = Column(Numeric(10, 2), default=0)
+    observacoes = Column(Text)
+    metadados = Column(JSON, default={})
+    
+    lista = relationship("ListaEvento", back_populates="participantes")
+    cliente = relationship("ClienteEvento")
+
+class Promocao(Base):
+    __tablename__ = "promocoes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True, nullable=False)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    codigo = Column(String(50), unique=True)
+    desconto_percentual = Column(Numeric(5, 2))
+    desconto_valor = Column(Numeric(10, 2))
+    valor_minimo = Column(Numeric(10, 2))
+    limite_uso_total = Column(Integer)
+    limite_uso_cliente = Column(Integer, default=1)
+    usos_atuais = Column(Integer, default=0)
+    data_inicio = Column(DateTime(timezone=True), nullable=False)
+    data_fim = Column(DateTime(timezone=True), nullable=False)
+    ativa = Column(Boolean, default=True)
+    segmento_id = Column(Integer, ForeignKey("segmentos_cliente.id"))
+    configuracoes = Column(JSON, default={})
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    empresa = relationship("Empresa")
+    segmento = relationship("SegmentoCliente")
+    criador = relationship("Usuario")
+    usos = relationship("CupomUso", back_populates="promocao")
+
+class CupomUso(Base):
+    __tablename__ = "cupom_uso"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    promocao_id = Column(Integer, ForeignKey("promocoes.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    codigo_usado = Column(String(50), nullable=False)
+    valor_desconto_aplicado = Column(Numeric(10, 2), nullable=False)
+    valor_original = Column(Numeric(10, 2), nullable=False)
+    valor_final = Column(Numeric(10, 2), nullable=False)
+    data_uso = Column(DateTime(timezone=True), server_default=func.now())
+    funcionario_id = Column(Integer, ForeignKey("usuarios.id"))
+    metadados = Column(JSON, default={})
+    
+    promocao = relationship("Promocao", back_populates="usos")
+    cliente = relationship("ClienteEvento")
+    evento = relationship("Evento")
+    funcionario = relationship("Usuario")
+
+class AnalyticsEvento(Base):
+    __tablename__ = "analytics_eventos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    data_evento = Column(Date, nullable=False)
+    total_participantes = Column(Integer, default=0)
+    total_receita = Column(Numeric(10, 2), default=0)
+    ticket_medio = Column(Numeric(10, 2), default=0)
+    taxa_conversao = Column(Numeric(5, 2), default=0)
+    nps_score = Column(Numeric(3, 1))
+    satisfacao_media = Column(Numeric(3, 1))
+    tempo_permanencia_medio = Column(Integer)
+    pontos_distribuidos = Column(Integer, default=0)
+    promocoes_utilizadas = Column(Integer, default=0)
+    campanhas_ativas = Column(Integer, default=0)
+    segmentos_impactados = Column(JSON, default=[])
+    metricas_detalhadas = Column(JSON, default={})
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    evento = relationship("Evento")
+
+class WorkflowMarketing(Base):
+    __tablename__ = "workflows_marketing"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    trigger_evento = Column(String(100), nullable=False)
+    condicoes = Column(JSON, default={})
+    acoes = Column(JSON, default=[])
+    ativo = Column(Boolean, default=True)
+    prioridade = Column(Integer, default=1)
+    delay_execucao = Column(Integer, default=0)
+    total_execucoes = Column(Integer, default=0)
+    taxa_sucesso = Column(Numeric(5, 2), default=0)
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    empresa = relationship("Empresa")
+    criador = relationship("Usuario")
+    execucoes = relationship("WorkflowExecucao", back_populates="workflow")
+
+class WorkflowExecucao(Base):
+    __tablename__ = "workflow_execucoes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("workflows_marketing.id"), nullable=False)
+    cliente_cpf = Column(String(11), ForeignKey("clientes_eventos.cpf"))
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    status = Column(String(20), default='pendente')
+    dados_entrada = Column(JSON, default={})
+    dados_saida = Column(JSON, default={})
+    erro_detalhes = Column(Text)
+    tempo_execucao = Column(Integer)
+    data_agendamento = Column(DateTime(timezone=True))
+    data_inicio = Column(DateTime(timezone=True))
+    data_fim = Column(DateTime(timezone=True))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    workflow = relationship("WorkflowMarketing", back_populates="execucoes")
+    cliente = relationship("ClienteEvento")
     evento = relationship("Evento")

@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
 from typing import Optional, List
 from decimal import Decimal
-from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, StatusColaborador
+from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, StatusColaborador, StatusMesa, TipoArea, StatusComandaOperacao, TipoBloqueio
 import re
 
 
@@ -903,3 +903,490 @@ class ReposicaoAutomatica(ReposicaoAutomaticaBase):
     
     class Config:
         from_attributes = True
+
+class LayoutEventoBase(BaseModel):
+    nome: str
+    largura: int
+    altura: int
+    escala: Optional[Decimal] = Decimal('1.0')
+    configuracao: Optional[dict] = {}
+    imagem_fundo: Optional[str] = None
+
+class LayoutEventoCreate(LayoutEventoBase):
+    evento_id: int
+
+class LayoutEvento(LayoutEventoBase):
+    id: int
+    evento_id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class AreaEventoBase(BaseModel):
+    nome: str
+    tipo: TipoArea
+    posicao_x: int
+    posicao_y: int
+    largura: int
+    altura: int
+    capacidade_maxima: Optional[int] = 0
+    cor: Optional[str] = '#4299e1'
+    ativa: Optional[bool] = True
+    configuracoes: Optional[dict] = {}
+    restricoes: Optional[List[str]] = []
+    responsavel_id: Optional[int] = None
+
+class AreaEventoCreate(AreaEventoBase):
+    layout_id: int
+
+class AreaEvento(AreaEventoBase):
+    id: int
+    layout_id: int
+    
+    class Config:
+        from_attributes = True
+
+class MesaBase(BaseModel):
+    numero: str
+    nome: Optional[str] = None
+    tipo: Optional[str] = 'comum'
+    capacidade_pessoas: Optional[int] = 4
+    posicao_x: int
+    posicao_y: int
+    largura: Optional[int] = 100
+    altura: Optional[int] = 100
+    formato: Optional[str] = 'retangular'
+    status: Optional[StatusMesa] = StatusMesa.DISPONIVEL
+    valor_minimo: Optional[Decimal] = Decimal('0')
+    taxa_servico: Optional[Decimal] = Decimal('10')
+    observacoes: Optional[str] = None
+    configuracoes: Optional[dict] = {}
+
+class MesaCreate(MesaBase):
+    area_id: int
+
+class Mesa(MesaBase):
+    id: int
+    area_id: int
+    criada_em: datetime
+    atualizada_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComandaOperacaoBase(BaseModel):
+    numero_comanda: str
+    cliente_principal_cpf: Optional[str] = None
+    status: Optional[StatusComandaOperacao] = StatusComandaOperacao.ABERTA
+    tipo: Optional[str] = 'mesa'
+    observacoes: Optional[str] = None
+    configuracoes: Optional[dict] = {}
+
+class ComandaOperacaoCreate(ComandaOperacaoBase):
+    evento_id: int
+    mesa_id: Optional[int] = None
+
+class ComandaOperacao(ComandaOperacaoBase):
+    id: int
+    uuid: str
+    evento_id: int
+    mesa_id: Optional[int] = None
+    data_abertura: datetime
+    data_fechamento: Optional[datetime] = None
+    valor_total: Decimal
+    valor_pago: Decimal
+    valor_pendente: Decimal
+    desconto_aplicado: Decimal
+    taxa_servico: Decimal
+    funcionario_abertura: Optional[int] = None
+    funcionario_fechamento: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComandaParticipanteBase(BaseModel):
+    nome: str
+    telefone: Optional[str] = None
+    cliente_cpf: Optional[str] = None
+
+class ComandaParticipanteCreate(ComandaParticipanteBase):
+    comanda_id: int
+
+class ComandaParticipante(ComandaParticipanteBase):
+    id: int
+    comanda_id: int
+    entrada_em: datetime
+    saida_em: Optional[datetime] = None
+    consumo_individual: Decimal
+    ativo: bool
+    
+    class Config:
+        from_attributes = True
+
+class ComandaItemBase(BaseModel):
+    nome_produto: str
+    categoria: Optional[str] = None
+    quantidade: int = 1
+    valor_unitario: Decimal
+    valor_total: Decimal
+    desconto: Optional[Decimal] = Decimal('0')
+    cliente_solicitante_cpf: Optional[str] = None
+    observacoes: Optional[str] = None
+
+class ComandaItemCreate(ComandaItemBase):
+    comanda_id: int
+    produto_id: Optional[int] = None
+
+class ComandaItem(ComandaItemBase):
+    id: int
+    comanda_id: int
+    produto_id: Optional[int] = None
+    funcionario_id: Optional[int] = None
+    data_pedido: datetime
+    data_entrega: Optional[datetime] = None
+    status: str
+    
+    class Config:
+        from_attributes = True
+
+class BloqueioBase(BaseModel):
+    tipo: TipoBloqueio
+    referencia_id: str
+    motivo: str
+    detalhes: Optional[str] = None
+    temporario: Optional[bool] = False
+    expira_em: Optional[datetime] = None
+
+class BloqueioCreate(BloqueioBase):
+    evento_id: int
+
+class Bloqueio(BloqueioBase):
+    id: int
+    evento_id: int
+    bloqueado_por: Optional[int] = None
+    bloqueado_em: datetime
+    desbloqueado_por: Optional[int] = None
+    desbloqueado_em: Optional[datetime] = None
+    ativo: bool
+    
+    class Config:
+        from_attributes = True
+
+class GrupoCartaoBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    cor: Optional[str] = '#4299e1'
+    limite_consumo: Optional[Decimal] = Decimal('0')
+    desconto_percentual: Optional[Decimal] = Decimal('0')
+    beneficios: Optional[List[str]] = []
+    ativo: Optional[bool] = True
+
+class GrupoCartaoCreate(GrupoCartaoBase):
+    evento_id: int
+
+class GrupoCartao(GrupoCartaoBase):
+    id: int
+    evento_id: int
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class CartaoEventoBase(BaseModel):
+    numero_cartao: str
+    cliente_cpf: Optional[str] = None
+    status: Optional[str] = 'ativo'
+    saldo_credito: Optional[Decimal] = Decimal('0')
+    limite_consumo: Optional[Decimal] = Decimal('0')
+    configuracoes: Optional[dict] = {}
+
+class CartaoEventoCreate(CartaoEventoBase):
+    evento_id: int
+    grupo_id: Optional[int] = None
+
+class CartaoEvento(CartaoEventoBase):
+    id: int
+    uuid: str
+    evento_id: int
+    grupo_id: Optional[int] = None
+    qr_code: Optional[str] = None
+    consumo_total: Decimal
+    data_emissao: datetime
+    data_bloqueio: Optional[datetime] = None
+    motivo_bloqueio: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class FiltrosMapaOperacao(BaseModel):
+    mostrar_apenas_ativas: Optional[bool] = True
+    tipo_area: Optional[str] = None
+    status_mesa: Optional[str] = None
+    grupo_cartao: Optional[int] = None
+    busca_texto: Optional[str] = None
+    busca_tipo: Optional[str] = None
+
+class EstatisticasOperacao(BaseModel):
+    total_mesas: int
+    mesas_ocupadas: int
+    mesas_disponveis: int
+    mesas_reservadas: int
+    mesas_bloqueadas: int
+    comandas_abertas: int
+    comandas_bloqueadas: int
+    total_participantes: int
+    faturamento_total: Decimal
+    ticket_medio: Decimal
+
+class ResultadoBusca(BaseModel):
+    tipo: str
+    id: int
+    titulo: str
+    subtitulo: Optional[str] = None
+    status: str
+    dados_extras: Optional[dict] = {}
+
+class ProgramaFidelidadeBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    tipo: Optional[str] = 'pontos'
+    ativo: Optional[bool] = True
+    data_inicio: date
+    data_fim: Optional[date] = None
+    configuracoes: Optional[dict] = {}
+    regras_pontuacao: Optional[dict] = {}
+    regras_resgate: Optional[dict] = {}
+
+class ProgramaFidelidadeCreate(ProgramaFidelidadeBase):
+    empresa_id: int
+
+class ProgramaFidelidade(ProgramaFidelidadeBase):
+    id: int
+    empresa_id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class NivelFidelidadeBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    cor: Optional[str] = '#4299e1'
+    icone: Optional[str] = None
+    pontos_minimos: Optional[int] = 0
+    pontos_maximos: Optional[int] = None
+    multiplicador_pontos: Optional[Decimal] = Decimal('1.00')
+    desconto_percentual: Optional[Decimal] = Decimal('0')
+    beneficios: Optional[List[str]] = []
+    requisitos: Optional[dict] = {}
+    ordem: Optional[int] = 0
+    ativo: Optional[bool] = True
+
+class NivelFidelidadeCreate(NivelFidelidadeBase):
+    programa_id: int
+
+class NivelFidelidade(NivelFidelidadeBase):
+    id: int
+    programa_id: int
+    
+    class Config:
+        from_attributes = True
+
+class CarteiraFidelidadeBase(BaseModel):
+    pontos_atuais: Optional[int] = 0
+    pontos_lifetime: Optional[int] = 0
+    cashback_disponivel: Optional[Decimal] = Decimal('0')
+    status: Optional[str] = 'ativo'
+    metadata: Optional[dict] = {}
+
+class CarteiraFidelidadeCreate(CarteiraFidelidadeBase):
+    cliente_cpf: str
+    programa_id: int
+    nivel_atual_id: Optional[int] = None
+
+class CarteiraFidelidade(CarteiraFidelidadeBase):
+    id: int
+    cliente_cpf: str
+    programa_id: int
+    nivel_atual_id: Optional[int] = None
+    data_ingresso: datetime
+    ultima_atividade: datetime
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class TransacaoFidelidadeBase(BaseModel):
+    tipo: str
+    origem: Optional[str] = None
+    pontos_transacao: int
+    valor_monetario: Optional[Decimal] = None
+    descricao: Optional[str] = None
+    comanda_id: Optional[int] = None
+    campanha_id: Optional[int] = None
+    data_expiracao: Optional[date] = None
+    metadata: Optional[dict] = {}
+
+class TransacaoFidelidadeCreate(TransacaoFidelidadeBase):
+    carteira_id: int
+    evento_id: Optional[int] = None
+    funcionario_id: Optional[int] = None
+
+class TransacaoFidelidade(TransacaoFidelidadeBase):
+    id: int
+    carteira_id: int
+    evento_id: Optional[int] = None
+    pontos_antes: int
+    pontos_depois: int
+    funcionario_id: Optional[int] = None
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class SegmentoClienteBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    tipo: Optional[str] = 'dinamico'
+    criterios: dict
+    filtros_sql: Optional[str] = None
+    ativo: Optional[bool] = True
+
+class SegmentoClienteCreate(SegmentoClienteBase):
+    criado_por: int
+
+class SegmentoCliente(SegmentoClienteBase):
+    id: int
+    tamanho_estimado: int
+    ultima_atualizacao: datetime
+    criado_por: int
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class CampanhaMarketingBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    tipo: str
+    status: Optional[str] = 'rascunho'
+    objetivo: Optional[str] = None
+    data_inicio: Optional[datetime] = None
+    data_fim: Optional[datetime] = None
+    frequencia: Optional[str] = None
+    trigger_evento: Optional[str] = None
+    configuracoes: Optional[dict] = {}
+    budget_maximo: Optional[Decimal] = None
+
+class CampanhaMarketingCreate(CampanhaMarketingBase):
+    segmento_id: Optional[int] = None
+    template_id: Optional[int] = None
+    criado_por: int
+
+class CampanhaMarketing(CampanhaMarketingBase):
+    id: int
+    segmento_id: Optional[int] = None
+    template_id: Optional[int] = None
+    metricas: dict
+    gasto_atual: Decimal
+    criado_por: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class TemplateMensagemBase(BaseModel):
+    nome: str
+    tipo: str
+    categoria: Optional[str] = None
+    assunto: Optional[str] = None
+    conteudo: str
+    variaveis: Optional[List[str]] = []
+    layout_html: Optional[str] = None
+    configuracoes: Optional[dict] = {}
+    preview_url: Optional[str] = None
+    ativo: Optional[bool] = True
+
+class TemplateMensagemCreate(TemplateMensagemBase):
+    criado_por: int
+
+class TemplateMensagem(TemplateMensagemBase):
+    id: int
+    criado_por: int
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PromocaoBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    tipo: str
+    valor_desconto: Optional[Decimal] = None
+    percentual_desconto: Optional[Decimal] = None
+    codigo_cupom: Optional[str] = None
+    limite_uso: Optional[int] = None
+    limite_por_cliente: Optional[int] = 1
+    valor_minimo_compra: Optional[Decimal] = Decimal('0')
+    publico_alvo: Optional[dict] = {}
+    produtos_aplicaveis: Optional[List[int]] = []
+    data_inicio: datetime
+    data_fim: datetime
+    ativa: Optional[bool] = True
+
+class PromocaoCreate(PromocaoBase):
+    created_by: int
+
+class Promocao(PromocaoBase):
+    id: int
+    uso_atual: int
+    receita_impacto: Decimal
+    created_by: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class DashboardMarketing(BaseModel):
+    total_clientes_fidelidade: int
+    pontos_emitidos_mes: int
+    pontos_resgatados_mes: int
+    campanhas_ativas: int
+    taxa_engajamento: Decimal
+    roi_fidelidade: Decimal
+    promocoes_ativas: int
+    cupons_utilizados_mes: int
+    receita_promocoes: Decimal
+    segmentos_ativos: int
+    workflows_executando: int
+    conversao_campanhas: Decimal
+
+class AnalysePreditivaCliente(BaseModel):
+    score_engajamento: int
+    probabilidade_retorno: int
+    valor_medio_projetado: Decimal
+    proximo_nivel_estimado: Optional[str] = None
+    dias_para_proximo_nivel: Optional[int] = None
+    recomendacoes: List[str]
+    risco_cancelamento: str
+    melhor_dia_para_contato: str
+    melhor_horario_para_contato: str
+    preferencias: dict
+    insights: List[str]
+
+class ROIPrograma(BaseModel):
+    total_clientes: int
+    receita_total: Decimal
+    custos_resgates: Decimal
+    roi_percentual: Decimal
+    periodo_analise: int
+    custo_por_cliente: Decimal
+    receita_por_cliente: Decimal
+    media_pontos_cliente: Decimal
+    total_transacoes: int
+    ticket_medio: Decimal
