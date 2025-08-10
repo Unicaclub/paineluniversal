@@ -20,7 +20,6 @@ import {
   Bell
 } from 'lucide-react';
 import { financeiroService, pdvService, eventoService } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
 
 interface DashboardData {
   totalEventos: number;
@@ -47,7 +46,6 @@ const DashboardSupremo: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [showBanner, setShowBanner] = useState(true);
-  const { toast } = useToast();
 
   const carregarDados = useCallback(async () => {
     try {
