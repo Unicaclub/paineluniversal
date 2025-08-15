@@ -164,7 +164,7 @@ const CaixaEvento: React.FC = () => {
       'receita_vendas': 'bg-emerald-100 text-emerald-800',
       'receita_listas': 'bg-teal-100 text-teal-800'
     };
-    return colors[tipo] || 'bg-gray-100 text-gray-800';
+    return colors[tipo] || 'bg-muted text-muted-foreground';
   };
 
   const getStatusColor = (status: string) => {
@@ -173,7 +173,7 @@ const CaixaEvento: React.FC = () => {
       'aprovada': 'bg-green-100 text-green-800',
       'cancelada': 'bg-red-100 text-red-800'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-muted text-muted-foreground';
   };
 
   const formatCurrency = (value: number) => {
@@ -188,7 +188,7 @@ const CaixaEvento: React.FC = () => {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Caixa do Evento & Financeiro</h1>
-          <p className="text-gray-600">Gestão completa das finanças do evento</p>
+          <p className="text-muted-foreground">Gestão completa das finanças do evento</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -278,7 +278,7 @@ const CaixaEvento: React.FC = () => {
               <div className="text-3xl font-bold text-red-600">
                 {formatCurrency(dashboard.total_saidas)}
               </div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 Despesas e repasses
               </div>
             </CardContent>
@@ -295,7 +295,7 @@ const CaixaEvento: React.FC = () => {
               <div className={`text-3xl font-bold ${dashboard.lucro_prejuizo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(dashboard.lucro_prejuizo)}
               </div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 Resultado final
               </div>
             </CardContent>
@@ -379,12 +379,12 @@ const CaixaEvento: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando movimentações...</p>
+              <p className="mt-2 text-muted-foreground">Carregando movimentações...</p>
             </div>
           ) : movimentacoes.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">Nenhuma movimentação encontrada</p>
+              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">Nenhuma movimentação encontrada</p>
               <Button 
                 onClick={() => setMovimentacaoModal({ open: true, movimentacao: null })}
                 className="mt-4"
@@ -414,26 +414,26 @@ const CaixaEvento: React.FC = () => {
                       </div>
                       
                       <h3 className="font-semibold">{movimentacao.categoria}</h3>
-                      <p className="text-gray-600 text-sm">{movimentacao.descricao}</p>
+                      <p className="text-muted-foreground text-sm">{movimentacao.descricao}</p>
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
                         <div>
-                          <span className="text-gray-500">Valor:</span>
+                          <span className="text-muted-foreground">Valor:</span>
                           <p className={`font-semibold ${movimentacao.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
                             {movimentacao.tipo === 'entrada' ? '+' : '-'}{formatCurrency(movimentacao.valor)}
                           </p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Responsável:</span>
+                          <span className="text-muted-foreground">Responsável:</span>
                           <p className="font-medium">{movimentacao.usuario_responsavel_nome}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Data:</span>
+                          <span className="text-muted-foreground">Data:</span>
                           <p>{new Date(movimentacao.criado_em).toLocaleDateString('pt-BR')}</p>
                         </div>
                         {movimentacao.numero_documento && (
                           <div>
-                            <span className="text-gray-500">Documento:</span>
+                            <span className="text-muted-foreground">Documento:</span>
                             <p className="font-mono text-xs">{movimentacao.numero_documento}</p>
                           </div>
                         )}

@@ -159,14 +159,14 @@ const ListasModule: React.FC = () => {
 
   const getTipoColor = (tipo: string) => {
     const colors: Record<string, string> = {
-      'vip': 'bg-purple-100 text-purple-800',
-      'promoter': 'bg-blue-100 text-blue-800',
-      'aniversario': 'bg-pink-100 text-pink-800',
-      'free': 'bg-green-100 text-green-800',
-      'desconto': 'bg-yellow-100 text-yellow-800',
-      'pagante': 'bg-gray-100 text-gray-800'
+      'vip': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
+      'promoter': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+      'aniversario': 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400',
+      'free': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+      'desconto': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+      'pagante': 'bg-muted text-muted-foreground'
     };
-    return colors[tipo] || 'bg-gray-100 text-gray-800';
+    return colors[tipo] || 'bg-muted text-muted-foreground';
   };
 
   const formatCurrency = (value: number) => {

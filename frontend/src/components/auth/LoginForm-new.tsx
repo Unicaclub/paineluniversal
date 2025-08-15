@@ -84,14 +84,14 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Calendar className="mx-auto h-12 w-12 text-blue-600" />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
             Sistema de Gestão de Eventos
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             {mode === 'login' 
               ? 'Faça login para acessar o sistema'
               : 'Crie sua conta para acessar o sistema'
@@ -229,7 +229,7 @@ const LoginForm: React.FC = () => {
 
         {/* Informações adicionais para desenvolvimento */}
         <div className="text-center">
-          <div className="text-xs text-gray-500 space-y-1">
+          <div className="text-xs text-muted-foreground space-y-1">
             <p><strong>Usuários para teste:</strong></p>
             <p>Admin: CPF 000.000.000-00, Senha: 0000</p>
             <p>Promoter: CPF 111.111.111-11, Senha: promoter123</p>

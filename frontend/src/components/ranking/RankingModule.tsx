@@ -132,24 +132,24 @@ const RankingModule: React.FC = () => {
     const icons = {
       'lenda': <Crown className="h-5 w-5 text-purple-600" />,
       'diamante': <Star className="h-5 w-5 text-blue-600" />,
-      'platina': <Award className="h-5 w-5 text-gray-400" />,
+      'platina': <Award className="h-5 w-5 text-muted-foreground" />,
       'ouro': <Trophy className="h-5 w-5 text-yellow-500" />,
-      'prata': <Medal className="h-5 w-5 text-gray-500" />,
+      'prata': <Medal className="h-5 w-5 text-muted-foreground" />,
       'bronze': <Target className="h-5 w-5 text-orange-600" />
     };
-    return icons[badge] || <Target className="h-5 w-5 text-gray-400" />;
+    return icons[badge] || <Target className="h-5 w-5 text-muted-foreground" />;
   };
 
   const getBadgeColor = (badge: string) => {
     const colors = {
       'lenda': 'bg-purple-100 text-purple-800 border-purple-200',
       'diamante': 'bg-blue-100 text-blue-800 border-blue-200',
-      'platina': 'bg-gray-100 text-gray-800 border-gray-200',
+      'platina': 'bg-muted text-muted-foreground border-border',
       'ouro': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'prata': 'bg-gray-100 text-gray-600 border-gray-200',
+      'prata': 'bg-muted text-muted-foreground border-border',
       'bronze': 'bg-orange-100 text-orange-800 border-orange-200'
     };
-    return colors[badge] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[badge] || 'bg-muted text-muted-foreground border-border';
   };
 
   const formatCurrency = (value: number) => {
@@ -179,7 +179,7 @@ const RankingModule: React.FC = () => {
             <Trophy className="h-8 w-8 text-yellow-500" />
             Ranking & Gamificação
           </h1>
-          <p className="text-gray-600">Sistema de ranking e conquistas para promoters</p>
+          <p className="text-muted-foreground">Sistema de ranking e conquistas para promoters</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -346,12 +346,12 @@ const RankingModule: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando ranking...</p>
+              <p className="mt-2 text-muted-foreground">Carregando ranking...</p>
             </div>
           ) : ranking.length === 0 ? (
             <div className="text-center py-8">
-              <Trophy className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">Nenhum promoter encontrado</p>
+              <Trophy className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">Nenhum promoter encontrado</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -362,8 +362,8 @@ const RankingModule: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
                           index === 0 ? 'bg-yellow-500' : 
-                          index === 1 ? 'bg-gray-400' : 
-                          index === 2 ? 'bg-orange-600' : 'bg-gray-600'
+                          index === 1 ? 'bg-muted-foreground' : 
+                          index === 2 ? 'bg-orange-600' : 'bg-muted-foreground'
                         }`}>
                           {promoter.posicao_atual}
                         </div>
@@ -387,19 +387,19 @@ const RankingModule: React.FC = () => {
                         
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-500">Vendas:</span>
+                            <span className="text-muted-foreground">Vendas:</span>
                             <p className="font-semibold text-blue-600">{promoter.total_vendas}</p>
                           </div>
                           <div>
-                            <span className="text-gray-500">Receita:</span>
+                            <span className="text-muted-foreground">Receita:</span>
                             <p className="font-semibold text-green-600">{formatCurrency(promoter.receita_gerada)}</p>
                           </div>
                           <div>
-                            <span className="text-gray-500">Presença:</span>
+                            <span className="text-muted-foreground">Presença:</span>
                             <p className="font-semibold">{promoter.taxa_presenca}%</p>
                           </div>
                           <div>
-                            <span className="text-gray-500">Conquistas:</span>
+                            <span className="text-muted-foreground">Conquistas:</span>
                             <p className="font-semibold text-purple-600">
                               {promoter.conquistas_total} 
                               {promoter.conquistas_mes > 0 && (
@@ -410,11 +410,11 @@ const RankingModule: React.FC = () => {
                         </div>
                         
                         <div className="mt-2">
-                          <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
                             <span>Nível {Math.floor(promoter.nivel_experiencia / 10)}</span>
                             <span>{promoter.pontuacao_total} pts</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-muted rounded-full h-2">
                             <div 
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${promoter.nivel_experiencia}%` }}
@@ -463,7 +463,7 @@ const RankingModule: React.FC = () => {
                 <div key={index} className="border rounded-lg p-4 text-center">
                   <div className="text-3xl mb-2">{badge.icone}</div>
                   <h3 className="font-semibold">{badge.nome}</h3>
-                  <p className="text-sm text-gray-600">{badge.descricao}</p>
+                  <p className="text-sm text-muted-foreground">{badge.descricao}</p>
                 </div>
               ))}
             </div>

@@ -170,7 +170,7 @@ const EventosModule: React.FC = () => {
     switch (status) {
       case 'ativo': return 'text-green-600 bg-green-100';
       case 'cancelado': return 'text-red-600 bg-red-100';
-      case 'finalizado': return 'text-gray-600 bg-gray-100';
+      case 'finalizado': return 'text-muted-foreground bg-muted';
       default: return 'text-blue-600 bg-blue-100';
     }
   };
@@ -180,7 +180,7 @@ const EventosModule: React.FC = () => {
       case 'alto': return 'text-green-600 bg-green-100';
       case 'medio': return 'text-yellow-600 bg-yellow-100';
       case 'baixo': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -310,7 +310,7 @@ const EventosModule: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 {new Date(evento.data_evento).toLocaleDateString('pt-BR', {
                   day: '2-digit',
@@ -321,18 +321,18 @@ const EventosModule: React.FC = () => {
                 })}
               </div>
               
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 {evento.local}
               </div>
               
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
                 Limite: {evento.limite_idade}+ | Capacidade: {evento.capacidade_maxima}
               </div>
 
               {evento.descricao && (
-                <p className="text-sm text-gray-600 line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
                   {evento.descricao}
                 </p>
               )}
@@ -415,11 +415,11 @@ const EventosModule: React.FC = () => {
       {eventos.length === 0 && !loading && (
         <Card>
           <CardContent className="text-center py-12">
-            <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Calendar className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               Nenhum evento encontrado
             </h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-muted-foreground mb-4">
               {Object.keys(filtros).length > 0 || busca 
                 ? 'Tente ajustar os filtros de busca.' 
                 : 'Comece criando seu primeiro evento.'

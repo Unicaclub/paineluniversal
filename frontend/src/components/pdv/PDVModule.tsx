@@ -451,7 +451,7 @@ const PDVModule = () => {
                 <div key={item.produto.id} className="flex justify-between items-center p-2 border rounded">
                   <div className="flex-1">
                     <div className="font-medium text-sm">{item.produto.nome}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       R$ {toNumber(item.preco_unitario).toFixed(2)} x {item.quantidade}
                     </div>
                   </div>

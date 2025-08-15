@@ -151,13 +151,13 @@ const UsuariosModule: React.FC = () => {
   const getTipoBadgeColor = (tipo: string) => {
     switch (tipo) {
       case 'admin':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/10 text-destructive border-destructive/20';
       case 'promoter':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'cliente':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-500/10 text-green-600 border-green-500/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -183,7 +183,7 @@ const UsuariosModule: React.FC = () => {
             <User className="h-6 w-6" />
             Gerenciar Usuários
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Cadastre e gerencie usuários do sistema
           </p>
         </div>
@@ -199,7 +199,7 @@ const UsuariosModule: React.FC = () => {
           <div className="flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Buscar por nome, CPF ou email..."
                   value={searchTerm}
@@ -209,11 +209,11 @@ const UsuariosModule: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className="h-4 w-4 text-muted-foreground" />
               <select
                 value={filterTipo}
                 onChange={(e) => setFilterTipo(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 bg-white"
+                className="border border-input rounded-md px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="todos">Todos os tipos</option>
                 <option value="admin">Administradores</option>
@@ -238,7 +238,7 @@ const UsuariosModule: React.FC = () => {
         <CardContent>
           {error && (
             <Alert className="mb-4">
-              <AlertDescription className="text-red-600">
+              <AlertDescription className="text-destructive">
                 {error}
               </AlertDescription>
             </Alert>
@@ -247,7 +247,7 @@ const UsuariosModule: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="mt-2 text-gray-600">Carregando usuários...</p>
+              <p className="mt-2 text-muted-foreground">Carregando usuários...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -266,7 +266,7 @@ const UsuariosModule: React.FC = () => {
                 <TableBody>
                   {filteredUsuarios.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         {searchTerm || filterTipo !== 'todos' 
                           ? 'Nenhum usuário encontrado com os filtros aplicados'
                           : 'Nenhum usuário cadastrado'
@@ -278,12 +278,12 @@ const UsuariosModule: React.FC = () => {
                       <TableRow key={usuario.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User className="h-4 w-4 text-blue-600" />
+                            <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary" />
                             </div>
                             <div>
                               <div className="font-medium">{usuario.nome}</div>
-                              <div className="text-sm text-gray-500 flex items-center gap-1">
+                              <div className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Mail className="h-3 w-3" />
                                 {usuario.email}
                               </div>
@@ -301,7 +301,7 @@ const UsuariosModule: React.FC = () => {
                             {formatPhone(usuario.telefone)}
                           </div>
                           {usuario.empresa && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                               <Building className="h-3 w-3" />
                               {usuario.empresa.nome}
                             </div>
@@ -323,7 +323,7 @@ const UsuariosModule: React.FC = () => {
                           </div>
                         </TableCell>
                         
-                        <TableCell className="text-sm text-gray-600">
+                        <TableCell className="text-sm text-muted-foreground">
                           {usuario.ultimo_login 
                             ? new Date(usuario.ultimo_login).toLocaleDateString('pt-BR')
                             : 'Nunca'
@@ -358,7 +358,7 @@ const UsuariosModule: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteUsuario(usuario)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                               title="Excluir usuário"
                             >
                               <Trash2 className="h-4 w-4" />

@@ -37,7 +37,7 @@ const CadastroUsuarioPage: React.FC = () => {
             <Users className="h-6 w-6" />
             Cadastro de Usuários
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Demonstração do componente de cadastro de usuários
           </p>
         </div>
@@ -53,7 +53,7 @@ const CadastroUsuarioPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Clique no botão abaixo para abrir o modal de cadastro de usuário.
             </p>
             <Button 
@@ -70,7 +70,7 @@ const CadastroUsuarioPage: React.FC = () => {
             <CardTitle className="text-lg">Campos Incluídos</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="text-sm space-y-1 text-gray-600">
+            <ul className="text-sm space-y-1 text-muted-foreground">
               <li>• CPF (com máscara)</li>
               <li>• Nome completo</li>
               <li>• Email</li>
@@ -87,7 +87,7 @@ const CadastroUsuarioPage: React.FC = () => {
             <CardTitle className="text-lg">Validações</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="text-sm space-y-1 text-gray-600">
+            <ul className="text-sm space-y-1 text-muted-foreground">
               <li>• CPF obrigatório (11 dígitos)</li>
               <li>• Email válido obrigatório</li>
               <li>• Nome obrigatório</li>

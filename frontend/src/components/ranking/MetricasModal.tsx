@@ -77,7 +77,7 @@ const MetricasModal: React.FC<MetricasModalProps> = ({ isOpen, onClose, promoter
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando métricas...</p>
+              <p className="mt-2 text-muted-foreground">Carregando métricas...</p>
             </div>
           ) : metricas ? (
             <>
@@ -90,7 +90,7 @@ const MetricasModal: React.FC<MetricasModalProps> = ({ isOpen, onClose, promoter
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {new Date(metricas.periodo_inicio).toLocaleDateString('pt-BR')} até{' '}
                     {new Date(metricas.periodo_fim).toLocaleDateString('pt-BR')}
                   </p>
@@ -110,7 +110,7 @@ const MetricasModal: React.FC<MetricasModalProps> = ({ isOpen, onClose, promoter
                     <div className="text-2xl font-bold text-blue-600">
                       {metricas.total_vendas}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       Posição: #{metricas.posicao_vendas}
                     </div>
                   </CardContent>

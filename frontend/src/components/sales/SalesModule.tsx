@@ -159,8 +159,8 @@ const SalesModule: React.FC = () => {
       case 'aprovada': return 'text-green-600';
       case 'pendente': return 'text-yellow-600';
       case 'rejeitada': return 'text-red-600';
-      case 'cancelada': return 'text-gray-600';
-      default: return 'text-gray-600';
+      case 'cancelada': return 'text-muted-foreground';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -194,7 +194,7 @@ const SalesModule: React.FC = () => {
                 <Label htmlFor="evento">Evento</Label>
                 <select
                   id="evento"
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   value={eventoSelecionado || ''}
                   onChange={(e) => setEventoSelecionado(Number(e.target.value))}
                   required
@@ -214,7 +214,7 @@ const SalesModule: React.FC = () => {
                     <Label htmlFor="lista">Lista/Tipo de Ingresso</Label>
                     <select
                       id="lista"
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       value={novaVenda.lista_id}
                       onChange={(e) => setNovaVenda({ ...novaVenda, lista_id: Number(e.target.value) })}
                       required
@@ -310,15 +310,15 @@ const SalesModule: React.FC = () => {
             {eventoSelecionado ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {transacoes.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">Nenhuma venda encontrada</p>
+                  <p className="text-muted-foreground text-center py-4">Nenhuma venda encontrada</p>
                 ) : (
                   transacoes.slice(0, 10).map(transacao => (
                     <div key={transacao.id} className="border-b pb-3">
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium">{transacao.nome_comprador}</p>
-                          <p className="text-sm text-gray-600">CPF: {formatarCPF(transacao.cpf_comprador)}</p>
-                          <p className="text-sm text-gray-600">{transacao.email_comprador}</p>
+                          <p className="text-sm text-muted-foreground">CPF: {formatarCPF(transacao.cpf_comprador)}</p>
+                          <p className="text-sm text-muted-foreground">{transacao.email_comprador}</p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold">{formatarMoeda(transacao.valor)}</p>
@@ -327,7 +327,7 @@ const SalesModule: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {formatarData(transacao.criado_em)}
                       </p>
                     </div>
@@ -335,7 +335,7 @@ const SalesModule: React.FC = () => {
                 )}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">
+              <p className="text-muted-foreground text-center py-8">
                 Selecione um evento para visualizar as vendas
               </p>
             )}

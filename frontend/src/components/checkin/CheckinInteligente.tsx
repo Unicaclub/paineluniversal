@@ -372,10 +372,10 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
           <CardContent>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {checkinsRecentes.map((checkin, index) => (
-                <div key={index} className="flex justify-between items-center p-3 border rounded-lg bg-white">
+                <div key={index} className="flex justify-between items-center p-3 border rounded-lg bg-card">
                   <div>
                     <div className="font-medium">{checkin.nome}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       CPF: {formatarCPF(checkin.cpf)} • {checkin.metodo_checkin}
                     </div>
                   </div>
@@ -384,7 +384,7 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Confirmado
                     </Badge>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {new Date(checkin.checkin_em).toLocaleTimeString('pt-BR')}
                     </div>
                   </div>
@@ -438,7 +438,7 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
                   <h4 className="font-medium mb-2">Check-ins por Método</h4>
                   <div className="space-y-2">
                     {dashboard.checkins_por_metodo?.map((metodo: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
                         <span className="capitalize">{metodo.metodo}</span>
                         <Badge variant="outline">{metodo.total}</Badge>
                       </div>
@@ -447,8 +447,8 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
                 <p>Carregando dashboard...</p>
               </div>
             )}

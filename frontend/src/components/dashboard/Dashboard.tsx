@@ -418,9 +418,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <Card className="bg-card border border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <CardTitle className="flex items-center text-foreground">
                 <BarChart3 className="h-5 w-5 mr-2 text-primary" />
                 Receita - Últimos 7 Dias
               </CardTitle>
@@ -473,7 +473,7 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <Card className="bg-card border border-border shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Zap className="h-5 w-5 mr-2 text-primary" />
@@ -526,9 +526,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
         >
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <Card className="bg-card border border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <CardTitle className="flex items-center text-foreground">
                 <Trophy className="h-5 w-5 mr-2 text-primary" />
                 Top Promoters
               </CardTitle>
@@ -582,9 +582,9 @@ const Dashboard: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
         >
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <Card className="bg-card border border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <CardTitle className="flex items-center text-foreground">
                 <Activity className="h-5 w-5 mr-2 text-primary" />
                 Status do Sistema
               </CardTitle>
