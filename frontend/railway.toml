@@ -2,6 +2,7 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
+buildCommand = "docker build -t frontend ."
 
 [deploy]
 numReplicas = 1
@@ -19,3 +20,7 @@ retries = 3
 [env]
 PORT = "3000"
 NODE_ENV = "production"
+
+# Root directory configuration
+[source]
+rootDirectory = "frontend"
