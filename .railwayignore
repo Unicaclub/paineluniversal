@@ -1,9 +1,11 @@
-# Ignorar arquivos desnecessários no Railway
+# Railway ignore para Backend service
+# Ignorar arquivos desnecessários no build do backend
 
-# Diretórios de outros serviços que não devem ser incluídos no frontend
-backend/
+# Diretórios de outros serviços
+frontend/
 meep-service/
 nginx/
+landing-unique/
 .venv/
 .qodo/
 .claude/
@@ -14,17 +16,24 @@ nginx/
 eventos.db
 server.pid
 
-# Scripts e documentação
-*.sh
-*.md
-*.py
-*.js
-*.html
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Build artifacts
+# Scripts e documentação que não são necessários
+*.md
+build.sh
+build.ps1
+deploy-*.sh
+
+# Frontend artifacts
 node_modules/
 dist/
 build/
+.cache/
+.parcel-cache/
 
 # Logs
 *.log
@@ -34,6 +43,9 @@ build/
 .git/
 .gitignore
 
-# Cache
-.cache/
-.parcel-cache/
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
