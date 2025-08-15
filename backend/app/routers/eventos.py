@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 import csv
 import io
@@ -306,7 +306,7 @@ async def atualizar_evento(
             detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
-    if evento_update.data_evento <= datetime.now():
+    if evento_update.data_evento <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data do evento deve ser futura"

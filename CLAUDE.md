@@ -41,6 +41,9 @@ npm run build-with-types  # Build with TypeScript compilation
 npm run lint         # Run ESLint
 npm run preview      # Preview production build (port 4173)
 npm start           # Alias for preview
+
+# Testing (Jest + React Testing Library)
+npm test            # Run tests (if configured)
 ```
 
 ### Full Stack Deployment
@@ -134,6 +137,7 @@ npm start           # Alias for preview
 
 ## Special Features
 - **Landing Page Integration**: Includes a separate landing page module in `/landing-unique` for marketing
+- **MEEP Service**: Dedicated Node.js microservice in `/meep-service` for analytics and validations
 - **Multi-Environment Support**: Different configurations for development (SQLite) and production (PostgreSQL)
 - **Real-time Communication**: WebSocket implementation for live updates in PDV and check-in systems  
 - **CPF Security**: All user operations are tied to CPF for enhanced security and Brazilian compliance
@@ -141,3 +145,11 @@ npm start           # Alias for preview
 - **Email Integration**: Email service for notifications and receipts
 - **WhatsApp Integration**: Automated WhatsApp messaging capabilities
 - **Deployment Scripts**: PowerShell (Windows) and Bash (Unix) scripts for easy deployment
+
+## Additional Services
+- **MEEP Service** (`/meep-service`): Node.js analytics service with Redis caching
+  ```bash
+  cd meep-service
+  npm install
+  npm start
+  ```

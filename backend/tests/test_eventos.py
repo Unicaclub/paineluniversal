@@ -61,7 +61,6 @@ def usuario_admin(db_session, empresa_teste):
         cpf="12345678901",
         telefone="11999999999",
         tipo=TipoUsuario.ADMIN,
-        empresa_id=empresa_teste.id,
         senha_hash="$2b$12$test",
         ativo=True
     )
@@ -78,7 +77,6 @@ def usuario_promoter(db_session, empresa_teste):
         cpf="98765432109",
         telefone="11888888888",
         tipo=TipoUsuario.PROMOTER,
-        empresa_id=empresa_teste.id,
         senha_hash="$2b$12$test",
         ativo=True
     )
