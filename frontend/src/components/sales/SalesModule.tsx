@@ -40,10 +40,11 @@ const SalesModule: React.FC = () => {
   const carregarEventos = async () => {
     try {
       setLoading(true);
-      const eventosData = await eventoService.listar(usuario?.empresa_id);
+      const eventosData = await eventoService.getAll();
       setEventos(eventosData.filter(e => e.status === 'ativo'));
     } catch (error) {
       setError('Erro ao carregar eventos');
+      console.error('Erro ao carregar eventos:', error);
     } finally {
       setLoading(false);
     }
@@ -53,10 +54,11 @@ const SalesModule: React.FC = () => {
     if (!eventoSelecionado) return;
     
     try {
-      const listasData = await listaService.listarPorEvento(eventoSelecionado);
+      const listasData = await listaService.getAll(eventoSelecionado);
       setListas(listasData.filter(l => l.ativa));
     } catch (error) {
       setError('Erro ao carregar listas');
+      console.error('Erro ao carregar listas:', error);
     }
   };
 
@@ -64,10 +66,11 @@ const SalesModule: React.FC = () => {
     if (!eventoSelecionado) return;
     
     try {
-      const transacoesData = await transacaoService.listar(eventoSelecionado);
+      const transacoesData = await transacaoService.getAll(eventoSelecionado);
       setTransacoes(transacoesData);
     } catch (error) {
       setError('Erro ao carregar transações');
+      console.error('Erro ao carregar transações:', error);
     }
   };
 

@@ -107,7 +107,7 @@ const DashboardAvancado: React.FC = () => {
 
   const carregarEventos = async () => {
     try {
-      const eventosData = await eventoService.listar();
+      const eventosData = await eventoService.getAll();
       setEventos(eventosData);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);

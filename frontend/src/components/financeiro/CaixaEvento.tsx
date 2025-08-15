@@ -72,12 +72,14 @@ const CaixaEvento: React.FC = () => {
 
   const carregarEventos = async () => {
     try {
-      const eventosData = await eventoService.listar();
-      setEventos(eventosData.filter(e => e.status === 'ativo'));
-      if (eventosData.length > 0) {
-        setEventoSelecionado(eventosData[0].id);
+      const eventosData = await eventoService.getAll();
+      const eventosAtivos = eventosData.filter(e => e.status === 'ativo');
+      setEventos(eventosAtivos);
+      if (eventosAtivos.length > 0) {
+        setEventoSelecionado(eventosAtivos[0].id);
       }
     } catch (error) {
+      console.error('Erro ao carregar eventos:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar eventos",

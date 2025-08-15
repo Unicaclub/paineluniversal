@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { pdvService } from '@/services/api';
+import { pdvService, eventoService, type Evento } from '@/services/api';
 // import { websocketService } from '@/services/websocket';
 
 interface Produto {
@@ -44,51 +45,81 @@ const toNumber = (value: string | number): number => {
 };
 
 const PDVModule = () => {
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [eventoSelecionado, setEventoSelecionado] = useState<number | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [busca, setBusca] = useState('');
   const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(null);
+  const [comandas, setComandas] = useState<Comanda[]>([]);
   const [cpfCliente, setCpfCliente] = useState('');
   const [nomeCliente, setNomeCliente] = useState('');
   const [metodoPagamento, setMetodoPagamento] = useState('DINHEIRO');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const eventoId = 1; // Pegar do contexto ou props
+  useEffect(() => {
+    carregarEventos();
+  }, []);
 
   useEffect(() => {
-    carregarProdutos();
-    
-    // websocketService.connect(eventoId);
-    
-    // websocketService.on('stock_update', (data) => {
-    //   setProdutos(prev => prev.map(p => 
-    //     p.id === data.produto_id 
-    //       ? { ...p, estoque_atual: data.estoque_atual }
-    //       : p
-    //   ));
-    //   
-    //   toast({
-    //     title: "Estoque atualizado",
-    //     description: `${data.produto_nome}: ${data.estoque_atual} unidades`,
-    //   });
-    // });
-    
-    // websocketService.on('new_sale', (data) => {
-    //   toast({
-    //     title: "Nova venda realizada",
-    //     description: `Venda ${data.venda.numero_venda} - R$ ${data.venda.valor_final}`,
-    //   });
-    // });
+    if (eventoSelecionado) {
+      carregarProdutos();
+      carregarComandas();
+      
+      // websocketService.connect(eventoSelecionado);
+      
+      // websocketService.on('stock_update', (data) => {
+      //   setProdutos(prev => prev.map(p => 
+      //     p.id === data.produto_id 
+      //       ? { ...p, estoque_atual: data.estoque_atual }
+      //       : p
+      //   ));
+      //   
+      //   toast({
+      //     title: "Estoque atualizado",
+      //     description: `${data.produto_nome}: ${data.estoque_atual} unidades`,
+      //   });
+      // });
+      
+      // websocketService.on('new_sale', (data) => {
+      //   toast({
+      //     title: "Nova venda realizada",
+      //     description: `Venda ${data.venda.numero_venda} - R$ ${data.venda.valor_final}`,
+      //   });
+      // });
+    }
     
     // return () => {
     //   websocketService.disconnect();
     // };
-  }, [eventoId]);
+  }, [eventoSelecionado]);
+
+  const carregarEventos = async () => {
+    try {
+      const eventosData = await eventoService.getAll();
+      const eventosAtivos = eventosData.filter(e => e.status === 'ativo');
+      setEventos(eventosAtivos);
+      
+      // Auto-selecionar o primeiro evento se houver apenas um
+      if (eventosAtivos.length === 1) {
+        setEventoSelecionado(eventosAtivos[0].id!);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar eventos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar eventos",
+        variant: "destructive"
+      });
+    }
+  };
 
   const carregarProdutos = async () => {
+    if (!eventoSelecionado) return;
+    
     try {
-      const response = await pdvService.listarProdutos(eventoId);
+      const response = await pdvService.listarProdutos(eventoSelecionado);
       setProdutos(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
@@ -190,9 +221,22 @@ const PDVModule = () => {
     );
   };
 
-  const buscarComanda = async (numeroComanda: string) => {
+  const carregarComandas = async () => {
+    if (!eventoSelecionado) return;
+    
     try {
-      const comandas = await pdvService.listarComandas(eventoId);
+      const comandasData = await pdvService.listarComandas(eventoSelecionado);
+      setComandas(Array.isArray(comandasData) ? comandasData : []);
+    } catch (error) {
+      console.error('Erro ao carregar comandas:', error);
+      setComandas([]);
+    }
+  };
+
+  const buscarComanda = async (numeroComanda: string) => {
+    if (!eventoSelecionado) return;
+    
+    try {
       const comanda = comandas.find(c => c.numero_comanda === numeroComanda);
       
       if (comanda) {
@@ -243,7 +287,7 @@ const PDVModule = () => {
     
     try {
       const vendaData = {
-        evento_id: eventoId,
+        evento_id: eventoSelecionado,
         cpf_cliente: cpfCliente || undefined,
         nome_cliente: nomeCliente || undefined,
         comanda_id: comandaSelecionada?.id,
@@ -297,13 +341,54 @@ const PDVModule = () => {
 
   return (
     <div className="w-full h-full p-4 sm:p-6 lg:p-8">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
-        {/* Produtos */}
-        <div className="xl:col-span-2">
-          <Card className="bg-card border border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Produtos</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-2">
+      {/* Seletor de Evento */}
+      <div className="mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ponto de Venda (PDV)</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <Label htmlFor="evento-select">Selecionar Evento</Label>
+                <Select 
+                  value={eventoSelecionado?.toString() || ''} 
+                  onValueChange={(value) => setEventoSelecionado(Number(value))}
+                >
+                  <SelectTrigger id="evento-select">
+                    <SelectValue placeholder="Selecione um evento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eventos.map((evento) => (
+                      <SelectItem key={evento.id} value={evento.id!.toString()}>
+                        {evento.nome} - {new Date(evento.data_evento).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {eventoSelecionado && (
+                <Badge variant="secondary">
+                  Evento ID: {eventoSelecionado}
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {!eventoSelecionado && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Selecione um evento para começar as vendas</p>
+        </div>
+      )}
+
+      {eventoSelecionado && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+          {/* Produtos */}
+          <div className="xl:col-span-2">
+            <Card className="bg-card border border-border">
+              <CardHeader>
+                <CardTitle className="text-foreground">Produtos</CardTitle>
+                <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   placeholder="Buscar produto ou código de barras..."
                   value={busca}
@@ -502,6 +587,7 @@ const PDVModule = () => {
         </Card>
         </div>
         </div>
+      )}
       </div>
   );
 };

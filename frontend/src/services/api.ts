@@ -230,6 +230,11 @@ export const usuarioService = {
   async toggleStatus(id: number, ativo: boolean): Promise<Usuario> {
     const response = await api.patch(`/api/usuarios/${id}/status`, { ativo });
     return response.data;
+  },
+
+  async listarPromoters(): Promise<Usuario[]> {
+    const response = await api.get('/api/usuarios/');
+    return response.data.filter((usuario: Usuario) => usuario.tipo === 'promoter');
   }
 };
 

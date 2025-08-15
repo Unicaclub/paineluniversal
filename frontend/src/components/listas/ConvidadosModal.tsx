@@ -57,7 +57,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
     
     try {
       setLoading(true);
-      const transacoes = await transacaoService.listar(lista.evento_id);
+      const transacoes = await transacaoService.getAll(lista.evento_id);
       const convidadosLista = transacoes.filter(t => 
         t.lista_id === lista.id && t.status === 'aprovada'
       );

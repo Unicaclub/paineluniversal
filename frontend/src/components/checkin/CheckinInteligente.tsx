@@ -97,9 +97,10 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
 
   const carregarEventos = async () => {
     try {
-      const response = await eventoService.listar();
+      const response = await eventoService.getAll();
       setEventos(response.filter((e: any) => e.status === 'ativo'));
     } catch (error) {
+      console.error('Erro ao carregar eventos:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar eventos",
