@@ -1,0 +1,39 @@
+# Ignorar arquivos desnecessários no Railway
+
+# Diretórios de outros serviços que não devem ser incluídos no frontend
+backend/
+meep-service/
+nginx/
+.venv/
+.qodo/
+.claude/
+
+# Arquivos de configuração local
+.env
+.env.example
+eventos.db
+server.pid
+
+# Scripts e documentação
+*.sh
+*.md
+*.py
+*.js
+*.html
+
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+*.pid
+
+# Git
+.git/
+.gitignore
+
+# Cache
+.cache/
+.parcel-cache/

@@ -1,26 +1,8 @@
-# Railway.toml para deploy do Frontend
+# Railway configuration for Frontend
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
-buildCommand = "docker build -t frontend ."
 
 [deploy]
-numReplicas = 1
-sleepApplication = false
-restartPolicyType = "always"
-startCommand = "/start.sh"
-
-[healthcheck]
-path = "/health"
-intervalSeconds = 30
-timeoutSeconds = 10
-retries = 3
-
-# Environment variables
-[env]
-PORT = "3000"
-NODE_ENV = "production"
-
-# Root directory configuration
-[source]
-rootDirectory = "frontend"
+startCommand = "/docker-entrypoint.sh"
+healthcheckPath = "/health"
+healthcheckTimeout = 300

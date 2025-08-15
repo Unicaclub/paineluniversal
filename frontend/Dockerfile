@@ -3,31 +3,28 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+# Install dependencies
+RUN npm ci --no-audit --no-fund
 
 # Copy source code
 COPY . .
 
-# Build arguments for Railway production
-ARG VITE_API_URL=https://backend-painel-universal-production.up.railway.app
-ARG VITE_MEEP_API_URL=https://meep-service-production.up.railway.app
-ARG VITE_WS_URL=wss://backend-painel-universal-production.up.railway.app
+# Build arguments (Railway will pass these via environment)
+ARG VITE_API_URL
+ARG VITE_MEEP_API_URL  
+ARG VITE_WS_URL
 
-# Set environment variables for build
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_MEEP_API_URL=$VITE_MEEP_API_URL
-ENV VITE_WS_URL=$VITE_WS_URL
+# Set environment variables for build with defaults
+ENV VITE_API_URL=${VITE_API_URL:-https://backend-painel-universal-production.up.railway.app}
+ENV VITE_MEEP_API_URL=${VITE_MEEP_API_URL:-https://meep-service-production.up.railway.app}
+ENV VITE_WS_URL=${VITE_WS_URL:-wss://backend-painel-universal-production.up.railway.app}
 ENV NODE_ENV=production
 
-# Build the application with verbose output
-RUN echo "Starting build process..." && \
-    npm run build --verbose && \
-    echo "Build completed successfully!" && \
-    ls -la dist/
+# Build the application
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
@@ -38,26 +35,22 @@ RUN apk add --no-cache curl
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy built application
+# Copy built application from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create a simple startup script inline
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'echo "🚀 Starting Frontend..."' >> /start.sh && \
-    echo 'if [ -n "$PORT" ]; then' >> /start.sh && \
-    echo '  echo "📝 Configuring port $PORT..."' >> /start.sh && \
-    echo '  sed -i "s/listen 3000/listen $PORT/g" /etc/nginx/nginx.conf' >> /start.sh && \
-    echo 'fi' >> /start.sh && \
-    echo 'echo "✅ Starting nginx..."' >> /start.sh && \
-    echo 'exec nginx -g "daemon off;"' >> /start.sh && \
-    chmod +x /start.sh
-
-# Expose port (Railway will override with PORT env var)
+# Expose port (Railway will set PORT env var)
 EXPOSE 3000
 
-# Health check - verificar se nginx está respondendo
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
+# Create startup script that handles dynamic port
+RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
+    echo 'PORT=${PORT:-3000}' >> /docker-entrypoint.sh && \
+    echo 'sed -i "s/listen 3000/listen $PORT/g" /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /docker-entrypoint.sh && \
+    chmod +x /docker-entrypoint.sh
 
-# Start with custom script
-CMD ["/start.sh"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
+
+# Use custom entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
