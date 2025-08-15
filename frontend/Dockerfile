@@ -41,9 +41,16 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built application
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy startup script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+# Create a simple startup script inline
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'echo "🚀 Starting Frontend..."' >> /start.sh && \
+    echo 'if [ -n "$PORT" ]; then' >> /start.sh && \
+    echo '  echo "📝 Configuring port $PORT..."' >> /start.sh && \
+    echo '  sed -i "s/listen 3000/listen $PORT/g" /etc/nginx/nginx.conf' >> /start.sh && \
+    echo 'fi' >> /start.sh && \
+    echo 'echo "✅ Starting nginx..."' >> /start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
 # Expose port (Railway will override with PORT env var)
 EXPOSE 3000

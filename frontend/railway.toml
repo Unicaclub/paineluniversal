@@ -1,3 +1,4 @@
+# Railway.toml para deploy do Frontend
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
@@ -6,13 +7,15 @@ dockerfilePath = "Dockerfile"
 numReplicas = 1
 sleepApplication = false
 restartPolicyType = "always"
-
-[env]
-PORT = "3000"
-NODE_ENV = "production"
+startCommand = "/start.sh"
 
 [healthcheck]
 path = "/health"
 intervalSeconds = 30
 timeoutSeconds = 10
 retries = 3
+
+# Environment variables
+[env]
+PORT = "3000"
+NODE_ENV = "production"
