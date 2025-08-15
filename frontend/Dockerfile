@@ -12,15 +12,16 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build arguments
-ARG VITE_API_URL=http://localhost:8000
-ARG VITE_MEEP_API_URL=http://localhost:3001
-ARG VITE_WS_URL=ws://localhost:8000
+# Build arguments for Railway production
+ARG VITE_API_URL=https://backend-painel-universal-production.up.railway.app
+ARG VITE_MEEP_API_URL=https://meep-service-production.up.railway.app
+ARG VITE_WS_URL=wss://backend-painel-universal-production.up.railway.app
 
 # Set environment variables for build
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_MEEP_API_URL=$VITE_MEEP_API_URL
 ENV VITE_WS_URL=$VITE_WS_URL
+ENV NODE_ENV=production
 
 # Build the application with verbose output
 RUN echo "Starting build process..." && \
@@ -31,23 +32,25 @@ RUN echo "Starting build process..." && \
 # Production stage
 FROM nginx:alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Add health check script
-RUN echo '#!/bin/sh' > /health-check.sh && \
-    echo 'curl -f http://localhost:3000/health || exit 1' >> /health-check.sh && \
-    chmod +x /health-check.sh
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Expose port
+# Expose port (Railway will override with PORT env var)
 EXPOSE 3000
 
-# Health check
+# Health check - verificar se nginx está respondendo
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD /health-check.sh
+  CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start with custom script
+CMD ["/start.sh"]

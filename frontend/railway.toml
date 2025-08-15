@@ -1,0 +1,18 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+numReplicas = 1
+sleepApplication = false
+restartPolicyType = "always"
+
+[env]
+PORT = "3000"
+NODE_ENV = "production"
+
+[healthcheck]
+path = "/health"
+intervalSeconds = 30
+timeoutSeconds = 10
+retries = 3
