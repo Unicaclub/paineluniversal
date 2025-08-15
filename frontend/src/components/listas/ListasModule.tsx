@@ -181,7 +181,7 @@ const ListasModule: React.FC = () => {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Listas &amp; Convidados</h1>
-          <p className="text-gray-600">Gestão inteligente de listas e convidados</p>
+          <p className="text-muted-foreground">Gestão inteligente de listas e convidados</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -216,7 +216,7 @@ const ListasModule: React.FC = () => {
             <div>
               <Label>Evento</Label>
               <select
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 value={eventoSelecionado || ''}
                 onChange={(e) => setEventoSelecionado(parseInt(e.target.value))}
               >
@@ -241,7 +241,7 @@ const ListasModule: React.FC = () => {
             <div>
               <Label>Tipo</Label>
               <select
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 value={filtros.tipo}
                 onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
               >
@@ -258,7 +258,7 @@ const ListasModule: React.FC = () => {
             <div>
               <Label>Promoter</Label>
               <select
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 value={filtros.promoter_id}
                 onChange={(e) => setFiltros({ ...filtros, promoter_id: e.target.value })}
               >
@@ -274,7 +274,7 @@ const ListasModule: React.FC = () => {
             <div>
               <Label>Status</Label>
               <select
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 value={filtros.ativa}
                 onChange={(e) => setFiltros({ ...filtros, ativa: e.target.value })}
               >
@@ -290,13 +290,13 @@ const ListasModule: React.FC = () => {
       {loading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando listas...</p>
+          <p className="mt-2 text-muted-foreground">Carregando listas...</p>
         </div>
       ) : listas.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">Nenhuma lista encontrada</p>
+            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">Nenhuma lista encontrada</p>
             <Button 
               onClick={() => setListaModal({ open: true, lista: null })}
               className="mt-4"
@@ -325,7 +325,7 @@ const ListasModule: React.FC = () => {
                   {lista.promoter_nome && (
                     <div className="text-right">
                       <Crown className="h-4 w-4 text-yellow-500 inline" />
-                      <p className="text-xs text-gray-600">{lista.promoter_nome}</p>
+                      <p className="text-xs text-muted-foreground">{lista.promoter_nome}</p>
                     </div>
                   )}
                 </div>
@@ -334,24 +334,24 @@ const ListasModule: React.FC = () => {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600">Preço</p>
+                    <p className="text-muted-foreground">Preço</p>
                     <p className="font-semibold">{formatCurrency(lista.preco)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Convidados</p>
+                    <p className="text-muted-foreground">Convidados</p>
                     <p className="font-semibold">
                       {lista.total_convidados || lista.vendas_realizadas}
                       {lista.limite_vendas && ` / ${lista.limite_vendas}`}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Presentes</p>
+                    <p className="text-muted-foreground">Presentes</p>
                     <p className="font-semibold text-green-600">
                       {lista.convidados_presentes || 0}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Taxa Presença</p>
+                    <p className="text-muted-foreground">Taxa Presença</p>
                     <p className="font-semibold text-blue-600">
                       {lista.taxa_presenca?.toFixed(1) || '0.0'}%
                     </p>
@@ -360,7 +360,7 @@ const ListasModule: React.FC = () => {
                 
                 {lista.receita_gerada && (
                   <div className="pt-2 border-t">
-                    <p className="text-gray-600 text-sm">Receita Gerada</p>
+                    <p className="text-muted-foreground text-sm">Receita Gerada</p>
                     <p className="font-semibold text-green-600">
                       {formatCurrency(lista.receita_gerada)}
                     </p>

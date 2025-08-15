@@ -84,9 +84,10 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
       
       setConvidados(convidadosComCheckin);
     } catch (error) {
+      console.error('Erro ao carregar convidados:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar convidados",
+        description: `Erro ao carregar convidados da lista ${lista.nome}. Verifique se a lista existe e tente novamente.`,
         variant: "destructive"
       });
     } finally {
@@ -125,7 +126,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
               <CardContent className="p-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-blue-600">{totalConvidados}</p>
-                  <p className="text-sm text-gray-600">Total Convidados</p>
+                  <p className="text-sm text-muted-foreground">Total Convidados</p>
                 </div>
               </CardContent>
             </Card>
@@ -134,7 +135,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
               <CardContent className="p-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">{presentes}</p>
-                  <p className="text-sm text-gray-600">Presentes</p>
+                  <p className="text-sm text-muted-foreground">Presentes</p>
                 </div>
               </CardContent>
             </Card>
@@ -143,7 +144,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
               <CardContent className="p-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-red-600">{ausentes}</p>
-                  <p className="text-sm text-gray-600">Ausentes</p>
+                  <p className="text-sm text-muted-foreground">Ausentes</p>
                 </div>
               </CardContent>
             </Card>
@@ -152,7 +153,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
               <CardContent className="p-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-600">{taxaPresenca.toFixed(1)}%</p>
-                  <p className="text-sm text-gray-600">Taxa Presença</p>
+                  <p className="text-sm text-muted-foreground">Taxa Presença</p>
                 </div>
               </CardContent>
             </Card>
@@ -162,7 +163,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
             <div className="flex-1">
               <Label>Buscar por CPF ou Nome</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Digite CPF ou nome..."
                   value={busca}
@@ -175,7 +176,7 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
             <div>
               <Label>Status</Label>
               <select
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -189,12 +190,12 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando convidados...</p>
+              <p className="mt-2 text-muted-foreground">Carregando convidados...</p>
             </div>
           ) : filteredConvidados.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">Nenhum convidado encontrado</p>
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">Nenhum convidado encontrado</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -206,12 +207,12 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
                         <div className="flex items-center gap-3">
                           <div>
                             <h4 className="font-semibold">{convidado.nome_comprador}</h4>
-                            <p className="text-sm text-gray-600">{formatCPF(convidado.cpf_comprador)}</p>
+                            <p className="text-sm text-muted-foreground">{formatCPF(convidado.cpf_comprador)}</p>
                             {convidado.email_comprador && (
-                              <p className="text-sm text-gray-600">{convidado.email_comprador}</p>
+                              <p className="text-sm text-muted-foreground">{convidado.email_comprador}</p>
                             )}
                             {convidado.telefone_comprador && (
-                              <p className="text-sm text-gray-600">{convidado.telefone_comprador}</p>
+                              <p className="text-sm text-muted-foreground">{convidado.telefone_comprador}</p>
                             )}
                           </div>
                         </div>
@@ -228,15 +229,15 @@ const ConvidadosModal: React.FC<ConvidadosModalProps> = ({
                             {convidado.checkin_realizado ? 'PRESENTE' : 'AUSENTE'}
                           </Badge>
                           {convidado.data_checkin && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {formatDate(convidado.data_checkin)}
                             </p>
                           )}
                         </div>
                         
                         <div className="text-center">
-                          <QrCode className="h-6 w-6 text-gray-400 mx-auto" />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <QrCode className="h-6 w-6 text-muted-foreground mx-auto" />
+                          <p className="text-xs text-muted-foreground mt-1">
                             {convidado.qr_code_ticket}
                           </p>
                         </div>
