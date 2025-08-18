@@ -157,3 +157,13 @@ npm test            # Run tests with Jest and React Testing Library
   npm test:coverage   # Run tests with coverage
   npm run lint        # Run ESLint
   ```
+
+- **Landing Page** (`/landing-unique`): Standalone React landing page
+  ```bash
+  cd landing-unique
+  npm install          # Install dependencies
+  npm run dev         # Run development server
+  npm run build       # Build for production
+  npm run preview     # Preview production build
+  npm run lint        # Run ESLint
+  ```

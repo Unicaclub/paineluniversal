@@ -474,12 +474,6 @@ export const inventoryService = {
     return { success: true, filename };
   },
 
-  // Dashboard and monitoring methods
-  async getDashboardStats() {
-    const response = await api.get('/estoque/dashboard/stats');
-    return response.data;
-  },
-
   async getImportExportJobs(limit = 20, statusFilter?: string) {
     const params = new URLSearchParams();
     params.append('limit', limit.toString());

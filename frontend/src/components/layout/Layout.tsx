@@ -48,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
   const handleLogout = () => {
     logout();
@@ -73,6 +74,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       duration: 2000,
     });
     // TODO: Implementar funcionalidade de busca global
+  };
+
+  const toggleSubmenu = (menuLabel: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuLabel]: !prev[menuLabel]
+    }));
   };
 
   const menuItems = [
@@ -124,6 +132,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: '/app/listas', 
       roles: ['admin', 'promoter'],
       description: 'Gerenciar listas de convidados'
+    },
+    { 
+      icon: Package, 
+      label: 'Produtos', 
+      path: '/app/produtos', 
+      roles: ['admin', 'promoter'],
+      description: 'Gestão completa de produtos',
+      hasSubmenu: true,
+      submenu: [
+        { label: 'Produtos', path: '/app/produtos', description: 'Gestão completa de produtos' },
+        { label: 'Categorias', path: '/app/produtos/categorias', description: 'Gestão de categorias de produtos' },
+        { label: 'Agendamento', path: '/app/produtos/agendamento', description: 'Agendamento automático de produtos' },
+        { label: 'Import/Export', path: '/app/produtos/importexport', description: 'Importar e exportar dados em massa' },
+        { label: 'Lista', path: '/app/produtos/lista', description: 'Listas de produtos personalizadas' },
+        { label: 'Limitar Acesso', path: '/app/produtos/acesso', description: 'Controle de acesso por função' },
+        { label: 'Produtos Ignorados', path: '/app/produtos/ignorados', description: 'Produtos desabilitados' }
+      ]
     },
     { 
       icon: Package, 
@@ -255,61 +280,119 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <div className="space-y-2">
             {filteredMenuItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = item.hasSubmenu 
+                ? location.pathname.startsWith(item.path)
+                : location.pathname === item.path;
+              const isExpanded = expandedMenus[item.label];
+              
               return (
-                <motion.div
-                  key={item.path}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Link
-                    to={item.path}
-                    className={`
-                      group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
-                      ${isActive 
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      }
-                    `}
-                    onClick={() => setSidebarOpen(false)}
-                    title={sidebarCollapsed ? item.label : undefined}
+                <div key={item.path}>
+                  <motion.div
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {isActive && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
-                        layoutId="activeTab"
-                        initial={false}
-                        transition={{
-                          type: "spring",
-                          stiffness: 500,
-                          damping: 30
-                        }}
-                      />
-                    )}
-                    
-                    <div className="relative z-10 flex items-center w-full">
-                      <item.icon className={`
-                        ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
-                        ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
-                      `} />
-                      
-                      {!sidebarCollapsed && (
+                    <Link
+                      to={item.hasSubmenu ? '#' : item.path}
+                      className={`
+                        group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
+                        ${isActive 
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                        }
+                      `}
+                      onClick={(e) => {
+                        if (item.hasSubmenu) {
+                          e.preventDefault();
+                          toggleSubmenu(item.label);
+                        } else {
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      title={sidebarCollapsed ? item.label : undefined}
+                    >
+                      {isActive && (
                         <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex-1 min-w-0"
+                          className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
+                          layoutId="activeTab"
+                          initial={false}
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30
+                          }}
+                        />
+                      )}
+                      
+                      <div className="relative z-10 flex items-center flex-1">
+                        <item.icon className={`
+                          ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
+                          ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
+                        `} />
+                        
+                        {!sidebarCollapsed && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex-1 min-w-0"
+                          >
+                            <div className="truncate">{item.label}</div>
+                            {!isActive && (
+                              <div className="text-xs opacity-60 truncate mt-0.5">
+                                {item.description}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                      
+                      {item.hasSubmenu && !sidebarCollapsed && (
+                        <motion.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="relative z-10"
                         >
-                          <div className="truncate">{item.label}</div>
-                          {!isActive && (
-                            <div className="text-xs opacity-60 truncate mt-0.5">
-                              {item.description}
-                            </div>
-                          )}
+                          <ChevronDown className={`h-4 w-4 transition-colors ${
+                            isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60'
+                          }`} />
                         </motion.div>
                       )}
-                    </div>
-                  </Link>
-                </motion.div>
+                    </Link>
+                  </motion.div>
+                  
+                  {/* Submenu */}
+                  {item.hasSubmenu && isExpanded && !sidebarCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="ml-4 mt-1 space-y-1 bg-sidebar-accent/30 rounded-lg p-2"
+                    >
+                      {item.submenu?.map((subItem) => {
+                        const isSubActive = location.pathname === subItem.path;
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={`
+                              block py-2 px-3 text-sm rounded-md transition-colors
+                              ${isSubActive
+                                ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
+                                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                              }
+                            `}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <div className="truncate">{subItem.label}</div>
+                            <div className="text-xs opacity-60 truncate mt-0.5">
+                              {subItem.description}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -19,6 +19,11 @@ import EstoqueModule from './components/estoque/EstoqueModule';
 import { UsuariosModule } from './components/usuarios';
 import PublicRegisterPage from './components/auth/PublicRegisterPage';
 import LandingPage from './components/landing/LandingPage';
+import ProdutosLayout from './components/produtos/ProdutosLayout';
+import ProductsList from './components/produtos/ProductsList';
+import CategoriasList from './components/produtos/CategoriasList';
+import AgendamentosList from './components/produtos/AgendamentosList';
+import ImportExportModule from './components/produtos/ImportExportModule';
 import './App.css';
 
 function App() {
@@ -91,6 +96,34 @@ function App() {
                           <ListasModule />
                         </ProtectedRoute>
                       } />
+                      <Route path="produtos/*" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <ProdutosLayout />
+                        </ProtectedRoute>
+                      }>
+                        <Route index element={<ProductsList />} />
+                        <Route path="categorias" element={<CategoriasList />} />
+                        <Route path="agendamento" element={<AgendamentosList />} />
+                        <Route path="importexport" element={<ImportExportModule />} />
+                        <Route path="lista" element={
+                          <div className="p-8 text-center">
+                            <h1 className="text-2xl font-bold">Lista</h1>
+                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
+                          </div>
+                        } />
+                        <Route path="acesso" element={
+                          <div className="p-8 text-center">
+                            <h1 className="text-2xl font-bold">Limitar Acesso</h1>
+                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
+                          </div>
+                        } />
+                        <Route path="ignorados" element={
+                          <div className="p-8 text-center">
+                            <h1 className="text-2xl font-bold">Produtos Ignorados</h1>
+                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
+                          </div>
+                        } />
+                      </Route>
                       <Route path="estoque" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <EstoqueModule />
