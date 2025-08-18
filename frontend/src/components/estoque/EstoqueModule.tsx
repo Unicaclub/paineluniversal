@@ -11,6 +11,7 @@ import { StockExitModal } from './StockExitModal';
 import { TransferModal } from './TransferModal';
 import { MovementHistoryModal } from './MovementHistoryModal';
 import { ManageReasonsModal } from './ManageReasonsModal';
+import { TestModal } from './TestModal';
 
 interface DashboardStats {
   totalProducts: number;
@@ -33,10 +34,19 @@ const EstoqueModule: React.FC = () => {
   const loadDashboardStats = async () => {
     try {
       setLoading(true);
+      console.log('Tentando carregar stats do inventory...');
       const data = await inventoryService.getDashboardStats();
+      console.log('Stats carregadas:', data);
       setStats(data);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
+      // Fallback com dados mockados para testar a interface
+      setStats({
+        totalProducts: 1247,
+        totalValue: 85430,
+        lowStockProducts: 23,
+        todayMovements: 156
+      });
     } finally {
       setLoading(false);
     }
@@ -51,6 +61,16 @@ const EstoqueModule: React.FC = () => {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const handleModalOpen = (modalType: string) => {
+    console.log('Abrindo modal:', modalType);
+    setSelectedModal(modalType);
+  };
+
+  const handleModalClose = () => {
+    console.log('Fechando modal');
+    setSelectedModal(null);
   };
 
   return (
@@ -68,7 +88,10 @@ const EstoqueModule: React.FC = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={() => setSelectedModal('new-movement')}>
+          <Button onClick={() => handleModalOpen('test')}>
+            🧪 Teste Modal
+          </Button>
+          <Button onClick={() => handleModalOpen('new-movement')}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Movimentação
           </Button>
@@ -140,7 +163,7 @@ const EstoqueModule: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-position')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-position')}>
           <CardHeader>
             <CardTitle className="text-lg">Posição de Estoque</CardTitle>
             <CardDescription>
@@ -154,7 +177,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-entry')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-entry')}>
           <CardHeader>
             <CardTitle className="text-lg">Entrada de Mercadorias</CardTitle>
             <CardDescription>
@@ -168,7 +191,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-exit')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-exit')}>
           <CardHeader>
             <CardTitle className="text-lg">Saída de Mercadorias</CardTitle>
             <CardDescription>
@@ -182,7 +205,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('transfer')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('transfer')}>
           <CardHeader>
             <CardTitle className="text-lg">Transferências</CardTitle>
             <CardDescription>
@@ -196,7 +219,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('movement-history')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('movement-history')}>
           <CardHeader>
             <CardTitle className="text-lg">Histórico de Movimentações</CardTitle>
             <CardDescription>
@@ -210,7 +233,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('manage-reasons')}>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('manage-reasons')}>
           <CardHeader>
             <CardTitle className="text-lg">Motivos de Movimentação</CardTitle>
             <CardDescription>
@@ -279,18 +302,30 @@ const EstoqueModule: React.FC = () => {
           </div>
           
           <div className="mt-4 pt-4 border-t">
-            <Button variant="ghost" className="w-full" onClick={() => setSelectedModal('movement-history')}>
+            <Button variant="ghost" className="w-full" onClick={() => handleModalOpen('movement-history')}>
               Ver Todas as Movimentações
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Debug Info */}
+      <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+        Estado atual do modal: {selectedModal || 'nenhum'}
+      </div>
+
       {/* Modals */}
+      {selectedModal === 'test' && (
+        <TestModal 
+          isOpen={true} 
+          onClose={handleModalClose}
+        />
+      )}
+      
       {selectedModal === 'stock-position' && (
         <StockPositionModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
           onRefresh={loadDashboardStats}
         />
       )}
@@ -298,7 +333,7 @@ const EstoqueModule: React.FC = () => {
       {selectedModal === 'stock-entry' && (
         <StockEntryModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
           onSuccess={loadDashboardStats}
         />
       )}
@@ -306,7 +341,7 @@ const EstoqueModule: React.FC = () => {
       {selectedModal === 'stock-exit' && (
         <StockExitModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
           onSuccess={loadDashboardStats}
         />
       )}
@@ -314,7 +349,7 @@ const EstoqueModule: React.FC = () => {
       {selectedModal === 'transfer' && (
         <TransferModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
           onSuccess={loadDashboardStats}
         />
       )}
@@ -322,14 +357,14 @@ const EstoqueModule: React.FC = () => {
       {selectedModal === 'movement-history' && (
         <MovementHistoryModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
         />
       )}
       
       {selectedModal === 'manage-reasons' && (
         <ManageReasonsModal 
           isOpen={true} 
-          onClose={() => setSelectedModal(null)}
+          onClose={handleModalClose}
         />
       )}
     </div>
