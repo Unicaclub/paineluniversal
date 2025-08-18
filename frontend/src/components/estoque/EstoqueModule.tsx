@@ -1,11 +1,58 @@
-import React from 'react';
-import { Package, Plus, Search, Filter, BarChart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, Plus, Search, Filter, BarChart, AlertTriangle, Activity, TrendingUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { inventoryService } from '../../services/inventory';
+import { StockPositionModal } from './StockPositionModal';
+import { StockEntryModal } from './StockEntryModal';
+import { StockExitModal } from './StockExitModal';
+import { TransferModal } from './TransferModal';
+import { MovementHistoryModal } from './MovementHistoryModal';
+import { ManageReasonsModal } from './ManageReasonsModal';
+
+interface DashboardStats {
+  totalProducts: number;
+  totalValue: number;
+  lowStockProducts: number;
+  todayMovements: number;
+}
 
 const EstoqueModule: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProducts: 0,
+    totalValue: 0,
+    lowStockProducts: 0,
+    todayMovements: 0
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [selectedModal, setSelectedModal] = useState<string | null>(null);
+
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const data = await inventoryService.getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Erro ao carregar dados do dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -21,7 +68,7 @@ const EstoqueModule: React.FC = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button>
+          <Button onClick={() => setSelectedModal('new-movement')}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Movimentação
           </Button>
@@ -36,7 +83,9 @@ const EstoqueModule: React.FC = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : stats.totalProducts.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               +12% em relação ao mês anterior
             </p>
@@ -46,25 +95,29 @@ const EstoqueModule: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 85.430</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : formatCurrency(stats.totalValue)}
+            </div>
             <p className="text-xs text-muted-foreground">
               +8% em relação ao mês anterior
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className={stats.lowStockProducts > 0 ? "border-destructive bg-destructive/5" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Produtos Baixo Estoque</CardTitle>
-            <Package className="h-4 w-4 text-destructive" />
+            <AlertTriangle className={`h-4 w-4 ${stats.lowStockProducts > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">23</div>
-            <p className="text-xs text-muted-foreground">
-              Requer atenção imediata
+            <div className={`text-2xl font-bold ${stats.lowStockProducts > 0 ? 'text-destructive' : ''}`}>
+              {loading ? '...' : stats.lowStockProducts}
+            </div>
+            <p className={`text-xs ${stats.lowStockProducts > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {stats.lowStockProducts > 0 ? 'Requer atenção imediata' : 'Estoque adequado'}
             </p>
           </CardContent>
         </Card>
@@ -72,10 +125,12 @@ const EstoqueModule: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Movimentações Hoje</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : stats.todayMovements}
+            </div>
             <p className="text-xs text-muted-foreground">
               Entradas e saídas
             </p>
@@ -85,7 +140,7 @@ const EstoqueModule: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-position')}>
           <CardHeader>
             <CardTitle className="text-lg">Posição de Estoque</CardTitle>
             <CardDescription>
@@ -99,7 +154,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-entry')}>
           <CardHeader>
             <CardTitle className="text-lg">Entrada de Mercadorias</CardTitle>
             <CardDescription>
@@ -113,7 +168,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('stock-exit')}>
           <CardHeader>
             <CardTitle className="text-lg">Saída de Mercadorias</CardTitle>
             <CardDescription>
@@ -127,7 +182,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('transfer')}>
           <CardHeader>
             <CardTitle className="text-lg">Transferências</CardTitle>
             <CardDescription>
@@ -141,7 +196,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('movement-history')}>
           <CardHeader>
             <CardTitle className="text-lg">Histórico de Movimentações</CardTitle>
             <CardDescription>
@@ -155,7 +210,7 @@ const EstoqueModule: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedModal('manage-reasons')}>
           <CardHeader>
             <CardTitle className="text-lg">Motivos de Movimentação</CardTitle>
             <CardDescription>
@@ -224,12 +279,59 @@ const EstoqueModule: React.FC = () => {
           </div>
           
           <div className="mt-4 pt-4 border-t">
-            <Button variant="ghost" className="w-full">
+            <Button variant="ghost" className="w-full" onClick={() => setSelectedModal('movement-history')}>
               Ver Todas as Movimentações
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      {selectedModal === 'stock-position' && (
+        <StockPositionModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+          onRefresh={loadDashboardStats}
+        />
+      )}
+      
+      {selectedModal === 'stock-entry' && (
+        <StockEntryModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+          onSuccess={loadDashboardStats}
+        />
+      )}
+      
+      {selectedModal === 'stock-exit' && (
+        <StockExitModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+          onSuccess={loadDashboardStats}
+        />
+      )}
+      
+      {selectedModal === 'transfer' && (
+        <TransferModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+          onSuccess={loadDashboardStats}
+        />
+      )}
+      
+      {selectedModal === 'movement-history' && (
+        <MovementHistoryModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+        />
+      )}
+      
+      {selectedModal === 'manage-reasons' && (
+        <ManageReasonsModal 
+          isOpen={true} 
+          onClose={() => setSelectedModal(null)}
+        />
+      )}
     </div>
   );
 };
