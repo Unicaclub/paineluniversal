@@ -20,7 +20,7 @@ from app.inventory.schemas import (
     # Management schemas
     CategoryCreate, CategoryUpdate, CategoryResponse,
     UnitCreate, UnitUpdate, UnitResponse,
-    ProductCreate, ProductUpdate, ProductResponse, ProductFilter,
+    ProductCreate, ProductUpdate, ProductResponse,
     LocationCreate, LocationUpdate, LocationResponse,
     MovementReasonCreate, MovementReasonUpdate, MovementReasonResponse,
     # Generic responses
@@ -242,15 +242,15 @@ async def get_products(
     current_user = Depends(require_permission("inventory:read"))
 ):
     """Get products with filters and pagination"""
-    filters = ProductFilter(
+    
+    products, total = service.repo.get_products(
+        organization_id,
         category_id=category_id,
         q=q,
         is_active=is_active,
         page=page,
         page_size=page_size
     )
-    
-    products, total = service.repo.get_products(organization_id, **filters.model_dump())
     pages = (total + page_size - 1) // page_size
     
     return PaginatedResponse[ProductResponse](

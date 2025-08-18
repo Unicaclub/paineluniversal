@@ -64,6 +64,48 @@ def obter_usuario_atual(token_data: TokenData = Depends(verificar_token), db: Se
         )
     return usuario
 
+# Alias para compatibilidade
+get_current_user = obter_usuario_atual
+
+def require_permission(permission: str):
+    """
+    Factory function to create permission dependencies
+    Usage: current_user = Depends(require_permission("inventory:read"))
+    """
+    def permission_checker(usuario_atual: Usuario = Depends(obter_usuario_atual)):
+        # Parse permission string (e.g., "inventory:read")
+        if ":" in permission:
+            resource, action = permission.split(":", 1)
+        else:
+            resource = permission
+            action = "read"
+        
+        # Admin has all permissions
+        if usuario_atual.tipo.value == "admin":
+            return usuario_atual
+        
+        # For inventory module, allow promoters to read/write
+        if resource == "inventory":
+            if usuario_atual.tipo.value in ["promoter"] and action in ["read", "write"]:
+                return usuario_atual
+            elif action == "admin":
+                # Only admin can do admin actions
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Acesso negado: permissão {permission} requer nível admin"
+                )
+        
+        # Default permission check for promoters
+        if usuario_atual.tipo.value in ["promoter"] and action in ["read", "write"]:
+            return usuario_atual
+        
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Acesso negado: permissão {permission} necessária"
+        )
+    
+    return permission_checker
+
 def verificar_permissao_admin(usuario_atual: Usuario = Depends(obter_usuario_atual)):
     if usuario_atual.tipo.value != "admin":
         raise HTTPException(

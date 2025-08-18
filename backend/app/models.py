@@ -667,3 +667,14 @@ class LogSegurancaMEEP(Base):
     
     evento = relationship("Evento")
     usuario = relationship("Usuario")
+
+# Import inventory models to ensure they are registered with SQLAlchemy
+try:
+    from .inventory.models import (
+        Category, Unit, Product, Location, MovementReason,
+        StockMovement, StockMovementLine, StockLevel,
+        MovementTypeEnum, ReasonDirectionEnum
+    )
+except ImportError:
+    # Inventory module is optional, ignore if not available
+    pass

@@ -3,10 +3,23 @@ Pydantic schemas for inventory module
 """
 from datetime import datetime, date
 from decimal import Decimal
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Generic, TypeVar
 from enum import Enum
 
 from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+# Generic type for pagination
+T = TypeVar('T')
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated response"""
+    items: List[T]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovementTypeEnum(str, Enum):
@@ -306,7 +319,7 @@ class StockPositionFilter(BaseModel):
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1, le=1000)
     order_by: str = Field(default="product_name")
-    order_dir: str = Field(default="asc", regex="^(asc|desc)$")
+    order_dir: str = Field(default="asc", pattern="^(asc|desc)$")
     below_min_stock: Optional[bool] = None
 
 
@@ -353,7 +366,7 @@ class MovementHistoryFilter(BaseModel):
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, ge=1, le=1000)
     order_by: str = Field(default="created_at")
-    order_dir: str = Field(default="desc", regex="^(asc|desc)$")
+    order_dir: str = Field(default="desc", pattern="^(asc|desc)$")
 
 
 # Error responses
