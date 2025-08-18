@@ -23,6 +23,7 @@
       "Bash(npm test:*)",
       "Bash(npm run test:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

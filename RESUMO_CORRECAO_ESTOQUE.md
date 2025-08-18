@@ -54,14 +54,27 @@ Substituição de todos os modais complexos por versões simplificadas usando HT
 - **Depois**: Interface simples para gerenciar motivos
 - **Funcionalidade**: Criar, editar e excluir motivos de movimentação
 
-## 🚨 Erro de Build Corrigido
-**Problema encontrado**: `StockPositionModal.tsx` tinha uma função duplicada e mistura de código antigo/novo que causava erros de compilação:
+## 🚨 Erros de Build Corrigidos
+
+### **Primeiro Erro**: StockPositionModal.tsx
+**Problema encontrado**: Função duplicada e mistura de código antigo/novo que causava erros de compilação:
 ```
 export function StockPositionModal() { ... } // Versão simplificada
 export function StockPositionModal() { ... } // Versão antiga duplicada
 ```
-
 **Solução aplicada**: Removida completamente a função duplicada e código antigo com dependências shadcn/ui problemáticas.
+
+### **Segundo Erro**: ManageReasonsModal.tsx  
+**Problema encontrado**: Arquivo corrompido com:
+- Código duplicado e malformado
+- Imports soltos que não pertencem à estrutura correta
+- Erro de sintaxe "Unexpected }" na linha 273
+- Funções exportadas duplicadas
+
+**Solução aplicada**: 
+- Arquivo completamente substituído por versão limpa
+- Removidas todas as duplicações e dependências problemáticas
+- Mantida apenas a versão simplificada funcional
 
 ## 🎯 Benefícios da Correção
 1. **✅ Build funcionando**: Erro de duplicação corrigido, projeto compila sem erros

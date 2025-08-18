@@ -43,7 +43,7 @@ npm run preview      # Preview production build (port 4173)
 npm start           # Alias for preview
 
 # Testing (Jest + React Testing Library)
-npm test            # Run tests (if configured)
+npm test            # Run tests with Jest and React Testing Library
 ```
 
 ### Full Stack Deployment
@@ -150,6 +150,10 @@ npm test            # Run tests (if configured)
 - **MEEP Service** (`/meep-service`): Node.js analytics service with Redis caching
   ```bash
   cd meep-service
-  npm install
-  npm start
+  npm install          # Install dependencies
+  npm start           # Start production server
+  npm run dev         # Start development server with nodemon
+  npm test            # Run Jest tests
+  npm test:coverage   # Run tests with coverage
+  npm run lint        # Run ESLint
   ```
