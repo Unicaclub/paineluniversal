@@ -76,6 +76,22 @@ export function StockPositionModal() { ... } // Versão antiga duplicada
 - Removidas todas as duplicações e dependências problemáticas
 - Mantida apenas a versão simplificada funcional
 
+### **Terceiro Erro**: StockEntryModal.tsx
+**Problema encontrado**: Funções duplicadas e código complexo misturado.
+**Solução aplicada**: Arquivo substituído por versão limpa.
+
+### **Quarto Erro**: StockExitModal.tsx
+**Problema encontrado**: Funções duplicadas linha 9 e 136.
+**Solução aplicada**: Arquivo substituído por versão limpa.
+
+### **Quinto Erro**: TransferModal.tsx
+**Problema encontrado**: Funções duplicadas linha 9 e 178.
+**Solução aplicada**: Arquivo substituído por versão limpa.
+
+### **Sexto Erro**: MovementHistoryModal.tsx
+**Problema encontrado**: Funções duplicadas linha 8 e 239.
+**Solução aplicada**: Arquivo substituído por versão limpa.
+
 ## 🎯 Benefícios da Correção
 1. **✅ Build funcionando**: Erro de duplicação corrigido, projeto compila sem erros
 2. **Eliminação de dependências problemáticas**: Removidas dependências do shadcn/ui que causavam conflitos
