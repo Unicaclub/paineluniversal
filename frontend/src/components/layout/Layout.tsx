@@ -21,7 +21,8 @@ import {
   Trophy,
   ChevronDown,
   Bell,
-  Search
+  Search,
+  Package
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -123,6 +124,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: '/app/listas', 
       roles: ['admin', 'promoter'],
       description: 'Gerenciar listas de convidados'
+    },
+    { 
+      icon: Package, 
+      label: 'Estoque', 
+      path: '/app/estoque', 
+      roles: ['admin', 'promoter'],
+      description: 'Controle de estoque e inventário'
     },
     { 
       icon: DollarSign, 

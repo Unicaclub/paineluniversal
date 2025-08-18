@@ -15,6 +15,7 @@ import DashboardAvancado from './components/dashboard/DashboardAvancado';
 import ListasModule from './components/listas/ListasModule';
 import CaixaEvento from './components/financeiro/CaixaEvento';
 import RankingModule from './components/ranking/RankingModule';
+import EstoqueModule from './components/estoque/EstoqueModule';
 import { UsuariosModule } from './components/usuarios';
 import PublicRegisterPage from './components/auth/PublicRegisterPage';
 import LandingPage from './components/landing/LandingPage';
@@ -88,6 +89,11 @@ function App() {
                       <Route path="listas" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <ListasModule />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="estoque" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <EstoqueModule />
                         </ProtectedRoute>
                       } />
                       <Route path="financeiro" element={
