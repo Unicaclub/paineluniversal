@@ -14,7 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, financeiro, gamificacao, import_export  # , meep
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao  # financeiro e import_export temporariamente comentados, meep
 from .inventory import inventory_router
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
@@ -83,9 +83,13 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
         ]
         
         # Em desenvolvimento ou para máxima compatibilidade
-        if not os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("CORS_ULTRA_PERMISSIVE", "false").lower() == "true":
-            logger.info("CORS Ultra-Permissivo ativado")
-            return ["*"]
+        # TEMPORÁRIO: CORS ultra-permissivo sempre ativo para resolver problemas de autenticação
+        logger.info("🔥 CORS Ultra-Permissivo SEMPRE ativado para debug")
+        return ["*"]
+        
+        # if not os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("CORS_ULTRA_PERMISSIVE", "false").lower() == "true":
+        #     logger.info("CORS Ultra-Permissivo ativado")
+        #     return ["*"]
         
         logger.info(f"CORS Restritivo ativado com {len(base_origins)} origens permitidas")
         return base_origins
@@ -172,7 +176,7 @@ app.add_middleware(UltimateCORSMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permitir todas as origens como backup
-    allow_credentials=False,  # Sem credentials no backup
+    allow_credentials=True,  # ATIVADO: permitir credentials para autenticação
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -199,10 +203,10 @@ app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(cupons.router, prefix="/api/cupons", tags=["Cupons"])
 app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
 app.include_router(pdv.router, prefix="/api")
-app.include_router(financeiro.router, prefix="/api")
+# app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(inventory_router, prefix="/api")
-app.include_router(import_export.router, tags=["Import-Export"])
+# app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 
 # 🔌 WEBSOCKETS COM CORS
