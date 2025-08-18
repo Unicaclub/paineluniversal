@@ -221,6 +221,23 @@ class Produto(Base):
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
     categoria = Column(String(100))
     imagem_url = Column(String(500))
+    
+    # Campos adicionais para import/export
+    marca = Column(String(100))
+    fornecedor = Column(String(200))
+    preco_custo = Column(Numeric(10, 2))
+    margem_lucro = Column(Numeric(5, 2))
+    unidade_medida = Column(String(10), default="UN")
+    volume = Column(Numeric(8, 2))
+    teor_alcoolico = Column(Numeric(4, 2))
+    temperatura_ideal = Column(String(20))
+    validade_dias = Column(Integer)
+    ncm = Column(String(8))
+    icms = Column(Numeric(5, 2))
+    ipi = Column(Numeric(5, 2))
+    destaque = Column(Boolean, default=False)
+    promocional = Column(Boolean, default=False)
+    observacoes = Column(Text)
     evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
@@ -351,6 +368,103 @@ class MovimentoEstoque(Base):
     produto = relationship("Produto", back_populates="movimentos_estoque")
     venda = relationship("VendaPDV")
     usuario = relationship("Usuario")
+
+# Enums para Import/Export
+class StatusImportacao(enum.Enum):
+    PENDENTE = "PENDENTE"
+    PROCESSANDO = "PROCESSANDO"
+    CONCLUIDA = "CONCLUIDA"
+    ERRO = "ERRO"
+    CANCELADA = "CANCELADA"
+
+class TipoOperacao(enum.Enum):
+    IMPORTACAO = "IMPORTACAO"
+    EXPORTACAO = "EXPORTACAO"
+
+class StatusValidacao(enum.Enum):
+    VALIDO = "VALIDO"
+    ERRO_CRITICO = "ERRO_CRITICO"
+    AVISO = "AVISO"
+
+# Tabelas de Import/Export
+class OperacaoImportExport(Base):
+    __tablename__ = "operacoes_import_export"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tipo_operacao = Column(Enum(TipoOperacao), nullable=False)
+    nome_arquivo = Column(String(255), nullable=False)
+    formato_arquivo = Column(String(10), nullable=False)  # csv, xlsx, json, xml
+    tamanho_arquivo = Column(Integer)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    evento_id = Column(Integer, ForeignKey("eventos.id"))
+    empresa_id = Column(Integer, ForeignKey("empresas.id"))
+    
+    # Status e progresso
+    status = Column(Enum(StatusImportacao), default=StatusImportacao.PENDENTE)
+    total_registros = Column(Integer, default=0)
+    registros_processados = Column(Integer, default=0)
+    registros_sucesso = Column(Integer, default=0)
+    registros_erro = Column(Integer, default=0)
+    registros_aviso = Column(Integer, default=0)
+    
+    # Configurações
+    mapeamento_campos = Column(Text)  # JSON com mapeamento de campos
+    filtros_aplicados = Column(Text)  # JSON com filtros para exportação
+    campos_personalizados = Column(Text)  # JSON com campos selecionados
+    
+    # Tempos
+    inicio_processamento = Column(DateTime(timezone=True))
+    fim_processamento = Column(DateTime(timezone=True))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Logs e resultados
+    log_detalhado = Column(Text)
+    url_arquivo_resultado = Column(String(500))
+    resumo_operacao = Column(Text)  # JSON com resumo detalhado
+    
+    # Relationships
+    usuario = relationship("Usuario")
+    evento = relationship("Evento")
+    empresa = relationship("Empresa")
+    validacoes = relationship("ValidacaoImportacao", back_populates="operacao")
+    
+class ValidacaoImportacao(Base):
+    __tablename__ = "validacoes_importacao"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    operacao_id = Column(Integer, ForeignKey("operacoes_import_export.id"), nullable=False)
+    linha_arquivo = Column(Integer, nullable=False)
+    campo = Column(String(100))
+    tipo_validacao = Column(String(50))  # required, unique, pattern, range, etc.
+    status = Column(Enum(StatusValidacao), nullable=False)
+    mensagem = Column(Text, nullable=False)
+    valor_original = Column(String(500))
+    valor_sugerido = Column(String(500))
+    corrigido = Column(Boolean, default=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    operacao = relationship("OperacaoImportExport", back_populates="validacoes")
+
+class TemplateImportacao(Base):
+    __tablename__ = "templates_importacao"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), nullable=False)
+    descricao = Column(Text)
+    formato = Column(String(10), nullable=False)  # csv, xlsx, json
+    mapeamento_padrao = Column(Text, nullable=False)  # JSON
+    campos_obrigatorios = Column(Text)  # JSON array
+    validacoes_personalizadas = Column(Text)  # JSON
+    ativo = Column(Boolean, default=True)
+    usuario_criador_id = Column(Integer, ForeignKey("usuarios.id"))
+    empresa_id = Column(Integer, ForeignKey("empresas.id"))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    usuario_criador = relationship("Usuario")
+    empresa = relationship("Empresa")
 
 class CaixaPDV(Base):
     __tablename__ = "caixa_pdv"

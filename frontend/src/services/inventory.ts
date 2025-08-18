@@ -1,5 +1,49 @@
 import { api } from './api';
 
+// Import/Export Types
+export interface ImportOptions {
+  formatos_suportados: string[];
+  campos_disponiveis: CampoDisponivel[];
+  templates_disponiveis: TemplateImportacao[];
+  categorias_existentes: string[];
+  fornecedores_existentes: string[];
+}
+
+export interface CampoDisponivel {
+  nome: string;
+  tipo: string;
+  obrigatorio: boolean;
+  descricao: string;
+  aliases: string[];
+  validacoes: string[];
+}
+
+export interface TemplateImportacao {
+  id: number;
+  nome: string;
+  descricao?: string;
+  formato: string;
+  mapeamento_padrao: Record<string, any>;
+  campos_obrigatorios: string[];
+  ativo: boolean;
+  criado_em: string;
+}
+
+export interface ExportFormats {
+  formats: Array<{
+    format: string;
+    name: string;
+    description: string;
+    icon: string;
+    extensions: string[];
+  }>;
+  types: Array<{
+    type: string;
+    name: string;
+    description: string;
+  }>;
+}
+
 // Types
 export interface StockPosition {
   id: number;
@@ -311,5 +355,160 @@ export const inventoryService = {
         todayMovements: 156
       };
     }
+  },
+
+  // ==================== IMPORT/EXPORT METHODS ====================
+  
+  // Import methods
+  async getImportOptions(): Promise<ImportOptions> {
+    const response = await api.get('/estoque/import/options');
+    return response.data;
+  },
+
+  async uploadImportFile(formData: FormData) {
+    const response = await api.post('/estoque/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  async validateImportData(operacaoId: number, mapeamento: Record<string, string>) {
+    const response = await api.post(`/estoque/validate/${operacaoId}`, mapeamento);
+    return response.data;
+  },
+
+  async executeImport(operacaoId: number, mapeamento: Record<string, string>) {
+    const response = await api.post(`/estoque/import/${operacaoId}`, mapeamento);
+    return response.data;
+  },
+
+  async getImportStatus(operacaoId: number) {
+    const response = await api.get(`/estoque/import/${operacaoId}/status`);
+    return response.data;
+  },
+
+  // Export methods
+  async getExportFormats(): Promise<ExportFormats> {
+    const response = await api.get('/estoque/export/formats');
+    return response.data;
+  },
+
+  async previewExport(config: any) {
+    const response = await api.post('/estoque/export/preview', config);
+    return response.data;
+  },
+
+  async exportData(config: any) {
+    const response = await api.post('/estoque/export', config, {
+      responseType: 'blob',
+    });
+    
+    // Criar URL para download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    
+    // Extrair nome do arquivo do header Content-Disposition
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'export.csv';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    // Criar link para download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpar URL
+    window.URL.revokeObjectURL(url);
+    
+    return { success: true, filename };
+  },
+
+  // Template methods
+  async getImportTemplates() {
+    const response = await api.get('/estoque/templates');
+    return response.data;
+  },
+
+  async createImportTemplate(templateData: any) {
+    const response = await api.post('/estoque/templates', templateData);
+    return response.data;
+  },
+
+  async downloadTemplate(format: string) {
+    const response = await api.get(`/estoque/templates/${format}/download`, {
+      responseType: 'blob',
+    });
+    
+    // Criar URL para download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    
+    // Determinar nome do arquivo baseado no formato
+    const extensions: Record<string, string> = {
+      csv: 'csv',
+      xlsx: 'xlsx',
+      json: 'json'
+    };
+    
+    const filename = `template_produtos.${extensions[format] || 'txt'}`;
+    
+    // Criar link para download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpar URL
+    window.URL.revokeObjectURL(url);
+    
+    return { success: true, filename };
+  },
+
+  // Dashboard and monitoring methods
+  async getDashboardStats() {
+    const response = await api.get('/estoque/dashboard/stats');
+    return response.data;
+  },
+
+  async getImportExportJobs(limit = 20, statusFilter?: string) {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    if (statusFilter) {
+      params.append('status_filter', statusFilter);
+    }
+    
+    const response = await api.get(`/estoque/jobs?${params}`);
+    return response.data;
+  },
+
+  async cancelJob(jobId: number) {
+    const response = await api.delete(`/estoque/jobs/${jobId}`);
+    return response.data;
+  },
+
+  // Report methods
+  async getRelatorioGiro(periodo = 30) {
+    const response = await api.get(`/estoque/reports/giro?periodo=${periodo}`);
+    return response.data;
+  },
+
+  async getRelatorioABC() {
+    const response = await api.get('/estoque/reports/abc');
+    return response.data;
+  },
+
+  async getRelatorioPerdas(periodo = 30) {
+    const response = await api.get(`/estoque/reports/perdas?periodo=${periodo}`);
+    return response.data;
   }
 };

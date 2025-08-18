@@ -14,7 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, financeiro, gamificacao  # , meep
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, financeiro, gamificacao, import_export  # , meep
 from .inventory import inventory_router
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
@@ -202,6 +202,7 @@ app.include_router(pdv.router, prefix="/api")
 app.include_router(financeiro.router, prefix="/api")
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(inventory_router, prefix="/api")
+app.include_router(import_export.router, tags=["Import-Export"])
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 
 # 🔌 WEBSOCKETS COM CORS

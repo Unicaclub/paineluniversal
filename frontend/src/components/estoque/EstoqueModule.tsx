@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Search, Filter, BarChart, AlertTriangle, Activity, TrendingUp } from 'lucide-react';
+import { Package, Plus, Search, Filter, BarChart, AlertTriangle, Activity, TrendingUp, Upload, Download, FileText } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { inventoryService } from '../../services/inventory';
 import { StockPositionModal } from './StockPositionModal';
 import { StockEntryModal } from './StockEntryModal';
@@ -12,6 +13,9 @@ import { TransferModal } from './TransferModal';
 import { MovementHistoryModal } from './MovementHistoryModal';
 import { ManageReasonsModal } from './ManageReasonsModal';
 import { TestModal } from './TestModal';
+import { ImportModal } from './ImportModal';
+import { ExportModal } from './ExportModal';
+import { ImportExportDashboard } from './ImportExportDashboard';
 
 interface DashboardStats {
   totalProducts: number;
@@ -88,8 +92,13 @@ const EstoqueModule: React.FC = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={() => handleModalOpen('test')}>
-            🧪 Teste Modal
+          <Button onClick={() => handleModalOpen('import')} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={() => handleModalOpen('export')} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
           </Button>
           <Button onClick={() => handleModalOpen('new-movement')}>
             <Plus className="h-4 w-4 mr-2" />
@@ -98,8 +107,17 @@ const EstoqueModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Tabs */}
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="operations">Operações</TabsTrigger>
+          <TabsTrigger value="import-export">Import/Export</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
@@ -161,92 +179,6 @@ const EstoqueModule: React.FC = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-position')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Posição de Estoque</CardTitle>
-            <CardDescription>
-              Visualize a posição atual de todos os produtos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Ver Posições
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-entry')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Entrada de Mercadorias</CardTitle>
-            <CardDescription>
-              Registre entradas de produtos no estoque
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Nova Entrada
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-exit')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Saída de Mercadorias</CardTitle>
-            <CardDescription>
-              Registre saídas e consumo de produtos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Nova Saída
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('transfer')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Transferências</CardTitle>
-            <CardDescription>
-              Transfira produtos entre locais
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Nova Transferência
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('movement-history')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Histórico de Movimentações</CardTitle>
-            <CardDescription>
-              Consulte todas as movimentações realizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Ver Histórico
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('manage-reasons')}>
-          <CardHeader>
-            <CardTitle className="text-lg">Motivos de Movimentação</CardTitle>
-            <CardDescription>
-              Configure motivos para as movimentações
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Gerenciar Motivos
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Recent Activity Preview */}
       <Card>
@@ -308,6 +240,101 @@ const EstoqueModule: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="operations" className="space-y-6">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-position')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Posição de Estoque</CardTitle>
+                <CardDescription>
+                  Visualize a posição atual de todos os produtos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Ver Posições
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-entry')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Entrada de Produtos</CardTitle>
+                <CardDescription>
+                  Registre novas entradas no estoque
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Nova Entrada
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('stock-exit')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Saída de Produtos</CardTitle>
+                <CardDescription>
+                  Registre saídas e consumo de produtos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Nova Saída
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('transfer')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Transferências</CardTitle>
+                <CardDescription>
+                  Transfira produtos entre locais
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Nova Transferência
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('movement-history')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Histórico de Movimentações</CardTitle>
+                <CardDescription>
+                  Consulte todas as movimentações realizadas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Ver Histórico
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleModalOpen('manage-reasons')}>
+              <CardHeader>
+                <CardTitle className="text-lg">Motivos de Movimentação</CardTitle>
+                <CardDescription>
+                  Configure motivos para as movimentações
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  Gerenciar Motivos
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="import-export" className="space-y-6">
+          <ImportExportDashboard />
+        </TabsContent>
+      </Tabs>
 
       {/* Debug Info */}
       <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
@@ -363,6 +390,21 @@ const EstoqueModule: React.FC = () => {
       
       {selectedModal === 'manage-reasons' && (
         <ManageReasonsModal 
+          isOpen={true} 
+          onClose={handleModalClose}
+        />
+      )}
+      
+      {selectedModal === 'import' && (
+        <ImportModal 
+          isOpen={true} 
+          onClose={handleModalClose}
+          onSuccess={loadDashboardStats}
+        />
+      )}
+      
+      {selectedModal === 'export' && (
+        <ExportModal 
           isOpen={true} 
           onClose={handleModalClose}
         />
