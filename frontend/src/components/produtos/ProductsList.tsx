@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { 
-  PencilIcon, 
-  DocumentDuplicateIcon, 
-  LockClosedIcon, 
-  TrashIcon,
+  Pencil, 
+  Copy, 
+  Lock, 
+  Trash2,
   Plus,
   Download,
   Upload,
@@ -287,28 +287,28 @@ const ProductsList: React.FC = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <ActionButton
-            icon={PencilIcon}
+            icon={Pencil}
             tooltip="Editar"
             onClick={() => handleEdit(row.original)}
             color="blue"
             size="sm"
           />
           <ActionButton
-            icon={DocumentDuplicateIcon}
+            icon={Copy}
             tooltip="Duplicar"
             onClick={() => handleDuplicate(row.original)}
             color="green"
             size="sm"
           />
           <ActionButton
-            icon={LockClosedIcon}
+            icon={Lock}
             tooltip="Limitar acesso"
             onClick={() => handleLimitAccess(row.original)}
             color="orange"
             size="sm"
           />
           <ActionButton
-            icon={TrashIcon}
+            icon={Trash2}
             tooltip="Excluir"
             onClick={() => handleDelete(row.original)}
             color="red"

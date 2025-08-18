@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { 
-  PencilIcon, 
-  TrashIcon,
+  Pencil, 
+  Trash2,
   Plus,
   Download,
   Calendar,
@@ -291,7 +291,7 @@ const AgendamentosList: React.FC = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <ActionButton
-            icon={PencilIcon}
+            icon={Pencil}
             tooltip="Editar"
             onClick={() => handleEdit(row.original)}
             color="blue"
@@ -300,7 +300,7 @@ const AgendamentosList: React.FC = () => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <ActionButton
-                icon={TrashIcon}
+                icon={Trash2}
                 tooltip="Excluir"
                 onClick={() => {}}
                 color="red"

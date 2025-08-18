@@ -48,21 +48,15 @@ const agendamentoSchema = z.object({
     .min(3, 'Nome deve ter pelo menos 3 caracteres')
     .max(100, 'Nome não pode ter mais de 100 caracteres'),
   
-  tipo: z.enum(['promocao', 'evento', 'sazonal'], {
-    required_error: 'Tipo é obrigatório',
-  }),
+  tipo: z.enum(['promocao', 'evento', 'sazonal']),
   
   regra: z.string()
     .min(5, 'Regra deve ter pelo menos 5 caracteres')
     .max(200, 'Regra não pode ter mais de 200 caracteres'),
   
-  data_inicio: z.date({
-    required_error: 'Data de início é obrigatória',
-  }),
+  data_inicio: z.date(),
   
-  data_fim: z.date({
-    required_error: 'Data de fim é obrigatória',
-  }),
+  data_fim: z.date(),
   
   produtos: z.array(z.string()).min(1, 'Selecione pelo menos um produto'),
   
@@ -387,7 +381,7 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
+                              disabled={(date: Date) => date < new Date()}
                               initialFocus
                             />
                           </PopoverContent>
@@ -427,7 +421,7 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
+                              disabled={(date: Date) => date < new Date()}
                               initialFocus
                             />
                           </PopoverContent>

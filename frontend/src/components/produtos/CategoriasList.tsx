@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { 
-  PencilIcon, 
-  LockClosedIcon, 
-  TrashIcon,
+  Pencil, 
+  Lock, 
+  Trash2,
   Plus,
   Download,
   Palette,
@@ -261,14 +261,14 @@ const CategoriasList: React.FC = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <ActionButton
-            icon={PencilIcon}
+            icon={Pencil}
             tooltip="Editar"
             onClick={() => handleEdit(row.original)}
             color="blue"
             size="sm"
           />
           <ActionButton
-            icon={LockClosedIcon}
+            icon={Lock}
             tooltip="Limitar acesso"
             onClick={() => handleLimitAccess(row.original)}
             color="orange"
@@ -277,7 +277,7 @@ const CategoriasList: React.FC = () => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <ActionButton
-                icon={TrashIcon}
+                icon={Trash2}
                 tooltip="Excluir"
                 onClick={() => {}}
                 color="red"
