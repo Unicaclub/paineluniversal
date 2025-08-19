@@ -6,6 +6,7 @@ from datetime import datetime
 import csv
 import io
 import json
+import sys
 
 from ..database import get_db
 from ..models import ProdutoCategoria, Produto, TipoProduto, StatusProduto
@@ -105,6 +106,52 @@ async def test_produtos():
         "timestamp": datetime.now().isoformat(),
         "status": "ok"
     }
+
+# Endpoint simplificado para criar produtos sem validações complexas
+@router.post("/simple")
+async def criar_produto_simples(
+    nome: str,
+    preco: float,
+    tipo: str = "PRODUTO",
+    db: Session = Depends(get_db)
+):
+    """Endpoint simplificado para criar produtos"""
+    try:
+        print(f"🚀 Criando produto simples: {nome}, preço: {preco}")
+        
+        # Criar produto com dados mínimos
+        novo_produto = Produto(
+            nome=nome,
+            preco=preco,
+            tipo=TipoProduto.PRODUTO,
+            evento_id=1,  # Valor padrão
+            status=StatusProduto.ATIVO,
+            estoque_atual=0,
+            estoque_minimo=0,
+            estoque_maximo=1000,
+            controla_estoque=True,
+            unidade_medida="UN"
+        )
+        
+        db.add(novo_produto)
+        db.commit()
+        db.refresh(novo_produto)
+        
+        print(f"✅ Produto criado com ID: {novo_produto.id}")
+        
+        return {
+            "id": novo_produto.id,
+            "nome": novo_produto.nome,
+            "preco": float(novo_produto.preco),
+            "tipo": novo_produto.tipo.value,
+            "status": novo_produto.status.value,
+            "message": "Produto criado com sucesso!"
+        }
+        
+    except Exception as e:
+        print(f"❌ ERRO ao criar produto simples: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")
 
 @router.post("/categorias/", response_model=CategoriaResponse)
 async def criar_categoria(categoria: CategoriaCreate, db: Session = Depends(get_db)):
@@ -276,67 +323,131 @@ async def listar_produtos(
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.post("/", response_model=ProdutoResponse)
-async def criar_produto(produto: ProdutoCreate, db: Session = Depends(get_db)):
-    """Cria um novo produto"""
+async def criar_produto(produto_data: dict, db: Session = Depends(get_db)):
+    """Cria um novo produto - Endpoint flexível que aceita qualquer estrutura"""
     try:
+        print(f"💾 Dados recebidos: {produto_data}")
+        
+        # Extrair campos obrigatórios
+        nome = produto_data.get('nome')
+        preco = produto_data.get('preco') or produto_data.get('valor', 0)
+        
+        if not nome:
+            raise HTTPException(status_code=400, detail="Nome é obrigatório")
+        
+        if not preco or preco <= 0:
+            raise HTTPException(status_code=400, detail="Preço deve ser maior que zero")
+        
+        # Determinar tipo do produto
+        tipo_str = produto_data.get('tipo', 'PRODUTO').upper()
+        try:
+            tipo_produto = TipoProduto(tipo_str)
+        except ValueError:
+            tipo_produto = TipoProduto.PRODUTO
+        
+        # Determinar evento_id
+        evento_id = produto_data.get('evento_id', 1)
+        
         # Verifica se categoria existe
-        if produto.categoria_id:
+        categoria_id = produto_data.get('categoria_id')
+        if categoria_id:
             categoria = db.query(ProdutoCategoria).filter(
-                ProdutoCategoria.id == produto.categoria_id,
+                ProdutoCategoria.id == categoria_id,
                 ProdutoCategoria.ativo == True
             ).first()
             if not categoria:
-                raise HTTPException(status_code=404, detail="Categoria não encontrada")
+                print(f"⚠️ Categoria {categoria_id} não encontrada, criando produto sem categoria")
+                categoria_id = None
         
-        # Verifica se código de barras é único (se fornecido)
-        if produto.codigo_barras:
-            produto_existente = db.query(Produto).filter(
-                Produto.codigo_barras == produto.codigo_barras
+        # Verificar códigos únicos
+        codigo_barras = produto_data.get('codigo_barras')
+        codigo_interno = produto_data.get('codigo_interno') or produto_data.get('codigo')
+        
+        if codigo_barras:
+            existente = db.query(Produto).filter(
+                Produto.codigo_barras == codigo_barras,
+                Produto.evento_id == evento_id
             ).first()
-            if produto_existente and produto_existente.evento_id == produto.evento_id:
-                raise HTTPException(status_code=400, detail="Código de barras já existe para este evento")
+            if existente:
+                raise HTTPException(status_code=400, detail="Código de barras já existe")
         
-        # Verifica se código interno é único (se fornecido)
-        if produto.codigo_interno:
-            produto_existente = db.query(Produto).filter(
-                Produto.codigo_interno == produto.codigo_interno
+        if codigo_interno:
+            existente = db.query(Produto).filter(
+                Produto.codigo_interno == codigo_interno,
+                Produto.evento_id == evento_id
             ).first()
-            if produto_existente and produto_existente.evento_id == produto.evento_id:
-                raise HTTPException(status_code=400, detail="Código interno já existe para este evento")
+            if existente:
+                raise HTTPException(status_code=400, detail="Código interno já existe")
         
-        # Criar dados do produto
-        produto_data = produto.dict()
-        produto_data['status'] = StatusProduto.ATIVO
+        # Criar produto
+        novo_produto = Produto(
+            nome=nome,
+            descricao=produto_data.get('descricao'),
+            tipo=tipo_produto,
+            preco=float(preco),
+            codigo_barras=codigo_barras,
+            codigo_interno=codigo_interno,
+            estoque_atual=int(produto_data.get('estoque_atual', 0)),
+            estoque_minimo=int(produto_data.get('estoque_minimo', 0)),
+            estoque_maximo=int(produto_data.get('estoque_maximo', 1000)),
+            controla_estoque=bool(produto_data.get('controla_estoque', True)),
+            categoria_id=categoria_id,
+            marca=produto_data.get('marca'),
+            fornecedor=produto_data.get('fornecedor'),
+            unidade_medida=produto_data.get('unidade_medida', 'UN'),
+            evento_id=evento_id,
+            status=StatusProduto.ATIVO,
+            destaque=bool(produto_data.get('destaque', False)),
+            promocional=bool(produto_data.get('promocional', False))
+        )
         
-        # Se não tiver evento_id, usar um valor padrão ou atual
-        if not produto_data.get('evento_id'):
-            produto_data['evento_id'] = 1  # Valor padrão temporário
-        
-        print(f"💾 Criando produto: {produto_data}")
-        
-        db_produto = Produto(**produto_data)
-        db.add(db_produto)
+        db.add(novo_produto)
         db.commit()
-        db.refresh(db_produto)
+        db.refresh(novo_produto)
         
-        print(f"✅ Produto criado com ID: {db_produto.id}")
+        print(f"✅ Produto criado com ID: {novo_produto.id}")
         
-        # Adiciona nome da categoria na resposta
-        produto_dict = db_produto.__dict__.copy()
-        if db_produto.categoria_id:
+        # Preparar resposta
+        resposta = {
+            "id": novo_produto.id,
+            "nome": novo_produto.nome,
+            "descricao": novo_produto.descricao,
+            "tipo": novo_produto.tipo,
+            "preco": float(novo_produto.preco),
+            "codigo_barras": novo_produto.codigo_barras,
+            "codigo_interno": novo_produto.codigo_interno,
+            "estoque_atual": novo_produto.estoque_atual,
+            "estoque_minimo": novo_produto.estoque_minimo,
+            "estoque_maximo": novo_produto.estoque_maximo,
+            "controla_estoque": novo_produto.controla_estoque,
+            "categoria_id": novo_produto.categoria_id,
+            "marca": novo_produto.marca,
+            "fornecedor": novo_produto.fornecedor,
+            "unidade_medida": novo_produto.unidade_medida,
+            "status": novo_produto.status,
+            "evento_id": novo_produto.evento_id,
+            "empresa_id": novo_produto.empresa_id,
+            "criado_em": novo_produto.criado_em,
+            "atualizado_em": novo_produto.atualizado_em,
+            "categoria_nome": None
+        }
+        
+        # Adicionar nome da categoria se existir
+        if novo_produto.categoria_id:
             categoria = db.query(ProdutoCategoria).filter(
-                ProdutoCategoria.id == db_produto.categoria_id
+                ProdutoCategoria.id == novo_produto.categoria_id
             ).first()
-            produto_dict['categoria_nome'] = categoria.nome if categoria else None
-        else:
-            produto_dict['categoria_nome'] = None
+            if categoria:
+                resposta["categoria_nome"] = categoria.nome
         
-        return produto_dict
+        return resposta
+        
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ ERRO ao criar produto: {e}")
-        print(f"Dados recebidos: {produto}")
+        import traceback
+        print(f"Stack trace: {traceback.format_exc()}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
@@ -453,16 +564,18 @@ async def deletar_produto(produto_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 # Endpoints de Importação/Exportação
-@router.post("/importar/{evento_id}")
-async def importar_produtos(
-    evento_id: int,
+@router.post("/importar")
+async def importar_produtos_simples(
     file: UploadFile = File(...),
+    evento_id: int = 1,
     sobrescrever: bool = False,
     db: Session = Depends(get_db)
 ):
-    """Importa produtos de um arquivo CSV"""
+    """Importa produtos de um arquivo CSV - Versão simplificada"""
     try:
-        if not file.filename.endswith('.csv'):
+        print(f"📁 Iniciando importação do arquivo: {file.filename}")
+        
+        if not file.filename.lower().endswith('.csv'):
             raise HTTPException(status_code=400, detail="Arquivo deve ser CSV")
         
         contents = await file.read()
@@ -476,156 +589,114 @@ async def importar_produtos(
         
         for linha_num, linha in enumerate(csv_reader, start=2):
             try:
-                # Campos obrigatórios
                 nome = linha.get('nome', '').strip()
-                preco = linha.get('preco', '0').strip()
-                tipo = linha.get('tipo', 'PRODUTO').strip().upper()
+                preco_str = linha.get('preco', '0').strip()
                 
                 if not nome:
                     erros.append(f"Linha {linha_num}: Nome é obrigatório")
                     continue
                 
-                if not preco or preco == '0':
-                    erros.append(f"Linha {linha_num}: Preço é obrigatório")
-                    continue
-                
                 try:
-                    preco_float = float(preco)
-                except ValueError:
-                    erros.append(f"Linha {linha_num}: Preço deve ser um número")
+                    preco = float(preco_str.replace(',', '.'))
+                except (ValueError, AttributeError):
+                    erros.append(f"Linha {linha_num}: Preço inválido")
                     continue
                 
-                # Validar tipo
-                try:
-                    tipo_produto = TipoProduto(tipo)
-                except ValueError:
-                    tipo_produto = TipoProduto.PRODUTO
-                
-                # Buscar categoria por nome
-                categoria_id = None
-                categoria_nome = linha.get('categoria', '').strip()
-                if categoria_nome:
-                    categoria = db.query(ProdutoCategoria).filter(
-                        ProdutoCategoria.nome.ilike(categoria_nome),
-                        ProdutoCategoria.ativo == True
-                    ).first()
-                    if categoria:
-                        categoria_id = categoria.id
-                
-                # Verificar se produto já existe
-                codigo_barras = linha.get('codigo_barras', '').strip() or None
-                codigo_interno = linha.get('codigo_interno', '').strip() or None
-                
-                produto_existente = None
-                if codigo_barras:
-                    produto_existente = db.query(Produto).filter(
-                        Produto.codigo_barras == codigo_barras,
-                        Produto.evento_id == evento_id
-                    ).first()
-                elif codigo_interno:
-                    produto_existente = db.query(Produto).filter(
-                        Produto.codigo_interno == codigo_interno,
-                        Produto.evento_id == evento_id
-                    ).first()
-                
-                if produto_existente and not sobrescrever:
-                    erros.append(f"Linha {linha_num}: Produto já existe (use sobrescrever=true para atualizar)")
+                if preco <= 0:
+                    erros.append(f"Linha {linha_num}: Preço deve ser maior que zero")
                     continue
                 
-                # Preparar dados do produto
-                produto_data = {
-                    'nome': nome,
-                    'descricao': linha.get('descricao', '').strip() or None,
-                    'tipo': tipo_produto,
-                    'preco': preco_float,
-                    'codigo_barras': codigo_barras,
-                    'codigo_interno': codigo_interno,
-                    'estoque_atual': int(linha.get('estoque_atual', '0') or '0'),
-                    'estoque_minimo': int(linha.get('estoque_minimo', '0') or '0'),
-                    'estoque_maximo': int(linha.get('estoque_maximo', '1000') or '1000'),
-                    'controla_estoque': linha.get('controla_estoque', 'true').lower() == 'true',
-                    'categoria_id': categoria_id,
-                    'marca': linha.get('marca', '').strip() or None,
-                    'fornecedor': linha.get('fornecedor', '').strip() or None,
-                    'unidade_medida': linha.get('unidade_medida', 'UN').strip() or 'UN',
-                    'evento_id': evento_id,
-                    'status': StatusProduto.ATIVO
-                }
+                # Criar produto simples
+                novo_produto = Produto(
+                    nome=nome,
+                    preco=preco,
+                    tipo=TipoProduto.PRODUTO,
+                    evento_id=evento_id,
+                    status=StatusProduto.ATIVO,
+                    descricao=linha.get('descricao', '').strip() or None,
+                    codigo_barras=linha.get('codigo_barras', '').strip() or None,
+                    codigo_interno=linha.get('codigo_interno', '').strip() or None,
+                    estoque_atual=int(linha.get('estoque_atual', '0') or '0'),
+                    estoque_minimo=int(linha.get('estoque_minimo', '0') or '0'),
+                    estoque_maximo=int(linha.get('estoque_maximo', '1000') or '1000'),
+                    controla_estoque=True,
+                    unidade_medida=linha.get('unidade_medida', 'UN').strip() or 'UN'
+                )
                 
-                if produto_existente:
-                    # Atualizar produto existente
-                    for field, value in produto_data.items():
-                        if field != 'evento_id':  # Não alterar evento_id
-                            setattr(produto_existente, field, value)
-                    produto_existente.atualizado_em = datetime.now()
-                    produtos_atualizados += 1
-                else:
-                    # Criar novo produto
-                    db_produto = Produto(**produto_data)
-                    db.add(db_produto)
-                    produtos_criados += 1
+                db.add(novo_produto)
+                produtos_criados += 1
                 
-            except Exception as e:
-                erros.append(f"Linha {linha_num}: Erro inesperado - {str(e)}")
+                if produtos_criados % 50 == 0:  # Commit a cada 50 produtos
+                    db.commit()
+                    print(f"📦 {produtos_criados} produtos processados...")
+                
+            except Exception as linha_erro:
+                erros.append(f"Linha {linha_num}: {str(linha_erro)}")
+                if len(erros) > 100:  # Limitar erros para não sobrecarregar
+                    break
         
+        # Commit final
         db.commit()
         
-        return {
+        resultado = {
             "message": "Importação concluída",
             "produtos_criados": produtos_criados,
             "produtos_atualizados": produtos_atualizados,
-            "erros": erros[:10]  # Limita a 10 erros para não sobrecarregar
+            "total_erros": len(erros),
+            "erros": erros[:20]  # Primeiros 20 erros
         }
+        
+        print(f"✅ Importação finalizada: {resultado}")
+        return resultado
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERRO na importação: {e}")
+        print(f"❌ ERRO na importação: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
-@router.get("/exportar/{evento_id}")
-async def exportar_produtos(evento_id: int, db: Session = Depends(get_db)):
-    """Exporta produtos de um evento para CSV"""
+@router.get("/exportar")
+async def exportar_produtos_simples(
+    evento_id: int = None,
+    db: Session = Depends(get_db)
+):
+    """Exporta produtos para CSV - Versão simplificada"""
     try:
-        produtos = db.query(Produto).filter(Produto.evento_id == evento_id).all()
+        print(f"📤 Iniciando exportação de produtos...")
+        
+        # Buscar produtos
+        query = db.query(Produto)
+        if evento_id:
+            query = query.filter(Produto.evento_id == evento_id)
+        
+        produtos = query.all()
         
         if not produtos:
-            raise HTTPException(status_code=404, detail="Nenhum produto encontrado para este evento")
+            raise HTTPException(status_code=404, detail="Nenhum produto encontrado")
         
         # Criar CSV
         output = io.StringIO()
         fieldnames = [
-            'nome', 'descricao', 'tipo', 'preco', 'codigo_barras', 'codigo_interno',
-            'estoque_atual', 'estoque_minimo', 'estoque_maximo', 'controla_estoque',
-            'categoria', 'marca', 'fornecedor', 'unidade_medida', 'status'
+            'id', 'nome', 'descricao', 'tipo', 'preco', 'codigo_barras', 'codigo_interno',
+            'estoque_atual', 'estoque_minimo', 'estoque_maximo', 'unidade_medida', 'status'
         ]
         
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         
         for produto in produtos:
-            categoria_nome = ""
-            if produto.categoria_id:
-                categoria = db.query(ProdutoCategoria).filter(
-                    ProdutoCategoria.id == produto.categoria_id
-                ).first()
-                categoria_nome = categoria.nome if categoria else ""
-            
             writer.writerow({
+                'id': produto.id,
                 'nome': produto.nome,
                 'descricao': produto.descricao or '',
                 'tipo': produto.tipo.value,
-                'preco': produto.preco,
+                'preco': float(produto.preco),
                 'codigo_barras': produto.codigo_barras or '',
                 'codigo_interno': produto.codigo_interno or '',
                 'estoque_atual': produto.estoque_atual,
                 'estoque_minimo': produto.estoque_minimo,
                 'estoque_maximo': produto.estoque_maximo,
-                'controla_estoque': produto.controla_estoque,
-                'categoria': categoria_nome,
-                'marca': produto.marca or '',
-                'fornecedor': produto.fornecedor or '',
                 'unidade_medida': produto.unidade_medida,
                 'status': produto.status.value
             })
@@ -633,14 +704,18 @@ async def exportar_produtos(evento_id: int, db: Session = Depends(get_db)):
         csv_content = output.getvalue()
         output.close()
         
+        filename = f"produtos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        print(f"✅ Exportação concluída: {len(produtos)} produtos")
+        
         return Response(
             content=csv_content,
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=produtos.csv"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
+        
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERRO na exportação: {e}")
-        db.rollback()
+        print(f"❌ ERRO na exportação: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao exportar produtos: {str(e)}")

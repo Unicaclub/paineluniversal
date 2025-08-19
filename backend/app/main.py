@@ -441,6 +441,26 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
         )
         return error_response
 
+# 🧪 ENDPOINT DE DEBUG PARA VERIFICAR ROTAS
+@app.get("/api/debug/routes")
+async def debug_routes():
+    """Debug endpoint para listar todas as rotas disponíveis"""
+    routes_info = []
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            routes_info.append({
+                "path": route.path,
+                "methods": list(route.methods),
+                "name": getattr(route, 'name', 'unnamed')
+            })
+    
+    return {
+        "total_routes": len(routes_info),
+        "routes": sorted(routes_info, key=lambda x: x['path']),
+        "produtos_routes": [r for r in routes_info if 'produtos' in r['path']],
+        "api_routes": [r for r in routes_info if r['path'].startswith('/api')]
+    }
+
 # 🏠 ROOT ENDPOINT
 @app.get("/")
 async def root():
