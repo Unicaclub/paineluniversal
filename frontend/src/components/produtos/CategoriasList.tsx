@@ -1,428 +1,390 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  CheckCircle,
-  XCircle
-} from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/shared/DataTable";
-import { categoriaService, type Categoria, type CategoriaCreate } from "@/services/api";
-import { ColumnDef } from "@tanstack/react-table";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Search, Edit2, Trash2, X, Palette } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { useToast } from '../../hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { categoriaService, Categoria, CategoriaCreate, CategoriaUpdate } from '../../services/categoria';
 
 interface CategoriasListProps {
-  isOpen?: boolean;
-  onClose?: () => void;
+  onSelectCategoria?: (categoria: Categoria) => void;
+  showActions?: boolean;
 }
 
-export const CategoriasList: React.FC<CategoriasListProps> = ({ isOpen = true, onClose }) => {
+const CORES_PADRAO = [
+  '#10B981', // Verde
+  '#F59E0B', // Amarelo
+  '#EF4444', // Vermelho
+  '#3B82F6', // Azul
+  '#8B5CF6', // Roxo
+  '#F97316', // Laranja
+  '#06B6D4', // Ciano
+  '#84CC16', // Lima
+  '#EC4899', // Rosa
+  '#6B7280'  // Cinza
+];
+
+export const CategoriasList: React.FC<CategoriasListProps> = ({ 
+  onSelectCategoria, 
+  showActions = true 
+}) => {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<Categoria | null>(null);
   const [formData, setFormData] = useState<CategoriaCreate>({
     nome: '',
     descricao: '',
-    cor: '#3B82F6'
+    cor: CORES_PADRAO[0]
   });
+  const { toast } = useToast();
 
-  // Carregar categorias ao montar o componente
   useEffect(() => {
-    loadCategorias();
+    carregarCategorias();
   }, []);
 
-  const loadCategorias = async () => {
-    setLoading(true);
+  const carregarCategorias = async () => {
     try {
-      const data = await categoriaService.getAll();
+      setLoading(true);
+      const data = await categoriaService.listar();
       setCategorias(data);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
-      // Em caso de erro, usar dados mock temporariamente
-      setCategorias([
-        { id: 1, nome: 'Bebidas', descricao: 'Bebidas alcoólicas e não alcoólicas', cor: '#10B981', ativo: true },
-        { id: 2, nome: 'Comidas', descricao: 'Pratos principais e petiscos', cor: '#F59E0B', ativo: true },
-        { id: 3, nome: 'Sobremesas', descricao: 'Doces e sobremesas', cor: '#EF4444', ativo: false }
-      ]);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as categorias",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveCategoria = async () => {
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.nome.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (editingCategoria) {
-        // Atualizar categoria existente
-        const updatedCategoria = await categoriaService.update(editingCategoria.id!, formData);
+        const categoriaAtualizada = await categoriaService.atualizar(editingCategoria.id, formData);
         setCategorias(prev => prev.map(cat => 
-          cat.id === editingCategoria.id ? updatedCategoria : cat
+          cat.id === editingCategoria.id ? categoriaAtualizada : cat
         ));
+        toast({
+          title: "Sucesso",
+          description: "Categoria atualizada com sucesso",
+        });
       } else {
-        // Criar nova categoria
-        const newCategoria = await categoriaService.create(formData);
-        setCategorias(prev => [...prev, newCategoria]);
+        const novaCategoria = await categoriaService.criar(formData);
+        setCategorias(prev => [...prev, novaCategoria]);
+        toast({
+          title: "Sucesso",
+          description: "Categoria criada com sucesso",
+        });
       }
       
-      // Resetar formulário
-      setFormData({ nome: '', descricao: '', cor: '#3B82F6' });
-      setEditingCategoria(null);
-      setIsFormOpen(false);
+      resetForm();
     } catch (error) {
       console.error('Erro ao salvar categoria:', error);
-      // Em caso de erro, simular a criação/atualização localmente
-      if (editingCategoria) {
-        const updatedCategoria = { ...editingCategoria, ...formData };
-        setCategorias(prev => prev.map(cat => 
-          cat.id === editingCategoria.id ? updatedCategoria : cat
-        ));
-      } else {
-        const newCategoria: Categoria = {
-          id: Math.max(...categorias.map(c => c.id || 0)) + 1,
-          ...formData,
-          ativo: true,
-          criado_em: new Date().toISOString()
-        };
-        setCategorias(prev => [...prev, newCategoria]);
-      }
-      setFormData({ nome: '', descricao: '', cor: '#3B82F6' });
-      setEditingCategoria(null);
-      setIsFormOpen(false);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar categoria",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleEditCategoria = (categoria: Categoria) => {
+  const handleEdit = (categoria: Categoria) => {
     setEditingCategoria(categoria);
     setFormData({
       nome: categoria.nome,
       descricao: categoria.descricao || '',
-      cor: categoria.cor || '#3B82F6'
+      cor: categoria.cor || CORES_PADRAO[0]
     });
-    setIsFormOpen(true);
+    setModalOpen(true);
   };
 
-  const handleDeleteCategoria = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
-    
-    setLoading(true);
+  const handleDelete = async (categoria: Categoria) => {
+    if (!window.confirm(`Tem certeza que deseja excluir a categoria "${categoria.nome}"?`)) {
+      return;
+    }
+
     try {
-      await categoriaService.delete(id);
-      setCategorias(prev => prev.filter(cat => cat.id !== id));
+      await categoriaService.deletar(categoria.id);
+      setCategorias(prev => prev.filter(cat => cat.id !== categoria.id));
+      toast({
+        title: "Sucesso",
+        description: "Categoria excluída com sucesso",
+      });
     } catch (error) {
       console.error('Erro ao excluir categoria:', error);
-      // Em caso de erro, remover localmente
-      setCategorias(prev => prev.filter(cat => cat.id !== id));
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir categoria",
+        variant: "destructive",
+      });
     }
   };
 
-  const filteredCategorias = categorias.filter(categoria =>
+  const resetForm = () => {
+    setFormData({
+      nome: '',
+      descricao: '',
+      cor: CORES_PADRAO[0]
+    });
+    setEditingCategoria(null);
+    setModalOpen(false);
+  };
+
+  const categoriasFiltradas = categorias.filter(categoria =>
     categoria.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (categoria.descricao && categoria.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
+    categoria.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const columns: ColumnDef<Categoria>[] = [
-    {
-      accessorKey: 'nome',
-      header: 'Nome',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <div 
-            className="w-4 h-4 rounded-full"
-            style={{ backgroundColor: row.original.cor || '#3B82F6' }}
-          />
-          <span className="font-medium">{row.getValue('nome')}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'descricao',
-      header: 'Descrição',
-      cell: ({ row }) => (
-        <span className="text-gray-600">
-          {row.getValue('descricao') || '-'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'ativo',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant={row.getValue('ativo') ? 'default' : 'secondary'}>
-          {row.getValue('ativo') ? (
-            <>
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Ativo
-            </>
-          ) : (
-            <>
-              <XCircle className="w-3 h-3 mr-1" />
-              Inativo
-            </>
-          )}
-        </Badge>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Ações',
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleEditCategoria(row.original)}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDeleteCategoria(row.original.id!)}
-            className="text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  // Se não é modal, renderizar como página normal
-  if (!isOpen || !onClose) {
+  if (loading) {
     return (
-      <div className="h-full bg-background p-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold">Categorias</h1>
-              <p className="text-gray-600">Gerencie as categorias dos seus produtos</p>
-            </div>
-            <Button onClick={() => setIsFormOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Categoria
-            </Button>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-
-          {/* Barra de pesquisa */}
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar categorias..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Tabela de categorias */}
-          <div className="border rounded-lg">
-            <DataTable
-              columns={columns}
-              data={filteredCategorias}
-              loading={loading}
-            />
-          </div>
-
-          {/* Modal do formulário */}
-          {isFormOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg w-full max-w-md p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  {editingCategoria ? 'Editar Categoria' : 'Nova Categoria'}
-                </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Nome</label>
-                    <Input
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Nome da categoria"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Descrição</label>
-                    <Input
-                      value={formData.descricao || ''}
-                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                      placeholder="Descrição da categoria"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Cor</label>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="color"
-                        value={formData.cor || '#3B82F6'}
-                        onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                        className="w-10 h-10 border rounded cursor-pointer"
-                      />
-                      <Input
-                        value={formData.cor || '#3B82F6'}
-                        onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                        placeholder="#3B82F6"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsFormOpen(false);
-                      setEditingCategoria(null);
-                      setFormData({ nome: '', descricao: '', cor: '#3B82F6' });
-                    }}
-                    className="flex-1"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleSaveCategoria}
-                    disabled={loading || !formData.nome.trim()}
-                    className="flex-1"
-                  >
-                    {loading ? 'Salvando...' : 'Salvar'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  // Renderizar como modal (versão original)
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Gerenciar Categorias</h2>
-            <Button variant="ghost" onClick={onClose}>
-              <XCircle className="w-5 h-5" />
-            </Button>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Categorias de Produtos</CardTitle>
+            <CardDescription>
+              Gerencie as categorias dos seus produtos
+            </CardDescription>
           </div>
+          
+          {showActions && (
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => resetForm()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Categoria
+                </Button>
+              </DialogTrigger>
+              
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingCategoria ? 'Editar Categoria' : 'Nova Categoria'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingCategoria 
+                      ? 'Atualize as informações da categoria' 
+                      : 'Crie uma nova categoria para organizar seus produtos'
+                    }
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome">Nome *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      placeholder="Nome da categoria"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                      placeholder="Descrição da categoria (opcional)"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="cor">Cor</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {CORES_PADRAO.map((cor) => (
+                        <button
+                          key={cor}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, cor })}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                            formData.cor === cor 
+                              ? 'border-black dark:border-white scale-110' 
+                              : 'border-gray-300 hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: cor }}
+                          title={cor}
+                        />
+                      ))}
+                    </div>
+                    <Input
+                      id="cor"
+                      type="color"
+                      value={formData.cor}
+                      onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
+                      className="mt-2 w-20 h-10"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" className="flex-1">
+                      {editingCategoria ? 'Atualizar' : 'Criar'} Categoria
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={resetForm}
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
-
-        <div className="p-6">
-          {/* Barra de ferramentas */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar categorias..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-            </div>
-            <Button onClick={() => setIsFormOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Categoria
-            </Button>
-          </div>
-
-          {/* Tabela de categorias */}
-          <div className="border rounded-lg">
-            <DataTable
-              columns={columns}
-              data={filteredCategorias}
-              loading={loading}
+        
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar categorias..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
           </div>
         </div>
-
-        {/* Modal do formulário */}
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-md p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                {editingCategoria ? 'Editar Categoria' : 'Nova Categoria'}
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nome</label>
-                  <Input
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Nome da categoria"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Descrição</label>
-                  <Input
-                    value={formData.descricao || ''}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    placeholder="Descrição da categoria"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Cor</label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      value={formData.cor || '#3B82F6'}
-                      onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                      className="w-10 h-10 border rounded cursor-pointer"
-                    />
-                    <Input
-                      value={formData.cor || '#3B82F6'}
-                      onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
-                      placeholder="#3B82F6"
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsFormOpen(false);
-                    setEditingCategoria(null);
-                    setFormData({ nome: '', descricao: '', cor: '#3B82F6' });
-                  }}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSaveCategoria}
-                  disabled={loading || !formData.nome.trim()}
-                  className="flex-1"
-                >
-                  {loading ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
-            </div>
+      </CardHeader>
+      
+      <CardContent>
+        {categoriasFiltradas.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {searchTerm ? 'Nenhuma categoria encontrada' : 'Nenhuma categoria cadastrada'}
+            </p>
+            {!searchTerm && showActions && (
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeira categoria
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Status</TableHead>
+                  {showActions && <TableHead className="text-right">Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence>
+                  {categoriasFiltradas.map((categoria) => (
+                    <motion.tr
+                      key={categoria.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => onSelectCategoria?.(categoria)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className="w-4 h-4 rounded-full border"
+                            style={{ backgroundColor: categoria.cor }}
+                          />
+                          <div>
+                            <p className="font-medium">{categoria.nome}</p>
+                            <p className="text-sm text-muted-foreground">
+                              ID: {categoria.id}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <p className="text-sm">
+                          {categoria.descricao || 'Sem descrição'}
+                        </p>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Badge variant={categoria.ativo ? 'default' : 'secondary'}>
+                          {categoria.ativo ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </TableCell>
+                      
+                      {showActions && (
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(categoria);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(categoria);
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
