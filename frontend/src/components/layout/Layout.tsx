@@ -453,7 +453,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {usuario?.email}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+                    Sistema Universal de Eventos
                   </p>
                 </div>
                 
@@ -524,7 +524,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <ThemeToggle />
               
               <div className="hidden sm:block text-sm text-muted-foreground">
-                {usuario?.empresa?.nome || `Empresa: ${usuario?.empresa_id}`}
+                Sistema Universal de Eventos
               </div>
             </div>
           </div>
