@@ -61,34 +61,27 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         print(f"Login realizado com sucesso para {usuario.nome}")
         
-        # Debug: verificar conversão do usuário
-        try:
-            # Usar model_validate em vez de from_orm (Pydantic v2)
-            usuario_schema = UsuarioSchema.model_validate(usuario)
-            print(f"Usuário convertido: {usuario_schema.model_dump()}")
-        except Exception as e:
-            print(f"ERRO na conversão do usuário: {e}")
-            # Criar manualmente se houver erro
-            usuario_schema = UsuarioSchema(
-                id=usuario.id,
-                cpf=usuario.cpf,
-                nome=usuario.nome,
-                email=usuario.email,
-                telefone=usuario.telefone,
-                tipo=usuario.tipo,
-                ativo=usuario.ativo,
-                ultimo_login=usuario.ultimo_login,
-                criado_em=usuario.criado_em
-            )
+        # Criar resposta manualmente para garantir compatibilidade
+        usuario_data = {
+            "id": usuario.id,
+            "cpf": usuario.cpf,
+            "nome": usuario.nome,
+            "email": usuario.email,
+            "telefone": usuario.telefone,
+            "tipo": usuario.tipo.value if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
+            "ativo": usuario.ativo,
+            "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
+            "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
+        }
         
         response_data = {
             "access_token": access_token,
-            "token_type": "bearer",
-            "usuario": usuario_schema
+            "token_type": "bearer", 
+            "usuario": usuario_data
         }
         
         print(f"Response data keys: {list(response_data.keys())}")
-        print(f"Usuario data: {usuario_schema.model_dump() if usuario_schema else None}")
+        print(f"Usuario data: {usuario_data}")
         return response_data
         
     except HTTPException:

@@ -236,17 +236,17 @@ export const eventoService = {
 // Serviços de dashboard
 export const dashboardService = {
   async getStats(): Promise<any> {
-    const response = await api.get('/api/dashboard/stats');
+    const response = await api.get('/api/dashboard/resumo');
     return response.data;
   },
 
   async getEventosProximos(): Promise<any[]> {
-    const response = await api.get('/api/dashboard/eventos-proximos');
+    const response = await api.get('/api/eventos/');
     return response.data;
   },
 
   async getResumoFinanceiro(): Promise<any> {
-    const response = await api.get('/api/dashboard/resumo-financeiro');
+    const response = await api.get('/api/dashboard/avancado');
     return response.data;
   }
 };
