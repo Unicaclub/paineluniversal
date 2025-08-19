@@ -68,11 +68,12 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
     };
     
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'checkin_update') {
-        carregarDashboard();
-        carregarCheckinsRecentes();
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'checkin_update') {
+          carregarDashboard();
+          carregarCheckinsRecentes();
         
         toast({
           title: "Novo check-in realizado",
@@ -80,6 +81,9 @@ const CheckinInteligente: React.FC<CheckinInteligente> = ({ eventoId = 1 }) => {
         });
       } else if (data.type === 'dashboard_update') {
         setDashboard(data.data);
+      }
+      } catch (error) {
+        console.error('Erro ao fazer parse de dados WebSocket:', error);
       }
     };
     

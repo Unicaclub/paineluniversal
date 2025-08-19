@@ -41,7 +41,21 @@ export const publicApi = axios.create({
 
 // Interceptor para API pública (apenas log de erros, sem redirect)
 publicApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Verificar se a resposta tem conteúdo válido
+    if (response.config.responseType === 'json' || !response.config.responseType) {
+      const contentType = response.headers['content-type'] || '';
+      if (!contentType.includes('application/json') && typeof response.data === 'string') {
+        console.warn('⚠️ Resposta não é JSON válido, tentando corrigir');
+        try {
+          response.data = JSON.parse(response.data);
+        } catch {
+          response.data = { message: response.data };
+        }
+      }
+    }
+    return response;
+  },
   (error) => {
     console.error('🔥 Public API Error:', {
       status: error.response?.status,
@@ -92,7 +106,21 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Verificar se a resposta tem conteúdo válido
+    if (response.config.responseType === 'json' || !response.config.responseType) {
+      const contentType = response.headers['content-type'] || '';
+      if (!contentType.includes('application/json') && typeof response.data === 'string') {
+        console.warn('⚠️ Resposta não é JSON válido, tentando corrigir');
+        try {
+          response.data = JSON.parse(response.data);
+        } catch {
+          response.data = { message: response.data };
+        }
+      }
+    }
+    return response;
+  },
   (error) => {
     console.error('API Error:', {
       status: error.response?.status,
