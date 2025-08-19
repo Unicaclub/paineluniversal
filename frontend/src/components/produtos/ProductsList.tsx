@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ColumnDef } from '@tanstack/react-table  const handleToggleHabilitado = async (id: string, checked: boolean) => {
-    try {
-      // TODO: Implementar chamada para API
-      // await api.patch(`/api/produtos/${id}`, { habilitado: checked });
-      setProdutos(prev => prev.map(p => p.id === id ? { ...p, habilitado: checked } : p));
-    } catch (error) {
-      console.error('Erro ao atualizar habilitado:', error);
-    }
-  };t { 
+import { ColumnDef } from '@tanstack/react-table';
+import { 
   Pencil, 
   Copy, 
   Lock, 
@@ -109,7 +102,7 @@ const ProductsList: React.FC = () => {
   const handleToggleHabilitado = async (id: string, checked: boolean) => {
     try {
       // TODO: Implementar chamada para API
-      // await api.patch(`/produtos/${id}`, { habilitado: checked });
+      // await api.patch(`/api/produtos/${id}`, { habilitado: checked });
       setProdutos(prev => prev.map(p => p.id === id ? { ...p, habilitado: checked } : p));
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
