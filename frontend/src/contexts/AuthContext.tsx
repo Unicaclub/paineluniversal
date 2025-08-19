@@ -60,15 +60,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('📊 AuthContext: Resposta recebida:', {
         hasToken: !!response.access_token,
         hasUsuario: !!response.usuario,
-        usuarioNome: response.usuario?.nome
+        usuarioNome: response.usuario?.nome,
+        responseKeys: Object.keys(response)
       });
 
-      if (response.access_token && response.usuario) {
+      if (response.access_token) {
         try {
           setToken(response.access_token);
-          setUsuario(response.usuario);
+          
+          // Verificar se tem usuário na resposta
+          if (response.usuario) {
+            setUsuario(response.usuario);
+            localStorage.setItem('usuario', JSON.stringify(response.usuario));
+            console.log('✅ AuthContext: Login completo com usuário');
+          } else {
+            console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário');
+            // Ainda assim considerar login bem-sucedido
+          }
+          
           localStorage.setItem('token', response.access_token);
-          localStorage.setItem('usuario', JSON.stringify(response.usuario));
           console.log('✅ AuthContext: Login bem-sucedido e dados salvos');
           return { success: true };
         } catch (storageError) {

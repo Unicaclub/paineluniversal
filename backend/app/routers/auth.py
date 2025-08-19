@@ -63,11 +63,23 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         # Debug: verificar conversão do usuário
         try:
-            usuario_schema = UsuarioSchema.from_orm(usuario)
-            print(f"Usuário convertido: {usuario_schema.dict()}")
+            # Usar model_validate em vez de from_orm (Pydantic v2)
+            usuario_schema = UsuarioSchema.model_validate(usuario)
+            print(f"Usuário convertido: {usuario_schema.model_dump()}")
         except Exception as e:
             print(f"ERRO na conversão do usuário: {e}")
-            usuario_schema = None
+            # Criar manualmente se houver erro
+            usuario_schema = UsuarioSchema(
+                id=usuario.id,
+                cpf=usuario.cpf,
+                nome=usuario.nome,
+                email=usuario.email,
+                telefone=usuario.telefone,
+                tipo=usuario.tipo,
+                ativo=usuario.ativo,
+                ultimo_login=usuario.ultimo_login,
+                criado_em=usuario.criado_em
+            )
         
         response_data = {
             "access_token": access_token,
@@ -75,7 +87,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             "usuario": usuario_schema
         }
         
-        print(f"Response data: {response_data}")
+        print(f"Response data keys: {list(response_data.keys())}")
+        print(f"Usuario data: {usuario_schema.model_dump() if usuario_schema else None}")
         return response_data
         
     except HTTPException:
