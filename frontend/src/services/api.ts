@@ -215,16 +215,42 @@ export const authService = {
         data: response.data
       });
       
+      // Log mais detalhado da estrutura
+      if (response.data) {
+        console.log('🔍 Análise detalhada da resposta:', {
+          keys: Object.keys(response.data),
+          hasAccessToken: !!response.data.access_token,
+          hasTokenType: !!response.data.token_type,
+          hasUsuario: !!response.data.usuario,
+          accessTokenType: typeof response.data.access_token,
+          usuarioType: typeof response.data.usuario,
+          usuarioKeys: response.data.usuario ? Object.keys(response.data.usuario) : 'N/A'
+        });
+      }
+      
       // Verificar se a resposta tem o formato esperado
       if (response.status === 200 && response.data && typeof response.data === 'object') {
-        if (response.data.access_token && response.data.usuario) {
-          console.log('✅ Login bem-sucedido!');
-          return response.data;
+        if (response.data.access_token) {
+          console.log('✅ Token encontrado!');
+          
+          // Verificar se tem usuário
+          if (response.data.usuario) {
+            console.log('✅ Usuário encontrado! Login bem-sucedido!');
+            return response.data;
+          } else {
+            console.warn('⚠️ Token válido, mas usuário não encontrado na resposta');
+            // Ainda assim retornar o token - o usuário pode ser buscado depois
+            return response.data;
+          }
         }
       }
       
       // Se chegou aqui, formato inesperado
-      console.error('❌ Formato de resposta inesperado:', response);
+      console.error('❌ Formato de resposta inesperado:', {
+        status: response.status,
+        data: response.data,
+        dataKeys: response.data ? Object.keys(response.data) : 'N/A'
+      });
       throw new Error('Formato de resposta inválido do servidor');
       
     } catch (error: any) {
