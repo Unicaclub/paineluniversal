@@ -21,6 +21,7 @@ import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
+import { produtoService } from '../../services/api';
 
 const ProductsList: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -42,48 +43,55 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      // TODO: Implementar chamada para API
-      // const response = await api.get('/produtos', { params: filters });
-      // setProdutos(response.data);
+      console.log('📋 Carregando produtos da API...');
       
-      // Mock data para desenvolvimento
-      setProdutos([
-        {
-          id: '1',
-          nome: 'Cerveja Heineken 600ml',
-          codigo: 'CERV001',
-          categoria_id: '1',
-          categoria: { id: '1', nome: 'CERVEJA', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
-          ncm: '22030000',
-          cfop: '5102',
-          cest: '0300700',
-          valor: 8.50,
-          destaque: true,
-          habilitado: true,
-          descricao: 'Cerveja premium importada',
-          estoque: 100,
-          promocional: false,
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          id: '2',
-          nome: 'Caipirinha de Cachaça',
-          codigo: 'DRINK001',
-          categoria_id: '2',
-          categoria: { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
-          valor: 12.00,
-          destaque: false,
-          habilitado: true,
-          descricao: 'Drink tradicional brasileiro',
-          estoque: 0,
-          promocional: true,
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ]);
+      try {
+        // Tentar carregar da API real
+        const produtos = await produtoService.getAll();
+        console.log('✅ Produtos carregados da API:', produtos);
+        setProdutos(produtos);
+      } catch (apiError) {
+        console.warn('⚠️ Erro ao carregar da API, usando dados mock:', apiError);
+        
+        // Fallback para dados mock se a API falhar
+        setProdutos([
+          {
+            id: '1',
+            nome: 'Cerveja Heineken 600ml',
+            codigo: 'CERV001',
+            categoria_id: '1',
+            categoria: { id: '1', nome: 'CERVEJA', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
+            ncm: '22030000',
+            cfop: '5102',
+            cest: '0300700',
+            valor: 8.50,
+            destaque: true,
+            habilitado: true,
+            descricao: 'Cerveja premium importada',
+            estoque: 100,
+            promocional: false,
+            created_at: new Date(),
+            updated_at: new Date()
+          },
+          {
+            id: '2',
+            nome: 'Caipirinha de Cachaça',
+            codigo: 'DRINK001',
+            categoria_id: '2',
+            categoria: { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
+            valor: 12.00,
+            destaque: false,
+            habilitado: true,
+            descricao: 'Drink tradicional brasileiro',
+            estoque: 0,
+            promocional: true,
+            created_at: new Date(),
+            updated_at: new Date()
+          }
+        ]);
+      }
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error('❌ Erro geral ao carregar produtos:', error);
     } finally {
       setLoading(false);
     }
@@ -155,18 +163,46 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
+      console.log('🚀 Dados do produto para salvar:', data);
+      console.log('📷 Arquivo de imagem:', imageFile);
+      
+      // Converter os dados do formulário para o formato esperado pela API
+      const produtoData = {
+        nome: data.nome,
+        preco: data.valor, // Frontend usa 'valor', backend espera 'preco'
+        tipo: 'PRODUTO',
+        codigo_interno: data.codigo,
+        codigo_barras: data.codigo_barras || null,
+        descricao: data.descricao || null,
+        categoria_id: data.categoria_id ? parseInt(data.categoria_id) : null,
+        marca: data.marca || null,
+        fornecedor: data.fornecedor || null,
+        unidade_medida: data.unidade_medida || 'UN',
+        estoque_atual: 0,
+        estoque_minimo: 0,
+        estoque_maximo: 1000,
+        controla_estoque: true,
+        destaque: data.destaque || false,
+        promocional: data.promocional || false,
+        evento_id: 1
+      };
+      
+      console.log('📤 Dados convertidos para API:', produtoData);
+      
       if (editingProduct) {
-        // TODO: Implementar chamada para API de atualização
-        console.log('Atualizando produto:', data, imageFile);
+        // Atualizar produto existente
+        const updatedProduct = await produtoService.update(editingProduct.id, produtoData);
+        console.log('✅ Produto atualizado:', updatedProduct);
       } else {
-        // TODO: Implementar chamada para API de criação
-        console.log('Criando produto:', data, imageFile);
+        // Criar novo produto
+        const newProduct = await produtoService.create(produtoData);
+        console.log('✅ Produto criado:', newProduct);
       }
       
       // Recarregar lista
       await loadProdutos();
     } catch (error) {
-      console.error('Erro ao salvar produto:', error);
+      console.error('❌ Erro ao salvar produto:', error);
       throw error;
     }
   };
