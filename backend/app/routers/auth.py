@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HT        response_data = {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "usuario": usuario_schema.model_dump() if hasattr(usuario_schema, 'model_dump') else usuario_schema.dict()
+        }rer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db, settings
@@ -113,6 +117,21 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno do servidor: {str(e)}"
         )
+
+@router.get("/me", response_model=UsuarioSchema)
+async def obter_usuario_atual(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obter dados do usuário atual"""
+    try:
+        usuario = db.query(Usuario).filter(Usuario.cpf == current_user["sub"]).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return UsuarioSchema.model_validate(usuario)
+    except Exception as e:
+        print(f"Erro ao buscar usuário atual: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.post("/register", response_model=UsuarioSchema)
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):

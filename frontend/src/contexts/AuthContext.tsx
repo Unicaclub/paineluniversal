@@ -100,7 +100,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log('✅ AuthContext: Login completo com usuário');
           } else {
             console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário');
-            // Ainda assim considerar login bem-sucedido
+            // Buscar dados do usuário separadamente se necessário
+            // Por enquanto, continuar sem dados do usuário
+            setUsuario(null);
+            localStorage.removeItem('usuario');
           }
           
           localStorage.setItem('token', response.access_token);
@@ -154,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     loading,
-    isAuthenticated: !!token && !!usuario
+    isAuthenticated: !!token // Autenticado se tem token, usuário é opcional
   };
 
   return (
