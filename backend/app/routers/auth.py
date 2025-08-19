@@ -61,11 +61,22 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         print(f"Login realizado com sucesso para {usuario.nome}")
         
-        return {
+        # Debug: verificar conversão do usuário
+        try:
+            usuario_schema = UsuarioSchema.from_orm(usuario)
+            print(f"Usuário convertido: {usuario_schema.dict()}")
+        except Exception as e:
+            print(f"ERRO na conversão do usuário: {e}")
+            usuario_schema = None
+        
+        response_data = {
             "access_token": access_token,
             "token_type": "bearer",
-            "usuario": UsuarioSchema.from_orm(usuario)
+            "usuario": usuario_schema
         }
+        
+        print(f"Response data: {response_data}")
+        return response_data
         
     except HTTPException:
         raise
