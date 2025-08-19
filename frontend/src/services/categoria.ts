@@ -25,7 +25,7 @@ export interface CategoriaUpdate {
 export const categoriaService = {
   async listar(): Promise<Categoria[]> {
     try {
-      const response = await api.get('/produtos/categorias/');
+      const response = await api.get('/api/produtos/categorias/');
       return response.data;
     } catch (error) {
       console.error('Erro ao listar categorias:', error);
@@ -55,7 +55,7 @@ export const categoriaService = {
 
   async criar(data: CategoriaCreate): Promise<Categoria> {
     try {
-      const response = await api.post('/produtos/categorias/', data);
+      const response = await api.post('/api/produtos/categorias/', data);
       return response.data;
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
@@ -75,7 +75,7 @@ export const categoriaService = {
 
   async obter(id: number): Promise<Categoria> {
     try {
-      const response = await api.get(`/produtos/categorias/${id}`);
+      const response = await api.get(`/api/produtos/categorias/${id}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao obter categoria:', error);
@@ -85,7 +85,7 @@ export const categoriaService = {
 
   async atualizar(id: number, data: CategoriaUpdate): Promise<Categoria> {
     try {
-      const response = await api.put(`/produtos/categorias/${id}`, data);
+      const response = await api.put(`/api/produtos/categorias/${id}`, data);
       return response.data;
     } catch (error) {
       console.error('Erro ao atualizar categoria:', error);
@@ -95,7 +95,7 @@ export const categoriaService = {
 
   async deletar(id: number): Promise<void> {
     try {
-      await api.delete(`/produtos/categorias/${id}`);
+      await api.delete(`/api/produtos/categorias/${id}`);
     } catch (error) {
       console.error('Erro ao deletar categoria:', error);
       throw new Error('Erro ao deletar categoria');
