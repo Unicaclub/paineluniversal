@@ -49,22 +49,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (cpf: string, senha: string, codigoVerificacao?: string) => {
     try {
+      console.log('🔐 AuthContext: Iniciando login...');
+      
       const response = await authService.login({
         cpf,
         senha,
         codigo_verificacao: codigoVerificacao
       });
 
+      console.log('📊 AuthContext: Resposta recebida:', {
+        hasToken: !!response.access_token,
+        hasUsuario: !!response.usuario,
+        usuarioNome: response.usuario?.nome
+      });
+
       if (response.access_token && response.usuario) {
-        setToken(response.access_token);
-        setUsuario(response.usuario);
-        localStorage.setItem('token', response.access_token);
-        localStorage.setItem('usuario', JSON.stringify(response.usuario));
-        return { success: true };
+        try {
+          setToken(response.access_token);
+          setUsuario(response.usuario);
+          localStorage.setItem('token', response.access_token);
+          localStorage.setItem('usuario', JSON.stringify(response.usuario));
+          console.log('✅ AuthContext: Login bem-sucedido e dados salvos');
+          return { success: true };
+        } catch (storageError) {
+          console.error('❌ Erro ao salvar no localStorage:', storageError);
+          return { success: false, error: 'Erro ao salvar dados de login' };
+        }
       }
 
       // Verificar se precisa de verificação
       if ((response as any).detail && (response as any).detail.includes('Código de verificação enviado')) {
+        console.log('📱 AuthContext: Verificação necessária');
         return {
           success: false,
           needsVerification: true,
@@ -72,9 +87,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
 
-      return response;
+      console.error('❌ AuthContext: Resposta inválida:', response);
+      return { success: false, error: 'Resposta inválida do servidor' };
+      
     } catch (error: any) {
+      console.error('❌ AuthContext: Erro no login:', error);
+      
       if (error.response?.status === 202) {
+        console.log('📱 AuthContext: Status 202 - Verificação necessária');
         return {
           success: false,
           needsVerification: true,

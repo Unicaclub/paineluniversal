@@ -81,15 +81,25 @@ const LoginForm: React.FC = () => {
     try {
       const cpfNumbers = cpf.replace(/\D/g, '');
       
+      console.log('🚀 LoginForm: Iniciando submit...', { 
+        cpfLength: cpfNumbers.length,
+        hasPassword: !!senha,
+        hasCode: !!codigoVerificacao
+      });
+      
       if (cpfNumbers.length !== 11) {
         setError('CPF deve ter 11 dígitos');
         setLoading(false);
         return;
       }
 
+      console.log('🔐 LoginForm: Chamando função login...');
       const result = await login(cpfNumbers, senha, codigoVerificacao);
+      
+      console.log('📋 LoginForm: Resultado recebido:', result);
 
       if (result.success) {
+        console.log('✅ LoginForm: Login bem-sucedido, redirecionando...');
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard...",
@@ -98,6 +108,7 @@ const LoginForm: React.FC = () => {
         // Redirecionar imediatamente em vez de usar setTimeout
         navigate('/app/dashboard', { replace: true });
       } else if (result.needsVerification) {
+        console.log('📱 LoginForm: Verificação necessária');
         setNeedsVerification(true);
         setVerificationMessage(result.message);
         
@@ -111,9 +122,22 @@ const LoginForm: React.FC = () => {
             : "Digite o código de 6 dígitos enviado.",
           duration: 5000,
         });
+      } else if (result.error) {
+        console.error('❌ LoginForm: Erro no resultado:', result.error);
+        setError(result.error);
+        toast({
+          title: "Erro no login",
+          description: result.error,
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        console.error('❌ LoginForm: Resultado inesperado:', result);
+        setError('Erro inesperado no login');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message || 'Erro ao fazer login';
+      console.error('❌ LoginForm: Erro capturado:', error);
+      const errorMessage = error.message || error.response?.data?.detail || 'Erro ao fazer login';
       setError(errorMessage);
       toast({
         title: "Erro no login",
@@ -122,6 +146,7 @@ const LoginForm: React.FC = () => {
         duration: 5000,
       });
     } finally {
+      console.log('🏁 LoginForm: Finalizando submit...');
       setLoading(false);
     }
   };

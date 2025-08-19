@@ -203,8 +203,52 @@ export interface EventoCreate {
 // Serviços de autenticação
 export const authService = {
   async login(data: LoginRequest): Promise<Token> {
-    const response = await publicApi.post('/api/auth/login', data);
-    return response.data;
+    try {
+      console.log('🔐 Fazendo login...', { cpf: data.cpf.slice(0, 3) + '***' });
+      
+      const response = await publicApi.post('/api/auth/login', data);
+      
+      console.log('📊 Resposta do login:', {
+        status: response.status,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        data: response.data
+      });
+      
+      // Verificar se a resposta tem o formato esperado
+      if (response.status === 200 && response.data && typeof response.data === 'object') {
+        if (response.data.access_token && response.data.usuario) {
+          console.log('✅ Login bem-sucedido!');
+          return response.data;
+        }
+      }
+      
+      // Se chegou aqui, formato inesperado
+      console.error('❌ Formato de resposta inesperado:', response);
+      throw new Error('Formato de resposta inválido do servidor');
+      
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error);
+      
+      // Verificar se é erro de rede/conexão
+      if (!error.response) {
+        throw new Error('Erro de conexão: Verifique sua internet');
+      }
+      
+      // Verificar status codes específicos
+      if (error.response.status === 401) {
+        throw new Error('CPF ou senha incorretos');
+      } else if (error.response.status === 400) {
+        const detail = error.response.data?.detail || 'Dados inválidos';
+        throw new Error(detail);
+      } else if (error.response.status >= 500) {
+        throw new Error('Erro no servidor. Tente novamente.');
+      }
+      
+      // Erro genérico
+      const message = error.response.data?.detail || error.message || 'Erro desconhecido';
+      throw new Error(message);
+    }
   },
 
   async register(data: {
