@@ -48,7 +48,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    'Produtos': location.pathname.startsWith('/app/produtos')
+  });
 
   const handleLogout = () => {
     logout();
@@ -75,6 +77,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     });
     // TODO: Implementar funcionalidade de busca global
   };
+
+  // Auto-expandir menu produtos quando navegar para a seção
+  React.useEffect(() => {
+    if (location.pathname.startsWith('/app/produtos')) {
+      setExpandedMenus(prev => ({
+        ...prev,
+        'Produtos': true
+      }));
+    }
+  }, [location.pathname]);
 
   const toggleSubmenu = (menuLabel: string) => {
     setExpandedMenus(prev => ({
@@ -304,9 +316,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         if (item.hasSubmenu) {
                           e.preventDefault();
                           toggleSubmenu(item.label);
-                        } else {
-                          setSidebarOpen(false);
+                          // Se ainda não está expandido, expande. Se já está expandido, navega para a página principal
+                          if (!isExpanded) {
+                            // Apenas expande o menu
+                          } else {
+                            // Se já está expandido, navega para a página principal
+                            navigate(item.path);
+                          }
                         }
+                        setSidebarOpen(false);
                       }}
                       title={sidebarCollapsed ? item.label : undefined}
                     >

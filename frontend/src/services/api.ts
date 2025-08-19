@@ -556,4 +556,103 @@ export const pdvService = {
   }
 };
 
+// Interfaces para produtos
+export interface Categoria {
+  id?: number;
+  nome: string;
+  descricao?: string;
+  cor?: string;
+  ativo?: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface CategoriaCreate {
+  nome: string;
+  descricao?: string;
+  cor?: string;
+}
+
+export interface Produto {
+  id?: number;
+  nome: string;
+  descricao?: string;
+  preco: number;
+  estoque?: number;
+  categoria_id?: number;
+  categoria?: Categoria;
+  codigo_barras?: string;
+  ativo?: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export interface ProdutoCreate {
+  nome: string;
+  descricao?: string;
+  preco: number;
+  estoque?: number;
+  categoria_id?: number;
+  codigo_barras?: string;
+}
+
+// Serviços de categorias
+export const categoriaService = {
+  async getAll(): Promise<Categoria[]> {
+    const response = await api.get('/api/categorias/');
+    return response.data;
+  },
+
+  async getById(id: number): Promise<Categoria> {
+    const response = await api.get(`/api/categorias/${id}`);
+    return response.data;
+  },
+
+  async create(categoriaData: CategoriaCreate): Promise<Categoria> {
+    const response = await api.post('/api/categorias/', categoriaData);
+    return response.data;
+  },
+
+  async update(id: number, categoriaData: Partial<CategoriaCreate>): Promise<Categoria> {
+    const response = await api.put(`/api/categorias/${id}`, categoriaData);
+    return response.data;
+  },
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/api/categorias/${id}`);
+  }
+};
+
+// Serviços de produtos
+export const produtoService = {
+  async getAll(): Promise<Produto[]> {
+    const response = await api.get('/api/produtos/');
+    return response.data;
+  },
+
+  async getById(id: number): Promise<Produto> {
+    const response = await api.get(`/api/produtos/${id}`);
+    return response.data;
+  },
+
+  async create(produtoData: ProdutoCreate): Promise<Produto> {
+    const response = await api.post('/api/produtos/', produtoData);
+    return response.data;
+  },
+
+  async update(id: number, produtoData: Partial<ProdutoCreate>): Promise<Produto> {
+    const response = await api.put(`/api/produtos/${id}`, produtoData);
+    return response.data;
+  },
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/api/produtos/${id}`);
+  },
+
+  async getByCodigo(codigo: string): Promise<Produto> {
+    const response = await api.get(`/api/produtos/codigo/${codigo}`);
+    return response.data;
+  }
+};
+
 export default api;

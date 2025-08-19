@@ -83,7 +83,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
   };
 
   const handleFilterChange = (field: keyof ProdutoFilter, value: string) => {
-    onChange({ ...filters, [field]: value });
+    // Converter "all" para string vazia para manter compatibilidade
+    const filterValue = value === 'all' ? '' : value;
+    onChange({ ...filters, [field]: filterValue });
   };
 
   const handleSearch = () => {
@@ -126,14 +128,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
             Categoria
           </label>
           <Select 
-            value={filters.categoria || ''} 
+            value={filters.categoria || 'all'} 
             onValueChange={(value) => handleFilterChange('categoria', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Filtre por categorias" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as categorias</SelectItem>
+              <SelectItem value="all">Todas as categorias</SelectItem>
               {categorias.map(categoria => (
                 <SelectItem key={categoria.id} value={categoria.id}>
                   {categoria.nome}
@@ -149,14 +151,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ filters, onChange }) =>
             Tipo
           </label>
           <Select 
-            value={filters.tipo || ''} 
+            value={filters.tipo || 'all'} 
             onValueChange={(value) => handleFilterChange('tipo', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Filtre por tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos os tipos</SelectItem>
               {tipos.map(tipo => (
                 <SelectItem key={tipo.value} value={tipo.value}>
                   {tipo.label}
