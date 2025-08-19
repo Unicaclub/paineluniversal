@@ -87,16 +87,21 @@ const LoginForm: React.FC = () => {
         return;
       }
 
+      console.log('🚀 Iniciando processo de login...');
       const result = await login(cpfNumbers, senha, codigoVerificacao);
+      console.log('📋 Resultado do login:', result);
 
       if (result.success) {
+        console.log('✅ Login bem-sucedido, redirecionando...');
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard...",
           duration: 2000,
         });
-        setTimeout(() => navigate('/app/dashboard'), 1000);
+        // Redirecionar imediatamente em vez de usar setTimeout
+        navigate('/app/dashboard', { replace: true });
       } else if (result.needsVerification) {
+        console.log('📱 Verificação necessária');
         setNeedsVerification(true);
         setVerificationMessage(result.message);
         
@@ -110,12 +115,16 @@ const LoginForm: React.FC = () => {
             : "Digite o código de 6 dígitos enviado.",
           duration: 5000,
         });
+      } else {
+        console.warn('⚠️ Resultado inesperado:', result);
       }
     } catch (error: any) {
-      setError(error.response?.data?.detail || 'Erro ao fazer login');
+      console.error('❌ Erro capturado no submit:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Erro ao fazer login';
+      setError(errorMessage);
       toast({
         title: "Erro no login",
-        description: error.response?.data?.detail || 'Erro ao fazer login',
+        description: errorMessage,
         variant: "destructive",
         duration: 5000,
       });

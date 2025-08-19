@@ -49,8 +49,14 @@ publicApi.interceptors.response.use(
       url: error.config?.url,
       baseURL: error.config?.baseURL,
       message: error.message,
-      corsError: error.message?.includes('CORS') || error.message?.includes('Access-Control')
+      corsError: error.message?.includes('CORS') || error.message?.includes('Access-Control'),
+      data: error.response?.data
     });
+    
+    // Se a resposta não for JSON, tratar como texto
+    if (error.response && typeof error.response.data === 'string') {
+      error.response.data = { detail: error.response.data };
+    }
     
     return Promise.reject(error);
   }
@@ -99,8 +105,14 @@ api.interceptors.response.use(
       statusText: error.response?.statusText,
       url: error.config?.url,
       baseURL: error.config?.baseURL,
-      message: error.message
+      message: error.message,
+      data: error.response?.data
     });
+
+    // Se a resposta não for JSON, tratar como texto
+    if (error.response && typeof error.response.data === 'string') {
+      error.response.data = { detail: error.response.data };
+    }
 
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
