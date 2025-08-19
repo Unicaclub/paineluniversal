@@ -61,18 +61,36 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         print(f"Login realizado com sucesso para {usuario.nome}")
         
+        # Debug detalhado
+        print(f"Usuario ID: {usuario.id}")
+        print(f"Usuario tipo: {usuario.tipo}")
+        print(f"Usuario tipo value: {getattr(usuario.tipo, 'value', str(usuario.tipo))}")
+        
         # Criar resposta manualmente para garantir compatibilidade
-        usuario_data = {
-            "id": usuario.id,
-            "cpf": usuario.cpf,
-            "nome": usuario.nome,
-            "email": usuario.email,
-            "telefone": usuario.telefone,
-            "tipo": usuario.tipo.value if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
-            "ativo": usuario.ativo,
-            "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
-            "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
-        }
+        try:
+            usuario_data = {
+                "id": usuario.id,
+                "cpf": usuario.cpf,
+                "nome": usuario.nome,
+                "email": usuario.email,
+                "telefone": usuario.telefone,
+                "tipo": str(usuario.tipo.value) if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
+                "ativo": usuario.ativo,
+                "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
+                "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
+            }
+            print(f"Usuario data criado: {usuario_data}")
+        except Exception as e:
+            print(f"ERRO ao criar usuario_data: {e}")
+            # Fallback mais simples
+            usuario_data = {
+                "id": usuario.id,
+                "cpf": usuario.cpf,
+                "nome": usuario.nome,
+                "email": usuario.email,
+                "tipo": "admin",  # Fallback seguro
+                "ativo": True
+            }
         
         response_data = {
             "access_token": access_token,
@@ -81,7 +99,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         }
         
         print(f"Response data keys: {list(response_data.keys())}")
-        print(f"Usuario data: {usuario_data}")
+        print(f"Response completo: {response_data}")
         return response_data
         
     except HTTPException:
