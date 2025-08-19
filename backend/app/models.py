@@ -220,6 +220,7 @@ class Produto(Base):
     controla_estoque = Column(Boolean, default=True)
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
     categoria = Column(String(100))
+    categoria_id = Column(Integer, ForeignKey("produtos_categorias.id"))
     imagem_url = Column(String(500))
     
     # Campos adicionais para import/export
@@ -245,8 +246,26 @@ class Produto(Base):
     
     evento = relationship("Evento")
     empresa = relationship("Empresa")
+    categoria_rel = relationship("ProdutoCategoria", back_populates="produtos")
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
+
+class ProdutoCategoria(Base):
+    __tablename__ = "produtos_categorias"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(255), nullable=False)
+    descricao = Column(Text)
+    cor = Column(String(7), default="#3B82F6")  # Cor em hexadecimal
+    ativo = Column(Boolean, default=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=True)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    evento = relationship("Evento")
+    empresa = relationship("Empresa")
+    produtos = relationship("Produto", back_populates="categoria_rel")
 
 class Comanda(Base):
     __tablename__ = "comandas"
