@@ -167,6 +167,60 @@ def verificar_permissao_empresa(usuario_atual: Usuario, empresa_id: Optional[int
     # Clientes têm acesso limitado aos recursos próprios
     return True  # Simplificado: remoção da validação por empresa
 
+def verificar_permissao(usuario_atual: Usuario, permissao: str) -> bool:
+    """
+    Verifica se o usuário tem uma permissão específica.
+    
+    Sistema de permissões baseado em papel:
+    - admin: todas as permissões
+    - promoter: permissões de gestão limitadas
+    - cliente: permissões básicas
+    
+    Formato das permissões: "recurso:acao" (ex: "produtos:create", "eventos:read")
+    """
+    if not usuario_atual or not usuario_atual.ativo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuário inativo ou não encontrado"
+        )
+    
+    # Admins têm todas as permissões
+    if usuario_atual.tipo.value == "admin":
+        return True
+    
+    # Mapear permissões por tipo de usuário
+    permissoes_promoter = {
+        # Produtos
+        "produtos:read", "produtos:create", "produtos:update",
+        # Eventos (limitado aos próprios eventos)
+        "eventos:read", "eventos:update",
+        # Listas
+        "listas:read", "listas:create", "listas:update",
+        # Dashboard
+        "dashboard:read",
+        # Relatórios básicos
+        "relatorios:read"
+    }
+    
+    permissoes_cliente = {
+        "checkins:read",
+        "transacoes:read"
+    }
+    
+    # Verificar permissão específica
+    if usuario_atual.tipo.value == "promoter":
+        if permissao in permissoes_promoter:
+            return True
+    elif usuario_atual.tipo.value == "cliente":
+        if permissao in permissoes_cliente:
+            return True
+    
+    # Se chegou até aqui, não tem permissão
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"Usuário {usuario_atual.tipo.value} não tem permissão: {permissao}"
+    )
+
 async def validar_cpf_receita_ws(cpf: str) -> dict:
     """Mock da validação de CPF via ReceitaWS/Serpro"""
     

@@ -165,15 +165,31 @@ class Checkin(Base):
     usuario = relationship("Usuario", back_populates="checkins")
     transacao = relationship("Transacao")
 
+# Adicionar antes dos enums de produto
+class CategoriaProduto(Base):
+    __tablename__ = "categorias_produtos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), nullable=False, index=True)
+    descricao = Column(Text, nullable=True)
+    cor = Column(String(7), default="#3b82f6")  # Hex color
+    ativo = Column(Boolean, default=True)
+    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relacionamentos
+    evento = relationship("Evento")
+    empresa = relationship("Empresa")
+    produtos = relationship("Produto", back_populates="categoria_produto")
+
 class TipoProduto(enum.Enum):
-    PRODUTO = "PRODUTO"
-    SERVICO = "SERVICO"
-    COMBO = "COMBO"
-    ASSINATURA = "ASSINATURA"
     BEBIDA = "BEBIDA"
     COMIDA = "COMIDA"
     INGRESSO = "INGRESSO"
     FICHA = "FICHA"
+    COMBO = "COMBO"
     VOUCHER = "VOUCHER"
 
 class StatusProduto(enum.Enum):
@@ -215,15 +231,15 @@ class Produto(Base):
     descricao = Column(Text)
     tipo = Column(Enum(TipoProduto), nullable=False)
     preco = Column(Numeric(10, 2), nullable=False)
-    codigo_barras = Column(String(50))
-    codigo_interno = Column(String(20))
+    codigo_barras = Column(String(50), unique=True)
+    codigo_interno = Column(String(20), unique=True)
     estoque_atual = Column(Integer, default=0)
     estoque_minimo = Column(Integer, default=0)
     estoque_maximo = Column(Integer, default=1000)
     controla_estoque = Column(Boolean, default=True)
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
-    categoria = Column(String(100))
-    categoria_id = Column(Integer, ForeignKey("produtos_categorias.id"))
+    categoria = Column(String(100))  # DEPRECATED: usar categoria_id
+    categoria_id = Column(Integer, ForeignKey("categorias_produtos.id"))  # NOVO
     imagem_url = Column(String(500))
     
     # Campos adicionais para import/export
@@ -249,26 +265,9 @@ class Produto(Base):
     
     evento = relationship("Evento")
     empresa = relationship("Empresa")
-    categoria_rel = relationship("ProdutoCategoria", back_populates="produtos")
+    categoria_produto = relationship("CategoriaProduto", back_populates="produtos")  # NOVO
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
-
-class ProdutoCategoria(Base):
-    __tablename__ = "produtos_categorias"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String(255), nullable=False)
-    descricao = Column(Text)
-    cor = Column(String(7), default="#3B82F6")  # Cor em hexadecimal
-    ativo = Column(Boolean, default=True)
-    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
-    criado_em = Column(DateTime(timezone=True), server_default=func.now())
-    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    evento = relationship("Evento")
-    empresa = relationship("Empresa")
-    produtos = relationship("Produto", back_populates="categoria_rel")
 
 class Comanda(Base):
     __tablename__ = "comandas"
