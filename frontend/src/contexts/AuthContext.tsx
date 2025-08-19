@@ -30,19 +30,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUsuario = localStorage.getItem('usuario');
+    try {
+      const storedToken = localStorage.getItem('token');
+      const storedUsuario = localStorage.getItem('usuario');
 
-    if (storedToken && storedUsuario) {
-      try {
-        setToken(storedToken);
-        setUsuario(JSON.parse(storedUsuario));
-      } catch (error) {
-        console.error('Erro ao fazer parse do usuário armazenado:', error);
-        // Limpar dados corrompidos
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
+      console.log('🔍 AuthContext: Verificando localStorage...', {
+        hasToken: !!storedToken,
+        hasUsuario: !!storedUsuario,
+        tokenLength: storedToken?.length,
+        usuarioContent: storedUsuario?.substring(0, 50)
+      });
+
+      if (storedToken && storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
+        try {
+          setToken(storedToken);
+          const parsedUsuario = JSON.parse(storedUsuario);
+          if (parsedUsuario && typeof parsedUsuario === 'object') {
+            setUsuario(parsedUsuario);
+            console.log('✅ AuthContext: Dados restaurados com sucesso');
+          } else {
+            throw new Error('Usuário inválido');
+          }
+        } catch (error) {
+          console.error('❌ AuthContext: Erro ao fazer parse do usuário armazenado:', error);
+          // Limpar dados corrompidos
+          localStorage.removeItem('token');
+          localStorage.removeItem('usuario');
+        }
+      } else {
+        console.log('⚠️ AuthContext: Dados do localStorage inválidos ou inexistentes');
+        // Limpar dados inválidos
+        if (storedToken === 'undefined' || storedUsuario === 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('usuario');
+        }
       }
+    } catch (error) {
+      console.error('❌ AuthContext: Erro crítico ao verificar localStorage:', error);
+      localStorage.clear();
     }
     setLoading(false);
   }, []);
