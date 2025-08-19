@@ -40,63 +40,42 @@ async def listar_categorias(db: Session = Depends(get_db)):
         categorias = db.query(ProdutoCategoria).filter(ProdutoCategoria.ativo == True).all()
         return categorias
     except Exception as e:
-        # Em caso de erro, retornar dados mock temporariamente
-        return [
-            {
-                "id": 1,
-                "nome": "Bebidas",
-                "descricao": "Bebidas alcoólicas e não alcoólicas",
-                "cor": "#10B981",
-                "ativo": True,
-                "criado_em": datetime.now(),
-                "atualizado_em": datetime.now()
-            },
-            {
-                "id": 2,
-                "nome": "Comidas",
-                "descricao": "Pratos principais e petiscos",
-                "cor": "#F59E0B",
-                "ativo": True,
-                "criado_em": datetime.now(),
-                "atualizado_em": datetime.now()
-            },
-            {
-                "id": 3,
-                "nome": "Sobremesas",
-                "descricao": "Doces e sobremesas",
-                "cor": "#EF4444",
-                "ativo": False,
-                "criado_em": datetime.now(),
-                "atualizado_em": datetime.now()
-            }
-        ]
+        print(f"ERRO ao listar categorias: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.post("/categorias/", response_model=CategoriaResponse)
 async def criar_categoria(categoria: CategoriaCreate, db: Session = Depends(get_db)):
     """Criar nova categoria"""
     try:
+        # Verificar se já existe categoria com o mesmo nome
+        categoria_existente = db.query(ProdutoCategoria).filter(
+            ProdutoCategoria.nome == categoria.nome,
+            ProdutoCategoria.ativo == True
+        ).first()
+        
+        if categoria_existente:
+            raise HTTPException(
+                status_code=400, 
+                detail="Já existe uma categoria com este nome"
+            )
+        
         nova_categoria = ProdutoCategoria(
             nome=categoria.nome,
             descricao=categoria.descricao,
-            cor=categoria.cor,
+            cor=categoria.cor or "#3b82f6",
             ativo=True
         )
         db.add(nova_categoria)
         db.commit()
         db.refresh(nova_categoria)
         return nova_categoria
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"ERRO ao criar categoria: {e}")
         db.rollback()
-        # Em caso de erro com banco, criar mock temporariamente
-        return {
-            "id": 999,  # ID mock temporário
-            "nome": categoria.nome,
-            "descricao": categoria.descricao,
-            "cor": categoria.cor,
-            "ativo": True,
-            "criado_em": datetime.now(),
-            "atualizado_em": datetime.now()
-        }
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.get("/categorias/{categoria_id}", response_model=CategoriaResponse)
 async def obter_categoria(categoria_id: int, db: Session = Depends(get_db)):
@@ -109,15 +88,9 @@ async def obter_categoria(categoria_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        # Mock para categoria específica
-        if categoria_id in [1, 2, 3]:
-            mock_categorias = {
-                1: {"id": 1, "nome": "Bebidas", "descricao": "Bebidas alcoólicas e não alcoólicas", "cor": "#10B981"},
-                2: {"id": 2, "nome": "Comidas", "descricao": "Pratos principais e petiscos", "cor": "#F59E0B"},
-                3: {"id": 3, "nome": "Sobremesas", "descricao": "Doces e sobremesas", "cor": "#EF4444"}
-            }
-            return {**mock_categorias[categoria_id], "ativo": True, "criado_em": datetime.now()}
-        raise HTTPException(status_code=404, detail="Categoria não encontrada")
+        print(f"ERRO ao obter categoria {categoria_id}: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.put("/categorias/{categoria_id}", response_model=CategoriaResponse)
 async def atualizar_categoria(categoria_id: int, categoria: CategoriaUpdate, db: Session = Depends(get_db)):
@@ -126,6 +99,19 @@ async def atualizar_categoria(categoria_id: int, categoria: CategoriaUpdate, db:
         categoria_db = db.query(ProdutoCategoria).filter(ProdutoCategoria.id == categoria_id).first()
         if not categoria_db:
             raise HTTPException(status_code=404, detail="Categoria não encontrada")
+        
+        # Verificar se mudança de nome não conflita com categoria existente
+        if categoria.nome and categoria.nome != categoria_db.nome:
+            nome_existente = db.query(ProdutoCategoria).filter(
+                ProdutoCategoria.nome == categoria.nome,
+                ProdutoCategoria.ativo == True,
+                ProdutoCategoria.id != categoria_id
+            ).first()
+            if nome_existente:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Já existe uma categoria com este nome"
+                )
         
         if categoria.nome is not None:
             categoria_db.nome = categoria.nome
@@ -142,17 +128,9 @@ async def atualizar_categoria(categoria_id: int, categoria: CategoriaUpdate, db:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"ERRO ao atualizar categoria {categoria_id}: {e}")
         db.rollback()
-        # Mock de atualização
-        return {
-            "id": categoria_id,
-            "nome": categoria.nome or "Nome atualizado",
-            "descricao": categoria.descricao or "Descrição atualizada",
-            "cor": categoria.cor or "#3B82F6",
-            "ativo": True,
-            "criado_em": datetime.now(),
-            "atualizado_em": datetime.now()
-        }
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.delete("/categorias/{categoria_id}")
 async def deletar_categoria(categoria_id: int, db: Session = Depends(get_db)):
@@ -161,6 +139,9 @@ async def deletar_categoria(categoria_id: int, db: Session = Depends(get_db)):
         categoria = db.query(ProdutoCategoria).filter(ProdutoCategoria.id == categoria_id).first()
         if not categoria:
             raise HTTPException(status_code=404, detail="Categoria não encontrada")
+        
+        # Verificar se categoria tem produtos associados
+        # Adicionar verificação futura quando houver produtos
         
         # Desativação lógica
         categoria.ativo = False
@@ -171,6 +152,6 @@ async def deletar_categoria(categoria_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"ERRO ao deletar categoria {categoria_id}: {e}")
         db.rollback()
-        # Mock de exclusão
-        return {"message": "Categoria desativada com sucesso (mock)"}
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")

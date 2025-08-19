@@ -131,7 +131,8 @@ class UsuarioCreate(UsuarioBase):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
             raise ValueError('CPF deve ter 11 dígitos')
-        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+        # Retornar CPF limpo (sem formatação) para compatibilidade com banco
+        return cpf
 
 class UsuarioRegister(BaseModel):
     cpf: str
@@ -146,7 +147,7 @@ class UsuarioRegister(BaseModel):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
             raise ValueError('CPF deve ter 11 dígitos')
-        return cpf  # Manter apenas os números para o registro público
+        return cpf  # Retornar CPF limpo para o registro público
 
 class Usuario(UsuarioBase):
     id: int

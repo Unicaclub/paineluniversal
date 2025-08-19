@@ -189,6 +189,25 @@ app.add_middleware(LoggingMiddleware)
 # Inicializar scheduler
 start_scheduler()
 
+# 🗄️ INICIALIZAÇÃO DO BANCO DE DADOS
+@app.on_event("startup")
+async def startup_event():
+    """Evento executado na inicialização da aplicação"""
+    logger.info("🚀 Iniciando Sistema de Gestão de Eventos...")
+    
+    # Inicializar banco de dados
+    try:
+        from .database_init import startup_database_init
+        success = await startup_database_init()
+        if success:
+            logger.info("✅ Banco de dados inicializado com sucesso!")
+        else:
+            logger.warning("⚠️ Houve problemas na inicialização do banco")
+    except Exception as e:
+        logger.error(f"❌ Erro na inicialização do banco: {e}")
+    
+    logger.info("🎉 Aplicação iniciada e pronta para uso!")
+
 # 📡 ROTAS COM CORS EXPLÍCITO
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
 app.include_router(empresas.router, prefix="/api/empresas", tags=["Empresas"])
