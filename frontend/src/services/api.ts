@@ -553,6 +553,11 @@ export const pdvService = {
     const params = pdvId ? { pdv_id: pdvId } : {};
     const response = await api.get('/api/pdv/dashboard', { params });
     return response.data;
+  },
+
+  // Método para listar produtos usando o novo serviço
+  async listarProdutos(evento_id: number): Promise<Produto[]> {
+    return produtoService.getAll(evento_id, { status: 'ATIVO' });
   }
 };
 
@@ -577,12 +582,22 @@ export interface Produto {
   id?: number;
   nome: string;
   descricao?: string;
+  tipo: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
   preco: number;
-  estoque?: number;
-  categoria_id?: number;
-  categoria?: Categoria;
   codigo_barras?: string;
-  ativo?: boolean;
+  codigo_interno?: string;
+  estoque_atual: number;
+  estoque_minimo: number;
+  estoque_maximo: number;
+  controla_estoque: boolean;
+  categoria_id?: number;
+  categoria_nome?: string;
+  marca?: string;
+  fornecedor?: string;
+  unidade_medida: string;
+  status: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
+  evento_id: number;
+  empresa_id?: number;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -590,10 +605,19 @@ export interface Produto {
 export interface ProdutoCreate {
   nome: string;
   descricao?: string;
+  tipo: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
   preco: number;
-  estoque?: number;
-  categoria_id?: number;
   codigo_barras?: string;
+  codigo_interno?: string;
+  estoque_atual?: number;
+  estoque_minimo?: number;
+  estoque_maximo?: number;
+  controla_estoque?: boolean;
+  categoria_id?: number;
+  marca?: string;
+  fornecedor?: string;
+  unidade_medida?: string;
+  evento_id: number;
 }
 
 // Serviços de categorias
@@ -625,8 +649,29 @@ export const categoriaService = {
 
 // Serviços de produtos
 export const produtoService = {
-  async getAll(): Promise<Produto[]> {
-    const response = await api.get('/api/produtos/');
+  async getAll(
+    evento_id: number,
+    filtros?: {
+      categoria_id?: number;
+      busca?: string;
+      tipo?: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
+      status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
+      skip?: number;
+      limit?: number;
+    }
+  ): Promise<Produto[]> {
+    const params = new URLSearchParams({ evento_id: evento_id.toString() });
+    
+    if (filtros) {
+      if (filtros.categoria_id) params.append('categoria_id', filtros.categoria_id.toString());
+      if (filtros.busca) params.append('busca', filtros.busca);
+      if (filtros.tipo) params.append('tipo', filtros.tipo);
+      if (filtros.status) params.append('status', filtros.status);
+      if (filtros.skip) params.append('skip', filtros.skip.toString());
+      if (filtros.limit) params.append('limit', filtros.limit.toString());
+    }
+    
+    const response = await api.get(`/api/produtos/?${params.toString()}`);
     return response.data;
   },
 
@@ -649,9 +694,46 @@ export const produtoService = {
     await api.delete(`/api/produtos/${id}`);
   },
 
-  async getByCodigo(codigo: string): Promise<Produto> {
-    const response = await api.get(`/api/produtos/codigo/${codigo}`);
+  async importar(
+    evento_id: number, 
+    file: File, 
+    sobrescrever: boolean = false
+  ): Promise<{
+    message: string;
+    produtos_criados: number;
+    produtos_atualizados: number;
+    erros: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('sobrescrever', sobrescrever.toString());
+    
+    const response = await api.post(`/api/produtos/importar/${evento_id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
+  },
+
+  async exportar(evento_id: number): Promise<Blob> {
+    const response = await api.get(`/api/produtos/exportar/${evento_id}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  // Método auxiliar para buscar por código
+  async getByCodigo(codigo: string, evento_id: number): Promise<Produto | null> {
+    try {
+      const produtos = await this.getAll(evento_id, { busca: codigo });
+      return produtos.find(p => 
+        p.codigo_barras === codigo || p.codigo_interno === codigo
+      ) || null;
+    } catch (error) {
+      console.error('Erro ao buscar produto por código:', error);
+      return null;
+    }
   }
 };
 

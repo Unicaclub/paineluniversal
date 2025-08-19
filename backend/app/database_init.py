@@ -148,12 +148,128 @@ async def startup_database_init():
     # 2. Tentar inicialização via SQLAlchemy
     if init_database():
         logger.info("✅ Banco inicializado via SQLAlchemy")
+        create_default_data()
         return True
     
     # 3. Fallback: tentar via SQL bruto
     if create_tables_raw_sql():
         logger.info("✅ Banco inicializado via SQL bruto")
+        create_default_data()
         return True
     
     logger.error("❌ Falha na inicialização do banco de dados")
     return False
+
+def create_default_data():
+    """Criar dados padrão se não existirem"""
+    try:
+        from .database import SessionLocal
+        from .models import ProdutoCategoria, Produto, TipoProduto, StatusProduto
+        
+        db = SessionLocal()
+        try:
+            # Verificar se já existem categorias
+            if db.query(ProdutoCategoria).count() == 0:
+                logger.info("📦 Criando categorias padrão...")
+                
+                categorias_padrao = [
+                    {"nome": "Bebidas", "descricao": "Bebidas diversas", "cor": "#3b82f6"},
+                    {"nome": "Lanches", "descricao": "Lanches e petiscos", "cor": "#ef4444"},
+                    {"nome": "Doces", "descricao": "Doces e sobremesas", "cor": "#f59e0b"},
+                    {"nome": "Serviços", "descricao": "Serviços diversos", "cor": "#10b981"},
+                ]
+                
+                for cat_data in categorias_padrao:
+                    categoria = ProdutoCategoria(**cat_data)
+                    db.add(categoria)
+                
+                db.commit()
+                logger.info("✅ Categorias padrão criadas")
+            
+            # Verificar se já existem produtos
+            if db.query(Produto).count() == 0:
+                logger.info("🛍️ Criando produtos de exemplo...")
+                
+                # Buscar categorias criadas
+                categoria_bebidas = db.query(ProdutoCategoria).filter(ProdutoCategoria.nome == "Bebidas").first()
+                categoria_lanches = db.query(ProdutoCategoria).filter(ProdutoCategoria.nome == "Lanches").first()
+                categoria_doces = db.query(ProdutoCategoria).filter(ProdutoCategoria.nome == "Doces").first()
+                
+                produtos_exemplo = [
+                    {
+                        "nome": "Refrigerante Lata",
+                        "descricao": "Refrigerante em lata 350ml",
+                        "tipo": TipoProduto.PRODUTO,
+                        "preco": 5.00,
+                        "codigo_barras": "7891000001001",
+                        "codigo_interno": "REF001",
+                        "estoque_atual": 100,
+                        "estoque_minimo": 10,
+                        "estoque_maximo": 500,
+                        "controla_estoque": True,
+                        "categoria_id": categoria_bebidas.id if categoria_bebidas else None,
+                        "unidade_medida": "UN",
+                        "status": StatusProduto.ATIVO,
+                        "evento_id": 1,  # Assumindo que existe um evento com ID 1
+                    },
+                    {
+                        "nome": "Água Mineral",
+                        "descricao": "Água mineral 500ml",
+                        "tipo": TipoProduto.PRODUTO,
+                        "preco": 3.00,
+                        "codigo_barras": "7891000001002",
+                        "codigo_interno": "AGU001",
+                        "estoque_atual": 200,
+                        "estoque_minimo": 20,
+                        "estoque_maximo": 1000,
+                        "controla_estoque": True,
+                        "categoria_id": categoria_bebidas.id if categoria_bebidas else None,
+                        "unidade_medida": "UN",
+                        "status": StatusProduto.ATIVO,
+                        "evento_id": 1,
+                    },
+                    {
+                        "nome": "Hambúrguer Simples",
+                        "descricao": "Hambúrguer com pão, carne e salada",
+                        "tipo": TipoProduto.PRODUTO,
+                        "preco": 15.00,
+                        "codigo_interno": "HAM001",
+                        "estoque_atual": 50,
+                        "estoque_minimo": 5,
+                        "estoque_maximo": 200,
+                        "controla_estoque": True,
+                        "categoria_id": categoria_lanches.id if categoria_lanches else None,
+                        "unidade_medida": "UN",
+                        "status": StatusProduto.ATIVO,
+                        "evento_id": 1,
+                    },
+                    {
+                        "nome": "Brigadeiro",
+                        "descricao": "Brigadeiro gourmet",
+                        "tipo": TipoProduto.PRODUTO,
+                        "preco": 2.50,
+                        "codigo_interno": "BRI001",
+                        "estoque_atual": 80,
+                        "estoque_minimo": 10,
+                        "estoque_maximo": 300,
+                        "controla_estoque": True,
+                        "categoria_id": categoria_doces.id if categoria_doces else None,
+                        "unidade_medida": "UN",
+                        "status": StatusProduto.ATIVO,
+                        "evento_id": 1,
+                    },
+                ]
+                
+                for prod_data in produtos_exemplo:
+                    produto = Produto(**prod_data)
+                    db.add(produto)
+                
+                db.commit()
+                logger.info("✅ Produtos de exemplo criados")
+                
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao criar dados padrão: {e}")
+        # Não falha a aplicação se não conseguir criar dados de exemplo
