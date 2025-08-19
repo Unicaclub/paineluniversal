@@ -14,7 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, estoque  # financeiro e import_export temporariamente comentados, meep
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # financeiro e import_export temporariamente comentados, meep
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -188,25 +188,6 @@ app.add_middleware(LoggingMiddleware)
 # Inicializar scheduler
 start_scheduler()
 
-# 🗄️ INICIALIZAÇÃO DO BANCO DE DADOS
-@app.on_event("startup")
-async def startup_event():
-    """Evento executado na inicialização da aplicação"""
-    logger.info("🚀 Iniciando Sistema de Gestão de Eventos...")
-    
-    # Inicializar banco de dados
-    try:
-        from .database_init import startup_database_init
-        success = await startup_database_init()
-        if success:
-            logger.info("✅ Banco de dados inicializado com sucesso!")
-        else:
-            logger.warning("⚠️ Houve problemas na inicialização do banco")
-    except Exception as e:
-        logger.error(f"❌ Erro na inicialização do banco: {e}")
-    
-    logger.info("🎉 Aplicação iniciada e pronta para uso!")
-
 # 📡 ROTAS COM CORS EXPLÍCITO
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
 app.include_router(empresas.router, prefix="/api/empresas", tags=["Empresas"])
@@ -223,8 +204,7 @@ app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
 app.include_router(pdv.router, prefix="/api")
 # app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
-app.include_router(produtos.router, prefix="/api/produtos")
-app.include_router(estoque.router, prefix="/api")
+app.include_router(produtos.router, prefix="/api")
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 
@@ -440,26 +420,6 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             headers={"Access-Control-Allow-Origin": "*"}
         )
         return error_response
-
-# 🧪 ENDPOINT DE DEBUG PARA VERIFICAR ROTAS
-@app.get("/api/debug/routes")
-async def debug_routes():
-    """Debug endpoint para listar todas as rotas disponíveis"""
-    routes_info = []
-    for route in app.routes:
-        if hasattr(route, 'methods') and hasattr(route, 'path'):
-            routes_info.append({
-                "path": route.path,
-                "methods": list(route.methods),
-                "name": getattr(route, 'name', 'unnamed')
-            })
-    
-    return {
-        "total_routes": len(routes_info),
-        "routes": sorted(routes_info, key=lambda x: x['path']),
-        "produtos_routes": [r for r in routes_info if 'produtos' in r['path']],
-        "api_routes": [r for r in routes_info if r['path'].startswith('/api')]
-    }
 
 # 🏠 ROOT ENDPOINT
 @app.get("/")
