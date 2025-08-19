@@ -73,8 +73,8 @@ except ImportError as e:
         username: Optional[str] = None
     
     class LoginRequest(BaseModel):
-        email: str
-        password: str
+        cpf: str
+        senha: str
     
     class UsuarioBase(BaseModel):
         nome: str

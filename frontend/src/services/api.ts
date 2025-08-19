@@ -175,7 +175,7 @@ export interface EventoCreate {
 // Serviços de autenticação
 export const authService = {
   async login(data: LoginRequest): Promise<Token> {
-    const response = await api.post('/api/auth/login', data);
+    const response = await publicApi.post('/api/auth/login', data);
     return response.data;
   },
 
@@ -553,11 +553,6 @@ export const pdvService = {
     const params = pdvId ? { pdv_id: pdvId } : {};
     const response = await api.get('/api/pdv/dashboard', { params });
     return response.data;
-  },
-
-  // Método para listar produtos usando o novo serviço
-  async listarProdutos(evento_id: number): Promise<Produto[]> {
-    return produtoService.getAll(evento_id, { status: 'ATIVO' });
   }
 };
 
@@ -582,22 +577,12 @@ export interface Produto {
   id?: number;
   nome: string;
   descricao?: string;
-  tipo: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
   preco: number;
-  codigo_barras?: string;
-  codigo_interno?: string;
-  estoque_atual: number;
-  estoque_minimo: number;
-  estoque_maximo: number;
-  controla_estoque: boolean;
+  estoque?: number;
   categoria_id?: number;
-  categoria_nome?: string;
-  marca?: string;
-  fornecedor?: string;
-  unidade_medida: string;
-  status: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
-  evento_id: number;
-  empresa_id?: number;
+  categoria?: Categoria;
+  codigo_barras?: string;
+  ativo?: boolean;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -605,73 +590,43 @@ export interface Produto {
 export interface ProdutoCreate {
   nome: string;
   descricao?: string;
-  tipo: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
   preco: number;
-  codigo_barras?: string;
-  codigo_interno?: string;
-  estoque_atual?: number;
-  estoque_minimo?: number;
-  estoque_maximo?: number;
-  controla_estoque?: boolean;
+  estoque?: number;
   categoria_id?: number;
-  marca?: string;
-  fornecedor?: string;
-  unidade_medida?: string;
-  evento_id: number;
+  codigo_barras?: string;
 }
 
 // Serviços de categorias
 export const categoriaService = {
   async getAll(): Promise<Categoria[]> {
-    const response = await api.get('/api/produtos/categorias/');
+    const response = await api.get('/api/categorias/');
     return response.data;
   },
 
   async getById(id: number): Promise<Categoria> {
-    const response = await api.get(`/api/produtos/categorias/${id}`);
+    const response = await api.get(`/api/categorias/${id}`);
     return response.data;
   },
 
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
-    const response = await api.post('/api/produtos/categorias/', categoriaData);
+    const response = await api.post('/api/categorias/', categoriaData);
     return response.data;
   },
 
   async update(id: number, categoriaData: Partial<CategoriaCreate>): Promise<Categoria> {
-    const response = await api.put(`/api/produtos/categorias/${id}`, categoriaData);
+    const response = await api.put(`/api/categorias/${id}`, categoriaData);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/api/produtos/categorias/${id}`);
+    await api.delete(`/api/categorias/${id}`);
   }
 };
 
 // Serviços de produtos
 export const produtoService = {
-  async getAll(
-    evento_id: number,
-    filtros?: {
-      categoria_id?: number;
-      busca?: string;
-      tipo?: 'PRODUTO' | 'SERVICO' | 'COMBO' | 'ASSINATURA';
-      status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
-      skip?: number;
-      limit?: number;
-    }
-  ): Promise<Produto[]> {
-    const params = new URLSearchParams({ evento_id: evento_id.toString() });
-    
-    if (filtros) {
-      if (filtros.categoria_id) params.append('categoria_id', filtros.categoria_id.toString());
-      if (filtros.busca) params.append('busca', filtros.busca);
-      if (filtros.tipo) params.append('tipo', filtros.tipo);
-      if (filtros.status) params.append('status', filtros.status);
-      if (filtros.skip) params.append('skip', filtros.skip.toString());
-      if (filtros.limit) params.append('limit', filtros.limit.toString());
-    }
-    
-    const response = await api.get(`/api/produtos/?${params.toString()}`);
+  async getAll(): Promise<Produto[]> {
+    const response = await api.get('/api/produtos/');
     return response.data;
   },
 
@@ -694,46 +649,9 @@ export const produtoService = {
     await api.delete(`/api/produtos/${id}`);
   },
 
-  async importar(
-    evento_id: number, 
-    file: File, 
-    sobrescrever: boolean = false
-  ): Promise<{
-    message: string;
-    produtos_criados: number;
-    produtos_atualizados: number;
-    erros: string[];
-  }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('sobrescrever', sobrescrever.toString());
-    
-    const response = await api.post(`/api/produtos/importar/${evento_id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  async getByCodigo(codigo: string): Promise<Produto> {
+    const response = await api.get(`/api/produtos/codigo/${codigo}`);
     return response.data;
-  },
-
-  async exportar(evento_id: number): Promise<Blob> {
-    const response = await api.get(`/api/produtos/exportar/${evento_id}`, {
-      responseType: 'blob',
-    });
-    return response.data;
-  },
-
-  // Método auxiliar para buscar por código
-  async getByCodigo(codigo: string, evento_id: number): Promise<Produto | null> {
-    try {
-      const produtos = await this.getAll(evento_id, { busca: codigo });
-      return produtos.find(p => 
-        p.codigo_barras === codigo || p.codigo_interno === codigo
-      ) || null;
-    } catch (error) {
-      console.error('Erro ao buscar produto por código:', error);
-      return null;
-    }
   }
 };
 
