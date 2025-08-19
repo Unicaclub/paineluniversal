@@ -388,14 +388,6 @@ export const inventoryService = {
       };
     }
   },
-      return {
-        totalProducts: 1247,
-        totalValue: 85430,
-        lowStockProducts: 23,
-        todayMovements: 156
-      };
-    }
-  },
 
   // ==================== IMPORT/EXPORT METHODS ====================
   
