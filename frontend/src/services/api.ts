@@ -34,25 +34,14 @@ export const publicApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
-  timeout: 60000, // 60 segundos para produção
+  timeout: 30000,
   withCredentials: false, // Explicitamente desabilitar credentials
-  validateStatus: function (status) {
-    // Aceitar qualquer status para tratar erros personalizadamente
-    return status >= 200 && status < 600;
-  }
 });
 
 // Interceptor para API pública (apenas log de erros, sem redirect)
 publicApi.interceptors.response.use(
-  (response) => {
-    // Verificar se a resposta é realmente JSON
-    if (response.status >= 400) {
-      console.warn('⚠️ Status de erro na resposta:', response.status);
-    }
-    return response;
-  },
+  (response) => response,
   (error) => {
     console.error('🔥 Public API Error:', {
       status: error.response?.status,
@@ -60,42 +49,8 @@ publicApi.interceptors.response.use(
       url: error.config?.url,
       baseURL: error.config?.baseURL,
       message: error.message,
-      corsError: error.message?.includes('CORS') || error.message?.includes('Access-Control'),
-      data: error.response?.data,
-      isNetworkError: !error.response,
-      isTimeout: error.code === 'ECONNABORTED'
+      corsError: error.message?.includes('CORS') || error.message?.includes('Access-Control')
     });
-    
-    // Se a resposta não for JSON, tratar como texto
-    if (error.response) {
-      const contentType = error.response.headers['content-type'] || '';
-      
-      if (!contentType.includes('application/json') && typeof error.response.data === 'string') {
-        console.warn('⚠️ Resposta não é JSON, convertendo...');
-        error.response.data = { 
-          detail: error.response.data || `Erro ${error.response.status}: ${error.response.statusText}` 
-        };
-      }
-      
-      // Para status 500, garantir que há uma mensagem de erro útil
-      if (error.response.status >= 500 && !error.response.data?.detail) {
-        error.response.data = {
-          detail: 'Erro interno do servidor. Tente novamente em alguns instantes.'
-        };
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      // Timeout específico
-      error.response = {
-        status: 408,
-        data: { detail: 'Timeout: O servidor demorou muito para responder. Tente novamente.' }
-      };
-    } else if (!error.response) {
-      // Erro de rede
-      error.response = {
-        status: 0,
-        data: { detail: 'Erro de conexão: Verifique sua internet e tente novamente.' }
-      };
-    }
     
     return Promise.reject(error);
   }
@@ -105,14 +60,9 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
-  timeout: 60000, // 60 segundos timeout para produção
+  timeout: 30000, // 30 segundos timeout
   withCredentials: false, // Explicitamente desabilitar credentials
-  validateStatus: function (status) {
-    // Aceitar qualquer status para tratar erros personalizadamente
-    return status >= 200 && status < 600;
-  }
 });
 
 // 🔧 LOG DETALHADO PARA DEBUG
@@ -149,14 +99,8 @@ api.interceptors.response.use(
       statusText: error.response?.statusText,
       url: error.config?.url,
       baseURL: error.config?.baseURL,
-      message: error.message,
-      data: error.response?.data
+      message: error.message
     });
-
-    // Se a resposta não for JSON, tratar como texto
-    if (error.response && typeof error.response.data === 'string') {
-      error.response.data = { detail: error.response.data };
-    }
 
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
@@ -231,47 +175,8 @@ export interface EventoCreate {
 // Serviços de autenticação
 export const authService = {
   async login(data: LoginRequest): Promise<Token> {
-    try {
-      console.log('🔐 Tentando login via API pública...');
-      
-      // Fazer a requisição de login
-      const response = await publicApi.post('/api/auth/login', data);
-      
-      console.log('📊 Resposta do login:', {
-        status: response.status,
-        hasData: !!response.data,
-        hasToken: !!response.data?.access_token,
-        contentType: response.headers['content-type']
-      });
-      
-      // Verificar se o login foi bem-sucedido
-      if (response.status === 200 && response.data?.access_token) {
-        console.log('✅ Login bem-sucedido!');
-        return response.data;
-      }
-      
-      // Se chegou aqui, algo deu errado
-      console.error('❌ Resposta inesperada do login:', response);
-      throw new Error(`Login falhou: status ${response.status}`);
-      
-    } catch (error: any) {
-      console.error('❌ Erro no authService.login:', error);
-      
-      // Melhorar a mensagem de erro baseada no tipo
-      if (error.response?.status === 401) {
-        throw new Error('CPF ou senha incorretos');
-      } else if (error.response?.status === 400) {
-        throw new Error(error.response?.data?.detail || 'Dados inválidos');
-      } else if (error.response?.status >= 500) {
-        throw new Error('Erro no servidor. Tente novamente em alguns instantes.');
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Timeout: Servidor demorou para responder');
-      } else if (!error.response) {
-        throw new Error('Erro de conexão: Verifique sua internet');
-      } else {
-        throw new Error(error.response?.data?.detail || error.message || 'Erro desconhecido');
-      }
-    }
+    const response = await publicApi.post('/api/auth/login', data);
+    return response.data;
   },
 
   async register(data: {
@@ -583,58 +488,20 @@ export const publicService = {
   async testConnection(): Promise<any> {
     console.log('🧪 Testando conectividade com backend...');
     try {
-      // Primeiro, tentar o endpoint de health check
-      const healthResponse = await publicApi.get('/healthz', { timeout: 15000 });
-      
-      if (healthResponse.status === 200) {
-        console.log('✅ Health check OK:', healthResponse.data);
-        
-        // Tentar o endpoint de CORS test
-        try {
-          const corsResponse = await publicApi.get('/api/cors-test', { timeout: 10000 });
-          console.log('✅ CORS test OK:', corsResponse.data);
-          return { 
-            success: true, 
-            data: { 
-              health: healthResponse.data, 
-              cors: corsResponse.data 
-            } 
-          };
-        } catch (corsError: any) {
-          console.warn('⚠️ CORS test falhou, mas health OK:', corsError.message);
-          return { 
-            success: true, 
-            data: healthResponse.data,
-            warning: 'CORS test failed but health OK'
-          };
-        }
-      }
-      
-      return { success: false, error: `Health check failed: ${healthResponse.status}` };
-      
+      const response = await publicApi.get('/api/cors-test', { timeout: 10000 });
+      console.log('✅ Conectividade OK:', response.data);
+      return { success: true, data: response.data };
     } catch (error: any) {
       console.error('❌ Falha na conectividade:', error);
-      
-      let errorMessage = 'Conexão falhou';
-      let details: any = {
-        baseURL: error.config?.baseURL,
-        url: error.config?.url
-      };
-      
-      if (error.code === 'ECONNABORTED') {
-        errorMessage = 'Timeout: Servidor demorou para responder';
-      } else if (!error.response) {
-        errorMessage = 'Erro de rede: Servidor inacessível';
-      } else {
-        errorMessage = `Erro ${error.response.status}: ${error.response.statusText}`;
-        details.status = error.response.status;
-        details.data = error.response.data;
-      }
-      
       return { 
         success: false, 
-        error: errorMessage,
-        details
+        error: error.message,
+        details: {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          baseURL: error.config?.baseURL,
+          url: error.config?.url
+        }
       };
     }
   }
