@@ -1,9 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HT        response_data = {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "usuario": usuario_schema.model_dump() if hasattr(usuario_schema, 'model_dump') else usuario_schema.dict()
-        }rer
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from ..database import get_db, settings
