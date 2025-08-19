@@ -11,7 +11,7 @@ from ..database import get_db
 from ..models import ProdutoCategoria, Produto, TipoProduto, StatusProduto
 from ..auth import obter_usuario_atual
 
-router = APIRouter(prefix="/produtos", tags=["produtos"])
+router = APIRouter(tags=["produtos"])
 
 # Schemas para Categorias
 class CategoriaBase(BaseModel):
@@ -54,7 +54,7 @@ class ProdutoBase(BaseModel):
     unidade_medida: str = "UN"
 
 class ProdutoCreate(ProdutoBase):
-    evento_id: int
+    evento_id: Optional[int] = 1  # Valor padrão para compatibilidade
 
 class ProdutoUpdate(BaseModel):
     nome: Optional[str] = None
@@ -95,6 +95,16 @@ async def listar_categorias(db: Session = Depends(get_db)):
         print(f"ERRO ao listar categorias: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+# Endpoint de teste para verificar conectividade
+@router.get("/test")
+async def test_produtos():
+    """Endpoint de teste para produtos"""
+    return {
+        "message": "API de produtos funcionando!",
+        "timestamp": datetime.now().isoformat(),
+        "status": "ok"
+    }
 
 @router.post("/categorias/", response_model=CategoriaResponse)
 async def criar_categoria(categoria: CategoriaCreate, db: Session = Depends(get_db)):
@@ -211,7 +221,7 @@ async def deletar_categoria(categoria_id: int, db: Session = Depends(get_db)):
 # Endpoints de Produtos
 @router.get("/", response_model=List[ProdutoResponse])
 async def listar_produtos(
-    evento_id: int,
+    evento_id: Optional[int] = None,
     skip: int = 0, 
     limit: int = 100, 
     categoria_id: Optional[int] = None,
@@ -220,9 +230,13 @@ async def listar_produtos(
     status: Optional[StatusProduto] = None,
     db: Session = Depends(get_db)
 ):
-    """Lista produtos de um evento com filtros opcionais"""
+    """Lista produtos com filtros opcionais"""
     try:
-        query = db.query(Produto).filter(Produto.evento_id == evento_id)
+        query = db.query(Produto)
+        
+        # Filtrar por evento se especificado
+        if evento_id:
+            query = query.filter(Produto.evento_id == evento_id)
         
         if categoria_id:
             query = query.filter(Produto.categoria_id == categoria_id)
@@ -277,28 +291,35 @@ async def criar_produto(produto: ProdutoCreate, db: Session = Depends(get_db)):
         # Verifica se código de barras é único (se fornecido)
         if produto.codigo_barras:
             produto_existente = db.query(Produto).filter(
-                Produto.codigo_barras == produto.codigo_barras,
-                Produto.evento_id == produto.evento_id
+                Produto.codigo_barras == produto.codigo_barras
             ).first()
-            if produto_existente:
+            if produto_existente and produto_existente.evento_id == produto.evento_id:
                 raise HTTPException(status_code=400, detail="Código de barras já existe para este evento")
         
         # Verifica se código interno é único (se fornecido)
         if produto.codigo_interno:
             produto_existente = db.query(Produto).filter(
-                Produto.codigo_interno == produto.codigo_interno,
-                Produto.evento_id == produto.evento_id
+                Produto.codigo_interno == produto.codigo_interno
             ).first()
-            if produto_existente:
+            if produto_existente and produto_existente.evento_id == produto.evento_id:
                 raise HTTPException(status_code=400, detail="Código interno já existe para este evento")
         
+        # Criar dados do produto
         produto_data = produto.dict()
         produto_data['status'] = StatusProduto.ATIVO
+        
+        # Se não tiver evento_id, usar um valor padrão ou atual
+        if not produto_data.get('evento_id'):
+            produto_data['evento_id'] = 1  # Valor padrão temporário
+        
+        print(f"💾 Criando produto: {produto_data}")
         
         db_produto = Produto(**produto_data)
         db.add(db_produto)
         db.commit()
         db.refresh(db_produto)
+        
+        print(f"✅ Produto criado com ID: {db_produto.id}")
         
         # Adiciona nome da categoria na resposta
         produto_dict = db_produto.__dict__.copy()
@@ -314,7 +335,8 @@ async def criar_produto(produto: ProdutoCreate, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERRO ao criar produto: {e}")
+        print(f"❌ ERRO ao criar produto: {e}")
+        print(f"Dados recebidos: {produto}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 

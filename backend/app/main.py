@@ -14,8 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # financeiro e import_export temporariamente comentados, meep
-from .inventory import inventory_router
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, estoque  # financeiro e import_export temporariamente comentados, meep
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -224,8 +223,8 @@ app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
 app.include_router(pdv.router, prefix="/api")
 # app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
-app.include_router(produtos.router, prefix="/api")
-app.include_router(inventory_router, prefix="/api")
+app.include_router(produtos.router, prefix="/api/produtos")
+app.include_router(estoque.router, prefix="/api")
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 

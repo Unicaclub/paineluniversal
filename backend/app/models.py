@@ -166,11 +166,14 @@ class Checkin(Base):
     transacao = relationship("Transacao")
 
 class TipoProduto(enum.Enum):
+    PRODUTO = "PRODUTO"
+    SERVICO = "SERVICO"
+    COMBO = "COMBO"
+    ASSINATURA = "ASSINATURA"
     BEBIDA = "BEBIDA"
     COMIDA = "COMIDA"
     INGRESSO = "INGRESSO"
     FICHA = "FICHA"
-    COMBO = "COMBO"
     VOUCHER = "VOUCHER"
 
 class StatusProduto(enum.Enum):
