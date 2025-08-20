@@ -195,7 +195,7 @@ async def obter_dados_tempo_real(
     uma_hora_atras = datetime.now() - timedelta(hours=1)
     vendas_ultima_hora = db.query(func.count(Transacao.id)).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada",
+        Transacao.status == StatusTransacao.APROVADA,
         Transacao.criado_em >= uma_hora_atras
     ).scalar() or 0
     
@@ -262,32 +262,32 @@ async def obter_dashboard_avancado(
     
     vendas_hoje = transacoes_query.filter(
         func.date(Transacao.criado_em) == hoje,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).count()
     
     vendas_semana = transacoes_query.filter(
         Transacao.criado_em >= inicio_semana,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).count()
     
     vendas_mes = transacoes_query.filter(
         Transacao.criado_em >= inicio_mes,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).count()
     
     receita_hoje = transacoes_query.filter(
         func.date(Transacao.criado_em) == hoje,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).with_entities(func.sum(Transacao.valor)).scalar() or Decimal('0.00')
     
     receita_semana = transacoes_query.filter(
         Transacao.criado_em >= inicio_semana,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).with_entities(func.sum(Transacao.valor)).scalar() or Decimal('0.00')
     
     receita_mes = transacoes_query.filter(
         Transacao.criado_em >= inicio_mes,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).with_entities(func.sum(Transacao.valor)).scalar() or Decimal('0.00')
     
     checkins_hoje = checkins_query.filter(
@@ -304,7 +304,7 @@ async def obter_dashboard_avancado(
     vendas_sem_checkin = db.query(Transacao).outerjoin(
         Checkin, Transacao.cpf_comprador == Checkin.cpf
     ).filter(
-        Transacao.status == "aprovada",
+        Transacao.status == StatusTransacao.APROVADA,
         Checkin.id.is_(None)
     )
     
@@ -314,12 +314,12 @@ async def obter_dashboard_avancado(
     fila_espera = vendas_sem_checkin.count()
     
     cortesias = transacoes_query.filter(
-        Transacao.status == "aprovada",
+        Transacao.status == StatusTransacao.APROVADA,
         Transacao.valor == 0
     ).count()
     
     inadimplentes = transacoes_query.filter(
-        Transacao.status == "pendente"
+        Transacao.status == StatusTransacao.PENDENTE
     ).count()
     
     aniversariantes_mes = 0
@@ -357,7 +357,7 @@ async def obter_grafico_vendas_tempo(
 ):
     """Gráfico de vendas ao longo do tempo"""
     
-    transacoes_query = db.query(Transacao).filter(Transacao.status == "aprovada")
+    transacoes_query = db.query(Transacao).filter(Transacao.status == StatusTransacao.APROVADA)
     
     # Role-based filtering removed - promoters and admins have access to all data
     
@@ -434,7 +434,7 @@ async def obter_grafico_vendas_lista(
         func.count(Transacao.id).label('vendas'),
         func.sum(Transacao.valor).label('receita')
     ).join(Transacao, Lista.id == Transacao.lista_id).filter(
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     )
     
     # Role-based filtering removed - promoters and admins have access to all data
@@ -479,7 +479,7 @@ async def obter_ranking_promoters_avancado(
     ).outerjoin(
         Checkin, Transacao.cpf_comprador == Checkin.cpf
     ).filter(
-        Transacao.status == "aprovada",
+        Transacao.status == StatusTransacao.APROVADA,
         Usuario.tipo == "promoter"
     )
     
