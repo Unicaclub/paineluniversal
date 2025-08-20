@@ -21,6 +21,7 @@ import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
+import { produtoService, ProdutoCreate } from '../../services/api';
 
 const ProductsList: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -42,53 +43,15 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      // Carregar produtos da API real
-      const { produtoService } = await import('../../services/api');
+      console.log('🔄 Carregando produtos...');
+      
       const response = await produtoService.getAll();
+      console.log('✅ Produtos carregados:', response);
       
-      // Converter para o formato esperado pelo componente
-      const produtosFormatados = response.map((produto: any) => ({
-        id: produto.id.toString(),
-        nome: produto.nome,
-        codigo: produto.codigo_barras || '',
-        categoria_id: produto.categoria_id?.toString() || '',
-        categoria: {
-          id: produto.categoria_id?.toString() || '1',
-          nome: produto.categoria_nome || 'SEM CATEGORIA',
-          mostrar_dashboard: true,
-          mostrar_pos: true,
-          ordem: 1,
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        ncm: produto.ncm || '',
-        cfop: '',
-        cest: '',
-        valor: produto.preco || 0,
-        destaque: produto.destaque || false,
-        habilitado: produto.status === 'ATIVO',
-        descricao: produto.descricao || '',
-        estoque: produto.estoque_atual || 0,
-        promocional: produto.promocional || false,
-        created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
-        updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date(),
-        marca: produto.marca || '',
-        fornecedor: produto.fornecedor || '',
-        preco_custo: produto.preco_custo || 0,
-        margem_lucro: produto.margem_lucro || 0,
-        unidade_medida: produto.unidade_medida || 'UN',
-        volume: produto.volume || 0,
-        teor_alcoolico: produto.teor_alcoolico || 0,
-        temperatura_ideal: produto.temperatura_ideal || ''
-      }));
-      
-      setProdutos(produtosFormatados);
-      console.log(`✅ ${produtosFormatados.length} produtos carregados da API`);
-      
+      setProdutos(response || []);
     } catch (error) {
-      console.error('❌ Erro ao carregar produtos da API:', error);
-      
-      // Fallback para dados mock em caso de erro
+      console.error('❌ Erro ao carregar produtos:', error);
+      // Em caso de erro, usar mock data temporariamente para não quebrar a interface
       setProdutos([
         {
           id: '1',
@@ -107,6 +70,21 @@ const ProductsList: React.FC = () => {
           promocional: false,
           created_at: new Date(),
           updated_at: new Date()
+        },
+        {
+          id: '2',
+          nome: 'Caipirinha de Cachaça',
+          codigo: 'DRINK001',
+          categoria_id: '2',
+          categoria: { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
+          valor: 12.00,
+          destaque: false,
+          habilitado: true,
+          descricao: 'Drink tradicional brasileiro',
+          estoque: 0,
+          promocional: true,
+          created_at: new Date(),
+          updated_at: new Date()
         }
       ]);
     } finally {
@@ -117,7 +95,7 @@ const ProductsList: React.FC = () => {
   const handleToggleDestaque = async (id: string, checked: boolean) => {
     try {
       // TODO: Implementar chamada para API
-      // await api.patch(`/api/produtos/${id}`, { destaque: checked });
+      // await api.patch(`/produtos/${id}`, { destaque: checked });
       setProdutos(prev => prev.map(p => p.id === id ? { ...p, destaque: checked } : p));
     } catch (error) {
       console.error('Erro ao atualizar destaque:', error);
@@ -127,7 +105,7 @@ const ProductsList: React.FC = () => {
   const handleToggleHabilitado = async (id: string, checked: boolean) => {
     try {
       // TODO: Implementar chamada para API
-      // await api.patch(`/api/produtos/${id}`, { habilitado: checked });
+      // await api.patch(`/produtos/${id}`, { habilitado: checked });
       setProdutos(prev => prev.map(p => p.id === id ? { ...p, habilitado: checked } : p));
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
@@ -180,46 +158,23 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
+      console.log('💾 Salvando produto...', { data, hasImage: !!imageFile });
+      
       if (editingProduct) {
-        // Atualizar produto existente
-        console.log('Atualizando produto:', data, imageFile);
-        // TODO: Implementar quando tiver endpoint de atualização
-        // await produtoService.update(editingProduct.id, data);
+        console.log('✏️ Atualizando produto existente:', editingProduct.id);
+        const updatedProduct = await produtoService.update(Number(editingProduct.id), data);
+        console.log('✅ Produto atualizado:', updatedProduct);
       } else {
-        // Criar novo produto
-        console.log('🔄 Iniciando criação de produto via API:', data);
-        
-        // Chamar API real para criar produto
-        const { produtoService } = await import('../../services/api');
-        
-        // Preparar dados simplificados primeiro
-        const produtoSimples = {
-          nome: data.nome || 'Produto Teste',
-          descricao: data.descricao || '',
-          preco: parseFloat(data.valor || '10'),
-          tipo: 'BEBIDA'
-        };
-        
-        console.log('📤 Enviando para API:', produtoSimples);
-        
-        const novoProduto = await produtoService.create(produtoSimples);
-        
-        console.log('✅ Produto criado com sucesso:', novoProduto);
+        console.log('➕ Criando novo produto');
+        const newProduct = await produtoService.create(data);
+        console.log('✅ Produto criado:', newProduct);
       }
       
       // Recarregar lista
       await loadProdutos();
+      handleCloseModal();
     } catch (error) {
       console.error('❌ Erro ao salvar produto:', error);
-      
-      // Log detalhado do erro
-      if (error.response) {
-        console.error('📋 Detalhes do erro:');
-        console.error('  - Status:', error.response.status);
-        console.error('  - Data:', error.response.data);
-        console.error('  - Headers:', error.response.headers);
-      }
-      
       throw error;
     }
   };

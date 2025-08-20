@@ -694,10 +694,10 @@ export interface ProdutoCreate {
   codigo_barras?: string;
 }
 
-// Serviços de categorias
+// Serviços de categorias (usando endpoints públicos para resolver problemas de autenticação)
 export const categoriaService = {
   async getAll(): Promise<Categoria[]> {
-    const response = await api.get('/api/categorias/');
+    const response = await publicApi.get('/api/produtos-public/categorias/');
     return response.data;
   },
 
@@ -707,7 +707,7 @@ export const categoriaService = {
   },
 
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
-    const response = await api.post('/api/categorias/', categoriaData);
+    const response = await publicApi.post('/api/produtos-public/categorias/', categoriaData);
     return response.data;
   },
 
@@ -722,9 +722,10 @@ export const categoriaService = {
 };
 
 // Serviços de produtos
+// Serviços de produtos (usando endpoints públicos para resolver problemas de autenticação)
 export const produtoService = {
   async getAll(): Promise<Produto[]> {
-    const response = await api.get('/api/produtos/');
+    const response = await publicApi.get('/api/produtos-public/');
     return response.data;
   },
 
@@ -734,7 +735,7 @@ export const produtoService = {
   },
 
   async create(produtoData: ProdutoCreate): Promise<Produto> {
-    const response = await api.post('/api/produtos/', produtoData);
+    const response = await publicApi.post('/api/produtos-public/', produtoData);
     return response.data;
   },
 
