@@ -180,13 +180,21 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
-      console.log('🔄 Salvando produto...', data);
+      console.log('🔄 Função handleSaveProduct iniciada');
+      console.log('📥 Dados recebidos:', data);
+      console.log('🖼️ Arquivo de imagem:', imageFile);
       
       // Validar dados obrigatórios (campo correto é 'valor')
+      console.log('🔍 Validando campos obrigatórios...');
+      console.log('nome:', data.nome, 'valor:', data.valor);
+      
       if (!data.nome || !data.valor) {
+        console.error('❌ Validação falhou - campos obrigatórios ausentes');
         alert('Nome e preço são obrigatórios!');
         return;
       }
+      
+      console.log('✅ Validação passou');
       
       // Adicionar campos obrigatórios com validação
       const produtoData = {
