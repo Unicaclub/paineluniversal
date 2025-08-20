@@ -692,11 +692,14 @@ export interface Produto {
   id?: number;
   nome: string;
   descricao?: string;
+  tipo: string; // BEBIDA, COMIDA, INGRESSO, FICHA, COMBO, VOUCHER
   preco: number;
-  estoque?: number;
+  estoque_atual?: number;
   categoria_id?: number;
   categoria?: Categoria;
   codigo_barras?: string;
+  evento_id: number;
+  status?: string;
   ativo?: boolean;
   criado_em?: string;
   atualizado_em?: string;
@@ -705,10 +708,12 @@ export interface Produto {
 export interface ProdutoCreate {
   nome: string;
   descricao?: string;
+  tipo: string; // BEBIDA, COMIDA, INGRESSO, FICHA, COMBO, VOUCHER
   preco: number;
-  estoque?: number;
+  estoque_atual?: number;
   categoria_id?: number;
   codigo_barras?: string;
+  evento_id: number;
 }
 
 // Serviços de categorias

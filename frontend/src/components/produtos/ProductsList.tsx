@@ -21,7 +21,6 @@ import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
-import { produtoService, ProdutoCreate } from '../../services/api';
 
 const ProductsList: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -43,15 +42,11 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      console.log('🔄 Carregando produtos...');
+      // TODO: Implementar chamada para API
+      // const response = await api.get('/produtos', { params: filters });
+      // setProdutos(response.data);
       
-      const response = await produtoService.getAll();
-      console.log('✅ Produtos carregados:', response);
-      
-      setProdutos(response || []);
-    } catch (error) {
-      console.error('❌ Erro ao carregar produtos:', error);
-      // Em caso de erro, usar mock data temporariamente para não quebrar a interface
+      // Mock data para desenvolvimento
       setProdutos([
         {
           id: '1',
@@ -87,6 +82,8 @@ const ProductsList: React.FC = () => {
           updated_at: new Date()
         }
       ]);
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
     } finally {
       setLoading(false);
     }
@@ -158,23 +155,45 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
-      console.log('💾 Salvando produto...', { data, hasImage: !!imageFile });
+      console.log('🔄 Salvando produto...', data);
+      
+      // Adicionar campos obrigatórios
+      const produtoData = {
+        ...data,
+        tipo: data.tipo || 'BEBIDA', // Tipo padrão se não fornecido
+        evento_id: 1, // TODO: Pegar evento atual do contexto
+        preco: parseFloat(data.preco) || 0
+      };
+      
+      console.log('📤 Dados finais para envio:', produtoData);
       
       if (editingProduct) {
-        console.log('✏️ Atualizando produto existente:', editingProduct.id);
-        const updatedProduct = await produtoService.update(Number(editingProduct.id), data);
-        console.log('✅ Produto atualizado:', updatedProduct);
+        console.log('✏️ Atualizando produto existente...');
+        await produtoService.update(editingProduct.id, produtoData);
+        console.log('✅ Produto atualizado com sucesso!');
       } else {
-        console.log('➕ Criando novo produto');
-        const newProduct = await produtoService.create(data);
-        console.log('✅ Produto criado:', newProduct);
+        console.log('🆕 Criando novo produto...');
+        const novoProduto = await produtoService.create(produtoData);
+        console.log('✅ Produto criado com sucesso:', novoProduto);
       }
       
-      // Recarregar lista
-      await loadProdutos();
+      // Fechar modal
       handleCloseModal();
-    } catch (error) {
+      
+      // Recarregar lista
+      console.log('🔄 Recarregando lista de produtos...');
+      await loadProdutos();
+      
+    } catch (error: any) {
       console.error('❌ Erro ao salvar produto:', error);
+      
+      // Log mais detalhado do erro
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+        console.error('Headers:', error.response.headers);
+      }
+      
       throw error;
     }
   };
