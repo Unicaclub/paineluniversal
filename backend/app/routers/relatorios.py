@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, date
 from ..database import get_db
-from ..models import Evento, Transacao, Checkin, Usuario, Lista
+from ..models import Evento, Transacao, Checkin, Lista, PromoterEvento, Usuario, StatusTransacao
 from ..schemas import RelatorioVendas
 from ..auth import obter_usuario_atual, verificar_permissao_admin
 import csv
@@ -36,7 +36,7 @@ async def gerar_relatorio_vendas(
     
     transacoes = db.query(Transacao).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).all()
     
     total_vendas = len(transacoes)
