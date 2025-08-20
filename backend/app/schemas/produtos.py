@@ -62,8 +62,7 @@ class ProdutoBase(BaseModel):
     descricao: Optional[str] = Field(None, max_length=1000, description="Descrição do produto")
     tipo: TipoProdutoEnum = Field(..., description="Tipo do produto")
     preco: Decimal = Field(..., gt=0, description="Preço do produto")
-    categoria_id: Optional[int] = Field(None, description="ID da categoria")
-    codigo_barras: Optional[str] = Field(None, max_length=50, description="Código de barras")
+    categoria: Optional[str] = Field(None, max_length=100, description="Categoria do produto")
     codigo_interno: Optional[str] = Field(None, max_length=20, description="Código interno")
     estoque_atual: Optional[int] = Field(0, ge=0, description="Estoque atual")
     estoque_minimo: Optional[int] = Field(0, ge=0, description="Estoque mínimo")
@@ -71,20 +70,6 @@ class ProdutoBase(BaseModel):
     controla_estoque: Optional[bool] = Field(True, description="Se controla estoque")
     status: Optional[StatusProdutoEnum] = Field(StatusProdutoEnum.ATIVO, description="Status do produto")
     imagem_url: Optional[str] = Field(None, max_length=500, description="URL da imagem")
-    
-    # Campos adicionais
-    marca: Optional[str] = Field(None, max_length=100)
-    fornecedor: Optional[str] = Field(None, max_length=200)
-    preco_custo: Optional[Decimal] = Field(None, ge=0)
-    margem_lucro: Optional[Decimal] = Field(None, ge=0)
-    unidade_medida: Optional[str] = Field("UN", max_length=10)
-    volume: Optional[Decimal] = Field(None, ge=0)
-    teor_alcoolico: Optional[Decimal] = Field(None, ge=0, le=100)
-    temperatura_ideal: Optional[str] = Field(None, max_length=20)
-    validade_dias: Optional[int] = Field(None, ge=0)
-    destaque: Optional[bool] = Field(False)
-    promocional: Optional[bool] = Field(False)
-    observacoes: Optional[str] = Field(None, max_length=1000)
 
     @validator('nome')
     def validar_nome(cls, v):
@@ -93,15 +78,14 @@ class ProdutoBase(BaseModel):
         return v.strip()
 
 class ProdutoCreate(ProdutoBase):
-    evento_id: int = Field(..., description="ID do evento")
+    pass
 
 class ProdutoUpdate(BaseModel):
     nome: Optional[str] = Field(None, min_length=1, max_length=255)
     descricao: Optional[str] = Field(None, max_length=1000)
     tipo: Optional[TipoProdutoEnum] = None
     preco: Optional[Decimal] = Field(None, gt=0)
-    categoria_id: Optional[int] = None
-    codigo_barras: Optional[str] = Field(None, max_length=50)
+    categoria: Optional[str] = Field(None, max_length=100)
     codigo_interno: Optional[str] = Field(None, max_length=20)
     estoque_atual: Optional[int] = Field(None, ge=0)
     estoque_minimo: Optional[int] = Field(None, ge=0)
@@ -109,27 +93,12 @@ class ProdutoUpdate(BaseModel):
     controla_estoque: Optional[bool] = None
     status: Optional[StatusProdutoEnum] = None
     imagem_url: Optional[str] = Field(None, max_length=500)
-    marca: Optional[str] = Field(None, max_length=100)
-    fornecedor: Optional[str] = Field(None, max_length=200)
-    preco_custo: Optional[Decimal] = Field(None, ge=0)
-    margem_lucro: Optional[Decimal] = Field(None, ge=0)
-    unidade_medida: Optional[str] = Field(None, max_length=10)
-    volume: Optional[Decimal] = Field(None, ge=0)
-    teor_alcoolico: Optional[Decimal] = Field(None, ge=0, le=100)
-    temperatura_ideal: Optional[str] = Field(None, max_length=20)
-    validade_dias: Optional[int] = Field(None, ge=0)
-    destaque: Optional[bool] = None
-    promocional: Optional[bool] = None
-    observacoes: Optional[str] = Field(None, max_length=1000)
 
 class ProdutoResponse(ProdutoBase):
     id: int
-    evento_id: int
     empresa_id: Optional[int]
-    categoria: Optional[str]  # Campo legado
     criado_em: datetime
     atualizado_em: datetime
-    categoria_produto: Optional[CategoriaResponse] = None
 
     class Config:
         from_attributes = True
@@ -138,7 +107,7 @@ class ProdutoResponse(ProdutoBase):
 class ProdutoFilter(BaseModel):
     nome: Optional[str] = None
     tipo: Optional[TipoProdutoEnum] = None
-    categoria_id: Optional[int] = None
+    categoria: Optional[str] = None
     status: Optional[StatusProdutoEnum] = None
     preco_min: Optional[Decimal] = None
     preco_max: Optional[Decimal] = None

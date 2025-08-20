@@ -714,30 +714,16 @@ export interface ProdutoCreate {
   nome: string;
   descricao?: string;
   tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
-  preco: number; // API espera 'preco'
-  evento_id: number;
-  categoria_id?: number;
-  codigo_interno?: string; // API espera 'codigo_interno'
-  codigo_barras?: string;
+  preco: number;
+  categoria?: string; // Categoria como string
+  codigo_interno?: string;
   estoque_atual?: number;
-  destaque?: boolean;
-  promocional?: boolean;
-  // Campos adicionais
-  marca?: string;
-  fornecedor?: string;
-  preco_custo?: number;
-  margem_lucro?: number;
-  unidade_medida?: string;
-  volume?: number;
-  teor_alcoolico?: number;
-  temperatura_ideal?: string;
-  validade_dias?: number;
-  ncm?: string;
-  cfop?: string;
-  cest?: string;
-  icms?: number;
-  ipi?: number;
-  observacoes?: string;
+  estoque_minimo?: number;
+  estoque_maximo?: number;
+  controla_estoque?: boolean;
+  status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
+  imagem_url?: string;
+}
 }
 
 // Serviços de categorias
@@ -851,16 +837,8 @@ export const produtoService = {
   },
 
   async create(produtoData: ProdutoCreate): Promise<Produto> {
-    // Garantir que evento_id está presente
-    if (!produtoData.evento_id) {
-      // Tentar obter o evento_id do localStorage ou context
-      const eventoId = localStorage.getItem('evento_id');
-      if (eventoId) {
-        produtoData.evento_id = parseInt(eventoId);
-      } else {
-        throw new Error('ID do evento é obrigatório para criar produto');
-      }
-    }
+    // Os dados já estão no formato correto do backend
+    console.log('🚀 Enviando produto para API:', produtoData);
     
     const response = await api.post('/api/produtos/', produtoData);
     return response.data;

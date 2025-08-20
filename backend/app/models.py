@@ -231,41 +231,19 @@ class Produto(Base):
     descricao = Column(Text)
     tipo = Column(Enum(TipoProduto), nullable=False)
     preco = Column(Numeric(10, 2), nullable=False)
-    codigo_barras = Column(String(50), unique=True)
-    codigo_interno = Column(String(20), unique=True)
+    codigo_interno = Column(String(20))
     estoque_atual = Column(Integer, default=0)
     estoque_minimo = Column(Integer, default=0)
     estoque_maximo = Column(Integer, default=1000)
     controla_estoque = Column(Boolean, default=True)
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
-    categoria = Column(String(100))  # DEPRECATED: usar categoria_id
-    categoria_id = Column(Integer, ForeignKey("categorias_produtos.id"))  # NOVO
+    categoria = Column(String(100))  # Campo principal para categoria
     imagem_url = Column(String(500))
-    
-    # Campos adicionais para import/export
-    marca = Column(String(100))
-    fornecedor = Column(String(200))
-    preco_custo = Column(Numeric(10, 2))
-    margem_lucro = Column(Numeric(5, 2))
-    unidade_medida = Column(String(10), default="UN")
-    volume = Column(Numeric(8, 2))
-    teor_alcoolico = Column(Numeric(4, 2))
-    temperatura_ideal = Column(String(20))
-    validade_dias = Column(Integer)
-    ncm = Column(String(8))
-    icms = Column(Numeric(5, 2))
-    ipi = Column(Numeric(5, 2))
-    destaque = Column(Boolean, default=False)
-    promocional = Column(Boolean, default=False)
-    observacoes = Column(Text)
-    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=False)
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
     
-    evento = relationship("Evento")
     empresa = relationship("Empresa")
-    categoria_produto = relationship("CategoriaProduto", back_populates="produtos")  # NOVO
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
 

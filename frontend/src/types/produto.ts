@@ -1,36 +1,29 @@
 export interface Produto {
-  id: string;
+  id?: string;
   nome: string;
-  codigo?: string;
+  codigo_interno?: string;
+  categoria?: string;
   tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
-  categoria_id: string;
-  categoria?: Categoria;
-  ncm?: string;
-  cfop?: string;
-  cest?: string;
-  valor: number;
-  destaque: boolean;
-  habilitado: boolean;
+  preco: number;
   descricao?: string;
-  imagem?: string;
+  estoque_atual?: number;
+  estoque_minimo?: number;
+  estoque_maximo?: number;
+  controla_estoque?: boolean;
+  status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
+  imagem_url?: string;
+  empresa_id?: string;
+  criado_em?: Date;
+  atualizado_em?: Date;
+  
+  // Campos antigos mantidos para compatibilidade (podem ser removidos depois)
+  codigo?: string;
+  categoria_id?: string;
+  valor?: number;
   estoque?: number;
-  marca?: string;
-  fornecedor?: string;
-  preco_custo?: number;
-  margem_lucro?: number;
-  unidade_medida?: string;
-  volume?: number;
-  teor_alcoolico?: number;
-  temperatura_ideal?: string;
-  validade_dias?: number;
-  icms?: number;
-  ipi?: number;
-  promocional: boolean;
-  observacoes?: string;
-  evento_id?: number;
-  empresa_id?: number;
-  created_at: Date;
-  updated_at: Date;
+  imagem?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface Categoria {
