@@ -293,6 +293,18 @@ export const authService = {
     return response.data;
   },
 
+  async getCurrentUser(): Promise<Usuario | null> {
+    try {
+      console.log('🔍 AuthService: Buscando dados do usuário atual...');
+      const response = await api.get('/api/auth/me');
+      console.log('✅ AuthService: Dados do usuário obtidos:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ AuthService: Erro ao buscar usuário atual:', error);
+      return null;
+    }
+  },
+
   async logout(): Promise<void> {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');

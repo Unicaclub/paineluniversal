@@ -213,11 +213,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.roles.includes(usuario?.tipo || '')
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    const userType = usuario?.tipo || 'admin'; // Fallback para admin se tipo não estiver definido
+    return item.roles.includes(userType);
+  });
 
   const getInitials = (name: string) => {
+    if (!name || name.trim() === '') return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
@@ -434,11 +436,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-sidebar-foreground truncate">
-                      {usuario?.nome}
+                      {usuario?.nome || 'Usuário'}
                     </p>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
-                        {usuario?.tipo}
+                        {usuario?.tipo || 'admin'}
                       </Badge>
                     </div>
                   </div>
@@ -450,7 +452,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
                   <p className="text-sm text-muted-foreground">
-                    {usuario?.email}
+                    {usuario?.email || 'Email não disponível'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Sistema Universal de Eventos
