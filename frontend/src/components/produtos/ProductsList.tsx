@@ -43,24 +43,52 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      // TODO: Implementar chamada para API
-      // const response = await api.get('/produtos', { params: filters });
-      // setProdutos(response.data);
+      console.log('📡 Carregando produtos da API...');
       
-      // Mock data para desenvolvimento
+      // Importar serviço diretamente para evitar problemas
+      const { produtoService } = await import('../../services/api');
+      
+      const response = await produtoService.getAll();
+      console.log('📦 Produtos recebidos:', response);
+      
+      // Converter formato se necessário
+      const produtosFormatados = response.map((produto: any) => ({
+        id: produto.id.toString(),
+        nome: produto.nome,
+        codigo: `PROD${produto.id.toString().padStart(3, '0')}`,
+        categoria_id: produto.categoria_id?.toString() || '',
+        categoria: produto.categoria || { id: produto.categoria_id, nome: 'Sem categoria' },
+        valor: produto.preco,
+        destaque: false,
+        habilitado: true,
+        promocional: false,
+        tipo: produto.tipo || 'FISICO',
+        descricao: produto.descricao || '',
+        evento_id: produto.evento_id
+      }));
+      
+      setProdutos(produtosFormatados);
+      console.log('✅ Produtos carregados com sucesso!');
+      
+    } catch (error) {
+      console.error('❌ Erro ao carregar produtos:', error);
+      
+      // Fallback para dados mock em caso de erro
+      console.log('🔄 Usando dados mock como fallback...');
       setProdutos([
         {
           id: '1',
-          nome: 'Cerveja Heineken 600ml',
-          codigo: 'CERV001',
+          nome: 'Produto Demo',
+          codigo: 'DEMO001',
           categoria_id: '1',
-          categoria: { id: '1', nome: 'CERVEJA', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
-          ncm: '22030000',
-          cfop: '5102',
-          cest: '0300700',
-          valor: 8.50,
-          destaque: true,
+          categoria: { id: '1', nome: 'DEMO', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
+          valor: 10.00,
+          destaque: false,
           habilitado: true,
+          promocional: false,
+          tipo: 'FISICO'
+        }
+      ]);
           descricao: 'Cerveja premium importada',
           estoque: 100,
           promocional: false,
@@ -158,15 +186,26 @@ const ProductsList: React.FC = () => {
     try {
       console.log('🔄 Salvando produto...', data);
       
-      // Adicionar campos obrigatórios
+      // Validar dados obrigatórios
+      if (!data.nome || !data.preco) {
+        alert('Nome e preço são obrigatórios!');
+        return;
+      }
+      
+      // Adicionar campos obrigatórios com validação
       const produtoData = {
-        ...data,
-        tipo: data.tipo || 'BEBIDA', // Tipo padrão se não fornecido
-        evento_id: 1, // TODO: Pegar evento atual do contexto
-        preco: parseFloat(data.preco) || 0
+        nome: data.nome,
+        descricao: data.descricao || '',
+        preco: parseFloat(data.preco) || 0,
+        tipo: data.tipo || 'FISICO', // Padrão físico
+        evento_id: data.evento_id || 1, // TODO: Pegar do contexto do usuário
+        categoria_id: data.categoria_id || null
       };
       
       console.log('📤 Dados finais para envio:', produtoData);
+      
+      // Importar o serviço diretamente para evitar problemas de cache
+      const { produtoService } = await import('../../services/api');
       
       if (editingProduct) {
         console.log('✏️ Atualizando produto existente...');
@@ -184,6 +223,8 @@ const ProductsList: React.FC = () => {
       // Recarregar lista
       console.log('🔄 Recarregando lista de produtos...');
       await loadProdutos();
+      
+      console.log('🎉 Processo concluído com sucesso!');
       
     } catch (error: any) {
       console.error('❌ Erro ao salvar produto:', error);
