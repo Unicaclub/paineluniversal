@@ -182,7 +182,6 @@ class CategoriaProduto(Base):
     # Relacionamentos
     evento = relationship("Evento")
     empresa = relationship("Empresa")
-    produtos = relationship("Produto", back_populates="categoria_produto")
 
 class TipoProduto(enum.Enum):
     BEBIDA = "BEBIDA"
