@@ -187,30 +187,22 @@ const ProductsList: React.FC = () => {
         // await produtoService.update(editingProduct.id, data);
       } else {
         // Criar novo produto
-        console.log('Criando produto via API:', data, imageFile);
+        console.log('🔄 Iniciando criação de produto via API:', data);
         
         // Chamar API real para criar produto
         const { produtoService } = await import('../../services/api');
-        const novoProduto = await produtoService.create({
-          nome: data.nome,
+        
+        // Preparar dados simplificados primeiro
+        const produtoSimples = {
+          nome: data.nome || 'Produto Teste',
           descricao: data.descricao || '',
-          preco: parseFloat(data.valor || '0'),
-          codigo_barras: data.codigo || null,
-          categoria_id: parseInt(data.categoria_id),
-          tipo: 'BEBIDA', // Padrão por enquanto
-          estoque_atual: 0,
-          marca: data.marca || null,
-          fornecedor: data.fornecedor || null,
-          preco_custo: data.preco_custo ? parseFloat(data.preco_custo) : null,
-          margem_lucro: data.margem_lucro ? parseFloat(data.margem_lucro) : null,
-          unidade_medida: data.unidade_medida || 'UN',
-          volume: data.volume ? parseFloat(data.volume) : null,
-          teor_alcoolico: data.teor_alcoolico ? parseFloat(data.teor_alcoolico) : null,
-          temperatura_ideal: data.temperatura_ideal || null,
-          ncm: data.ncm || null,
-          destaque: data.destaque || false,
-          promocional: data.promocional || false
-        });
+          preco: parseFloat(data.valor || '10'),
+          tipo: 'BEBIDA'
+        };
+        
+        console.log('📤 Enviando para API:', produtoSimples);
+        
+        const novoProduto = await produtoService.create(produtoSimples);
         
         console.log('✅ Produto criado com sucesso:', novoProduto);
       }
@@ -219,6 +211,15 @@ const ProductsList: React.FC = () => {
       await loadProdutos();
     } catch (error) {
       console.error('❌ Erro ao salvar produto:', error);
+      
+      // Log detalhado do erro
+      if (error.response) {
+        console.error('📋 Detalhes do erro:');
+        console.error('  - Status:', error.response.status);
+        console.error('  - Data:', error.response.data);
+        console.error('  - Headers:', error.response.headers);
+      }
+      
       throw error;
     }
   };

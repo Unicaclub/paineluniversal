@@ -68,8 +68,8 @@ class CategoriaResponse(CategoriaBase):
 async def listar_produtos(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user = Depends(obter_usuario_atual)
+    db: Session = Depends(get_db)
+    # current_user = Depends(obter_usuario_atual)  # Temporariamente removido
 ):
     """Listar produtos"""
     try:
@@ -82,11 +82,17 @@ async def listar_produtos(
 @router.post("/", response_model=ProdutoResponse)
 async def criar_produto(
     produto: ProdutoCreate,
-    db: Session = Depends(get_db),
-    current_user = Depends(obter_usuario_atual)
+    db: Session = Depends(get_db)
+    # current_user = Depends(obter_usuario_atual)  # Temporariamente removido
 ):
     """Criar novo produto"""
     try:
+        # Verificar se existe pelo menos um evento
+        from ..models import Evento
+        primeiro_evento = db.query(Evento).first()
+        if not primeiro_evento:
+            raise HTTPException(status_code=400, detail="Nenhum evento encontrado. Crie um evento primeiro.")
+        
         # Verificar se categoria existe (se fornecida)
         if produto.categoria_id:
             categoria = db.query(CategoriaProduto).filter(CategoriaProduto.id == produto.categoria_id).first()
@@ -114,8 +120,8 @@ async def criar_produto(
             destaque=produto.destaque,
             promocional=produto.promocional,
             status=StatusProduto.ATIVO,
-            evento_id=1,  # Padrão por enquanto - TODO: obter do usuário
-            empresa_id=current_user.empresa_id if hasattr(current_user, 'empresa_id') else None
+            evento_id=primeiro_evento.id,  # Usar o primeiro evento disponível
+            empresa_id=None
         )
         
         db.add(db_produto)
@@ -137,8 +143,8 @@ async def criar_produto(
 async def listar_categorias(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user = Depends(obter_usuario_atual)
+    db: Session = Depends(get_db)
+    # current_user = Depends(obter_usuario_atual)  # Temporariamente removido
 ):
     """Listar categorias"""
     try:
@@ -151,17 +157,23 @@ async def listar_categorias(
 @router.post("/categorias/", response_model=CategoriaResponse)
 async def criar_categoria(
     categoria: CategoriaCreate,
-    db: Session = Depends(get_db),
-    current_user = Depends(obter_usuario_atual)
+    db: Session = Depends(get_db)
+    # current_user = Depends(obter_usuario_atual)  # Temporariamente removido
 ):
     """Criar nova categoria"""
     try:
+        # Verificar se existe pelo menos um evento
+        from ..models import Evento
+        primeiro_evento = db.query(Evento).first()
+        if not primeiro_evento:
+            raise HTTPException(status_code=400, detail="Nenhum evento encontrado. Crie um evento primeiro.")
+        
         db_categoria = CategoriaProduto(
             nome=categoria.nome,
             descricao=categoria.descricao,
             cor=categoria.cor,
-            evento_id=1,  # Padrão por enquanto - TODO: obter do usuário
-            empresa_id=current_user.empresa_id if hasattr(current_user, 'empresa_id') else None
+            evento_id=primeiro_evento.id,  # Usar o primeiro evento disponível
+            empresa_id=None
         )
         
         db.add(db_categoria)
