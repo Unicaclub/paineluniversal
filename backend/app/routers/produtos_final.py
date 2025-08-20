@@ -153,17 +153,26 @@ async def criar_produto(
         logger.info(f"🆕 Criando produto: {produto_data.nome}")
         logger.info(f"📊 Dados recebidos: {produto_data.model_dump()}")
         
-        # Validar e converter tipo
+        # Validar e converter tipo (com novos valores)
         try:
-            if produto_data.tipo.upper() in ["FISICO", "FÍSICO"]:
+            tipo_upper = produto_data.tipo.upper()
+            if tipo_upper in ["FISICO", "FÍSICO"]:
                 tipo_enum = TipoProduto.FISICO
-            elif produto_data.tipo.upper() == "DIGITAL":
+            elif tipo_upper == "DIGITAL":
                 tipo_enum = TipoProduto.DIGITAL
-            elif produto_data.tipo.upper() in ["SERVICO", "SERVIÇO"]:
+            elif tipo_upper in ["SERVICO", "SERVIÇO"]:
                 tipo_enum = TipoProduto.SERVICO
+            # Manter compatibilidade com tipos antigos
+            elif tipo_upper == "BEBIDA":
+                tipo_enum = TipoProduto.BEBIDA
+            elif tipo_upper == "COMIDA":
+                tipo_enum = TipoProduto.COMIDA
             else:
                 tipo_enum = TipoProduto.FISICO  # Default
-        except Exception:
+                
+            logger.info(f"🔄 Tipo convertido: {produto_data.tipo} → {tipo_enum}")
+        except Exception as e:
+            logger.error(f"❌ Erro ao converter tipo: {e}")
             tipo_enum = TipoProduto.FISICO
         
         # Criar o produto com campos obrigatórios (SEM evento_id)
