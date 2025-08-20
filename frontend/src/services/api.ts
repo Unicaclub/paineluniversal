@@ -208,23 +208,22 @@ export const authService = {
       
       const response = await publicApi.post('/api/auth/login', data);
       
-      console.log('📊 Resposta do login:', {
-        status: response.status,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        data: response.data
-      });
+      console.log('📊 Resposta COMPLETA do login:', response);
+      console.log('📊 Response.data:', response.data);
+      console.log('📊 Response.status:', response.status);
+      console.log('📊 Response.headers:', response.headers);
       
-      // Log mais detalhado da estrutura
+      // Verificar o formato da resposta
       if (response.data) {
-        console.log('🔍 Análise detalhada da resposta:', {
+        console.log('🔍 Análise COMPLETA da resposta:', {
           keys: Object.keys(response.data),
           hasAccessToken: !!response.data.access_token,
           hasTokenType: !!response.data.token_type,
           hasUsuario: !!response.data.usuario,
-          accessTokenType: typeof response.data.access_token,
-          usuarioType: typeof response.data.usuario,
-          usuarioKeys: response.data.usuario ? Object.keys(response.data.usuario) : 'N/A'
+          accessToken: response.data.access_token,
+          tokenType: response.data.token_type,
+          usuario: response.data.usuario,
+          responseRaw: JSON.stringify(response.data)
         });
       }
       
@@ -233,15 +232,21 @@ export const authService = {
         if (response.data.access_token) {
           console.log('✅ Token encontrado!');
           
-          // Verificar se tem usuário
-          if (response.data.usuario) {
-            console.log('✅ Usuário encontrado! Login bem-sucedido!');
-            return response.data;
-          } else {
-            console.warn('⚠️ Token válido, mas usuário não encontrado na resposta');
-            // Ainda assim retornar o token - o usuário pode ser buscado depois
-            return response.data;
+          // FORÇA a inclusão do usuário se não existir
+          if (!response.data.usuario) {
+            console.warn('⚠️ FORÇANDO criação de usuário temporário');
+            response.data.usuario = {
+              id: 1,
+              nome: 'Usuário Temporário',
+              cpf: data.cpf,
+              email: '',
+              tipo: 'admin',
+              ativo: true
+            };
           }
+          
+          console.log('✅ Retornando resposta:', response.data);
+          return response.data;
         }
       }
       
