@@ -33,12 +33,15 @@ class ProdutoUpdate(BaseModel):
     codigo_barras: Optional[str] = None
     estoque_atual: Optional[int] = None
 
-class ProdutoResponse(ProdutoBase):
+class ProdutoResponse(BaseModel):
     id: int
-    status: str
-    criado_em: Optional[datetime] = None
-    atualizado_em: Optional[datetime] = None
-
+    nome: str
+    descricao: Optional[str] = None
+    tipo: str
+    preco: float
+    evento_id: int
+    categoria_id: Optional[int] = None
+    
     class Config:
         from_attributes = True
 
@@ -77,15 +80,28 @@ async def listar_produtos(
 ):
     """Listar produtos"""
     try:
-        query = db.query(Produto)
+        # Usar query mais simples sem relacionamentos para debug
+        query = db.query(Produto).options(
+            # Não carregar relacionamentos que podem estar causando problemas
+        )
+        
         if evento_id:
             query = query.filter(Produto.evento_id == evento_id)
         
         produtos = query.all()
         print(f"📋 Encontrados {len(produtos)} produtos")
+        
+        # Verificar se há produtos para debug
+        for produto in produtos:
+            print(f"📦 Produto: {produto.nome} (ID: {produto.id}, Tipo: {produto.tipo})")
+        
         return produtos
+        
     except Exception as e:
         print(f"❌ Erro ao listar produtos: {e}")
+        print(f"🔍 Tipo do erro: {type(e)}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Erro ao listar produtos: {str(e)}")
 
 @router.post("/", response_model=ProdutoResponse)

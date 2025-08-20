@@ -19,6 +19,7 @@ import { DataTable } from '../shared/DataTable';
 import StatusToggle from '../shared/StatusToggle';
 import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
+import { produtoService, categoriaService } from '../../services/api';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
 
