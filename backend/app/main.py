@@ -14,7 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # financeiro e import_export temporariamente comentados, meep
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao  # produtos temporariamente comentado para debug auth
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -81,9 +81,17 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
             "https://www.paineluniversal.com"
         ]
         
+        # Em desenvolvimento ou para máxima compatibilidade
         # TEMPORÁRIO: CORS ultra-permissivo sempre ativo para resolver problemas de autenticação
-        logger.info("� CORS Ultra-Permissivo SEMPRE ativado para debug")
+        logger.info("🔥 CORS Ultra-Permissivo SEMPRE ativado para debug")
         return ["*"]
+        
+        # if not os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("CORS_ULTRA_PERMISSIVE", "false").lower() == "true":
+        #     logger.info("CORS Ultra-Permissivo ativado")
+        #     return ["*"]
+        
+        logger.info(f"CORS Restritivo ativado com {len(base_origins)} origens permitidas")
+        return base_origins
     
     def _create_cors_response(self, request: Request, status_code: int = 200, content: str = ""):
         """Cria resposta com headers CORS completos"""
@@ -196,7 +204,7 @@ app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
 app.include_router(pdv.router, prefix="/api")
 # app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
-app.include_router(produtos.router, prefix="/api")
+# app.include_router(produtos.router, prefix="/api")  # Temporariamente comentado para debug auth
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 

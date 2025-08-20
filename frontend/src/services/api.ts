@@ -697,31 +697,30 @@ export interface ProdutoCreate {
 // Serviços de categorias
 export const categoriaService = {
   async getAll(): Promise<Categoria[]> {
-    const response = await api.get('/api/produtos/categorias/');
+    const response = await api.get('/api/categorias/');
     return response.data;
   },
 
   async getById(id: number): Promise<Categoria> {
-    const response = await api.get(`/api/produtos/categorias/${id}`);
+    const response = await api.get(`/api/categorias/${id}`);
     return response.data;
   },
 
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
-    const response = await api.post('/api/produtos/categorias/', categoriaData);
+    const response = await api.post('/api/categorias/', categoriaData);
     return response.data;
   },
 
   async update(id: number, categoriaData: Partial<CategoriaCreate>): Promise<Categoria> {
-    const response = await api.put(`/api/produtos/categorias/${id}`, categoriaData);
+    const response = await api.put(`/api/categorias/${id}`, categoriaData);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/api/produtos/categorias/${id}`);
+    await api.delete(`/api/categorias/${id}`);
   }
 };
 
-// Serviços de produtos
 // Serviços de produtos
 export const produtoService = {
   async getAll(): Promise<Produto[]> {

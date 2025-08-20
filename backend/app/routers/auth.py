@@ -5,7 +5,7 @@ from datetime import timedelta
 from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
-from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
+from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico, get_current_user
 
 router = APIRouter()
 security = HTTPBearer()
@@ -68,38 +68,49 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         # Criar resposta manualmente para garantir compatibilidade
         try:
+            # Verificar se o usuário tem empresa associada
+            empresa_id = getattr(usuario, 'empresa_id', None)
+            
+            # Construir dados do usuário de forma segura
             usuario_data = {
                 "id": usuario.id,
                 "cpf": usuario.cpf,
                 "nome": usuario.nome,
-                "email": usuario.email,
-                "telefone": usuario.telefone,
-                "tipo": str(usuario.tipo.value) if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
+                "email": usuario.email or "",
+                "telefone": usuario.telefone or "",
+                "tipo": usuario.tipo.value if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
                 "ativo": usuario.ativo,
+                "empresa_id": empresa_id,
                 "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
-                "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
+                "criado_em": usuario.criado_em.isoformat() if hasattr(usuario, 'criado_em') and usuario.criado_em else None
             }
-            print(f"Usuario data criado: {usuario_data}")
+            print(f"🔍 Usuario data criado com sucesso: {usuario_data}")
         except Exception as e:
-            print(f"ERRO ao criar usuario_data: {e}")
-            # Fallback mais simples
+            print(f"⚠️ ERRO ao criar usuario_data (usando fallback): {e}")
+            # Fallback mais simples e seguro
             usuario_data = {
                 "id": usuario.id,
                 "cpf": usuario.cpf,
                 "nome": usuario.nome,
-                "email": usuario.email,
+                "email": getattr(usuario, 'email', ''),
+                "telefone": getattr(usuario, 'telefone', ''),
                 "tipo": "admin",  # Fallback seguro
-                "ativo": True
+                "ativo": True,
+                "empresa_id": getattr(usuario, 'empresa_id', None)
             }
+            print(f"🔧 Fallback usuario_data: {usuario_data}")
         
+        # Construir resposta final
         response_data = {
             "access_token": access_token,
             "token_type": "bearer", 
             "usuario": usuario_data
         }
         
-        print(f"Response data keys: {list(response_data.keys())}")
-        print(f"Response completo: {response_data}")
+        print(f"📤 Response final - Keys: {list(response_data.keys())}")
+        print(f"📤 Response final - hasUsuario: {bool(response_data.get('usuario'))}")
+        print(f"📤 Response final - Usuario nome: {response_data.get('usuario', {}).get('nome', 'N/A')}")
+        
         return response_data
         
     except HTTPException:
@@ -115,13 +126,16 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         )
 
 @router.get("/me", response_model=UsuarioSchema)
-async def obter_dados_usuario_atual(
-    db: Session = Depends(get_db),
-    usuario_atual: Usuario = Depends(obter_usuario_atual)
+async def obter_usuario_atual(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Obter dados do usuário atual"""
     try:
-        return usuario_atual
+        usuario = db.query(Usuario).filter(Usuario.cpf == current_user["sub"]).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return UsuarioSchema.model_validate(usuario)
     except Exception as e:
         print(f"Erro ao buscar usuário atual: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
