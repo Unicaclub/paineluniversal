@@ -41,7 +41,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { usuario, logout } = useAuth();
+  const { usuario, logout, revalidateUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -51,6 +51,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     'Produtos': location.pathname.startsWith('/app/produtos')
   });
+
+  // Debug do estado da autenticação
+  React.useEffect(() => {
+    console.log('🔍 Layout: Estado da autenticação:', {
+      usuario: usuario ? { nome: usuario.nome, tipo: usuario.tipo, email: usuario.email } : null,
+      hasToken: !!localStorage.getItem('token')
+    });
+
+    // Se há token mas não há usuário, tentar revalidar
+    if (!usuario && localStorage.getItem('token')) {
+      console.log('🔄 Layout: Token existe mas usuário não. Tentando revalidar...');
+      revalidateUser();
+    }
+  }, [usuario, revalidateUser]);
 
   const handleLogout = () => {
     logout();
@@ -213,9 +227,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.roles.includes(usuario?.tipo || '')
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    // Se não há usuário carregado ou tipo definido, mostrar apenas itens básicos
+    if (!usuario || !usuario.tipo) {
+      return ['Dashboard', 'Eventos', 'Vendas'].includes(item.label);
+    }
+    return item.roles.includes(usuario.tipo);
+  });
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
