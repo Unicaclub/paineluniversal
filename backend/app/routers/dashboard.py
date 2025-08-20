@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from ..database import get_db
-from ..models import Evento, Transacao, Checkin, Usuario, Lista, PromoterEvento
+from ..models import Evento, Transacao, Checkin, Usuario, Lista, PromoterEvento, StatusTransacao
 from ..schemas import DashboardResumo, RankingPromoter, DashboardAvancado, FiltrosDashboard, RankingPromoterAvancado, DadosGrafico
 from ..auth import obter_usuario_atual
 
@@ -28,10 +28,10 @@ async def obter_resumo_dashboard(
         checkins_query = db.query(Checkin)
     
     total_eventos = eventos_query.count()
-    total_vendas = transacoes_query.filter(Transacao.status == "aprovada").count()
+    total_vendas = transacoes_query.filter(Transacao.status == StatusTransacao.APROVADA).count()
     total_checkins = checkins_query.count()
     
-    receita_total = transacoes_query.filter(Transacao.status == "aprovada").with_entities(
+    receita_total = transacoes_query.filter(Transacao.status == StatusTransacao.APROVADA).with_entities(
         func.sum(Transacao.valor)
     ).scalar() or Decimal('0.00')
     
@@ -250,9 +250,9 @@ async def obter_dashboard_avancado(
     if metodo_pagamento:
         transacoes_query = transacoes_query.filter(Transacao.metodo_pagamento == metodo_pagamento)
     
-    total_vendas = transacoes_query.filter(Transacao.status == "aprovada").count()
+    total_vendas = transacoes_query.filter(Transacao.status == StatusTransacao.APROVADA).count()
     total_checkins = checkins_query.count()
-    receita_total = transacoes_query.filter(Transacao.status == "aprovada").with_entities(
+    receita_total = transacoes_query.filter(Transacao.status == StatusTransacao.APROVADA).with_entities(
         func.sum(Transacao.valor)
     ).scalar() or Decimal('0.00')
     
