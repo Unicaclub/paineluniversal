@@ -182,8 +182,8 @@ const ProductsList: React.FC = () => {
     try {
       console.log('🔄 Salvando produto...', data);
       
-      // Validar dados obrigatórios
-      if (!data.nome || !data.preco) {
+      // Validar dados obrigatórios (campo correto é 'valor')
+      if (!data.nome || !data.valor) {
         alert('Nome e preço são obrigatórios!');
         return;
       }
@@ -192,7 +192,7 @@ const ProductsList: React.FC = () => {
       const produtoData = {
         nome: data.nome,
         descricao: data.descricao || '',
-        preco: parseFloat(data.preco) || 0,
+        preco: parseFloat(data.valor) || 0, // Usar 'valor' do frontend
         tipo: data.tipo || 'FISICO', // Padrão físico
         evento_id: data.evento_id || 1, // TODO: Pegar do contexto do usuário
         categoria_id: data.categoria_id || null
