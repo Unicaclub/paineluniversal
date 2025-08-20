@@ -724,7 +724,6 @@ export interface ProdutoCreate {
   status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
   imagem_url?: string;
 }
-}
 
 // Serviços de categorias
 export const categoriaService = {
