@@ -30,6 +30,27 @@ export interface Produto {
   updated_at: Date;
 }
 
+export interface ProdutoCreate {
+  nome: string;
+  descricao?: string;
+  preco: number;
+  codigo_barras?: string;
+  categoria_id?: number;
+  tipo?: string;
+  estoque_atual?: number;
+  marca?: string;
+  fornecedor?: string;
+  preco_custo?: number;
+  margem_lucro?: number;
+  unidade_medida?: string;
+  volume?: number;
+  teor_alcoolico?: number;
+  temperatura_ideal?: string;
+  ncm?: string;
+  destaque?: boolean;
+  promocional?: boolean;
+}
+
 export interface Categoria {
   id: string;
   nome: string;

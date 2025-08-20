@@ -42,11 +42,53 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      // TODO: Implementar chamada para API
-      // const response = await api.get('/api/produtos/', { params: filters });
-      // setProdutos(response.data);
+      // Carregar produtos da API real
+      const { produtoService } = await import('../../services/api');
+      const response = await produtoService.getAll();
       
-      // Mock data para desenvolvimento
+      // Converter para o formato esperado pelo componente
+      const produtosFormatados = response.map((produto: any) => ({
+        id: produto.id.toString(),
+        nome: produto.nome,
+        codigo: produto.codigo_barras || '',
+        categoria_id: produto.categoria_id?.toString() || '',
+        categoria: {
+          id: produto.categoria_id?.toString() || '1',
+          nome: produto.categoria_nome || 'SEM CATEGORIA',
+          mostrar_dashboard: true,
+          mostrar_pos: true,
+          ordem: 1,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        ncm: produto.ncm || '',
+        cfop: '',
+        cest: '',
+        valor: produto.preco || 0,
+        destaque: produto.destaque || false,
+        habilitado: produto.status === 'ATIVO',
+        descricao: produto.descricao || '',
+        estoque: produto.estoque_atual || 0,
+        promocional: produto.promocional || false,
+        created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
+        updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date(),
+        marca: produto.marca || '',
+        fornecedor: produto.fornecedor || '',
+        preco_custo: produto.preco_custo || 0,
+        margem_lucro: produto.margem_lucro || 0,
+        unidade_medida: produto.unidade_medida || 'UN',
+        volume: produto.volume || 0,
+        teor_alcoolico: produto.teor_alcoolico || 0,
+        temperatura_ideal: produto.temperatura_ideal || ''
+      }));
+      
+      setProdutos(produtosFormatados);
+      console.log(`✅ ${produtosFormatados.length} produtos carregados da API`);
+      
+    } catch (error) {
+      console.error('❌ Erro ao carregar produtos da API:', error);
+      
+      // Fallback para dados mock em caso de erro
       setProdutos([
         {
           id: '1',
@@ -65,25 +107,8 @@ const ProductsList: React.FC = () => {
           promocional: false,
           created_at: new Date(),
           updated_at: new Date()
-        },
-        {
-          id: '2',
-          nome: 'Caipirinha de Cachaça',
-          codigo: 'DRINK001',
-          categoria_id: '2',
-          categoria: { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
-          valor: 12.00,
-          destaque: false,
-          habilitado: true,
-          descricao: 'Drink tradicional brasileiro',
-          estoque: 0,
-          promocional: true,
-          created_at: new Date(),
-          updated_at: new Date()
         }
       ]);
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
     } finally {
       setLoading(false);
     }
@@ -156,17 +181,44 @@ const ProductsList: React.FC = () => {
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
       if (editingProduct) {
-        // TODO: Implementar chamada para API de atualização
+        // Atualizar produto existente
         console.log('Atualizando produto:', data, imageFile);
+        // TODO: Implementar quando tiver endpoint de atualização
+        // await produtoService.update(editingProduct.id, data);
       } else {
-        // TODO: Implementar chamada para API de criação
-        console.log('Criando produto:', data, imageFile);
+        // Criar novo produto
+        console.log('Criando produto via API:', data, imageFile);
+        
+        // Chamar API real para criar produto
+        const { produtoService } = await import('../../services/api');
+        const novoProduto = await produtoService.create({
+          nome: data.nome,
+          descricao: data.descricao || '',
+          preco: parseFloat(data.valor || '0'),
+          codigo_barras: data.codigo || null,
+          categoria_id: parseInt(data.categoria_id),
+          tipo: 'BEBIDA', // Padrão por enquanto
+          estoque_atual: 0,
+          marca: data.marca || null,
+          fornecedor: data.fornecedor || null,
+          preco_custo: data.preco_custo ? parseFloat(data.preco_custo) : null,
+          margem_lucro: data.margem_lucro ? parseFloat(data.margem_lucro) : null,
+          unidade_medida: data.unidade_medida || 'UN',
+          volume: data.volume ? parseFloat(data.volume) : null,
+          teor_alcoolico: data.teor_alcoolico ? parseFloat(data.teor_alcoolico) : null,
+          temperatura_ideal: data.temperatura_ideal || null,
+          ncm: data.ncm || null,
+          destaque: data.destaque || false,
+          promocional: data.promocional || false
+        });
+        
+        console.log('✅ Produto criado com sucesso:', novoProduto);
       }
       
       // Recarregar lista
       await loadProdutos();
     } catch (error) {
-      console.error('Erro ao salvar produto:', error);
+      console.error('❌ Erro ao salvar produto:', error);
       throw error;
     }
   };
