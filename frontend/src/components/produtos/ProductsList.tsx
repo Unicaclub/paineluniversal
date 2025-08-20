@@ -196,13 +196,12 @@ const ProductsList: React.FC = () => {
       
       console.log('✅ Validação passou');
       
-      // Adicionar campos obrigatórios com validação
+      // Adicionar campos obrigatórios com validação (SEM evento_id)
       const produtoData = {
         nome: data.nome,
         descricao: data.descricao || '',
         preco: parseFloat(data.valor) || 0, // Usar 'valor' do frontend
         tipo: data.tipo || 'FISICO', // Padrão físico
-        evento_id: data.evento_id || 1, // TODO: Pegar do contexto do usuário
         categoria_id: data.categoria_id || null
       };
       

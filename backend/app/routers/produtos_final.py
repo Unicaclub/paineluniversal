@@ -23,16 +23,14 @@ class ProdutoBase(BaseModel):
     descricao: Optional[str] = ""
     preco: float
     tipo: str
-    evento_id: int
     categoria_id: Optional[int] = None
 
 class ProdutoCreate(BaseModel):
-    """Schema para criação de produto - CORRIGIDO"""
+    """Schema para criação de produto - SEM evento_id"""
     nome: str
     descricao: Optional[str] = ""
     preco: float
     tipo: str = "FISICO"
-    evento_id: Optional[int] = 1  # Padrão para evitar erro
     categoria_id: Optional[int] = None
 
 class ProdutoResponse(BaseModel):
@@ -42,7 +40,6 @@ class ProdutoResponse(BaseModel):
     descricao: Optional[str] = ""
     preco: float
     tipo: str
-    evento_id: int
     categoria_id: Optional[int] = None
     
     class Config:
@@ -169,24 +166,12 @@ async def criar_produto(
         except Exception:
             tipo_enum = TipoProduto.FISICO
         
-        # Validar evento_id
-        evento_id = produto_data.evento_id
-        if not evento_id:
-            # Buscar primeiro evento disponível
-            primeiro_evento = db.query(Evento).first()
-            if primeiro_evento:
-                evento_id = primeiro_evento.id
-                logger.info(f"🎯 Usando evento padrão: {evento_id}")
-            else:
-                raise HTTPException(status_code=400, detail="Nenhum evento encontrado")
-        
-        # Criar o produto com campos obrigatórios
+        # Criar o produto com campos obrigatórios (SEM evento_id)
         novo_produto = Produto(
             nome=produto_data.nome,
             descricao=produto_data.descricao or "",
             preco=Decimal(str(produto_data.preco)),
             tipo=tipo_enum,
-            evento_id=evento_id,
             categoria_id=produto_data.categoria_id,
             status=StatusProduto.ATIVO,
             # Campos com valores padrão para evitar erros de NULL
