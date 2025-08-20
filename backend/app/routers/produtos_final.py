@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from ..database import get_db
-from ..models import Produto, CategoriaProduto, TipoProduto, StatusProduto
+from ..models import Produto, CategoriaProduto, TipoProduto, StatusProduto, Evento
 from ..auth import obter_usuario_atual
 import logging
 
@@ -26,9 +26,14 @@ class ProdutoBase(BaseModel):
     evento_id: int
     categoria_id: Optional[int] = None
 
-class ProdutoCreate(ProdutoBase):
-    """Schema para criação de produto"""
-    pass
+class ProdutoCreate(BaseModel):
+    """Schema para criação de produto - CORRIGIDO"""
+    nome: str
+    descricao: Optional[str] = ""
+    preco: float
+    tipo: str = "FISICO"
+    evento_id: Optional[int] = 1  # Padrão para evitar erro
+    categoria_id: Optional[int] = None
 
 class ProdutoResponse(BaseModel):
     """Schema para resposta de produto - campos essenciais"""
@@ -164,13 +169,24 @@ async def criar_produto(
         except Exception:
             tipo_enum = TipoProduto.FISICO
         
+        # Validar evento_id
+        evento_id = produto_data.evento_id
+        if not evento_id:
+            # Buscar primeiro evento disponível
+            primeiro_evento = db.query(Evento).first()
+            if primeiro_evento:
+                evento_id = primeiro_evento.id
+                logger.info(f"🎯 Usando evento padrão: {evento_id}")
+            else:
+                raise HTTPException(status_code=400, detail="Nenhum evento encontrado")
+        
         # Criar o produto com campos obrigatórios
         novo_produto = Produto(
             nome=produto_data.nome,
             descricao=produto_data.descricao or "",
             preco=Decimal(str(produto_data.preco)),
             tipo=tipo_enum,
-            evento_id=produto_data.evento_id,
+            evento_id=evento_id,
             categoria_id=produto_data.categoria_id,
             status=StatusProduto.ATIVO,
             # Campos com valores padrão para evitar erros de NULL
