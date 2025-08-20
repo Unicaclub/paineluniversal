@@ -123,16 +123,7 @@ def verificar_permissao_promoter(usuario_atual: Usuario = Depends(obter_usuario_
     return usuario_atual
 
 def autenticar_usuario(cpf: str, senha: str, db: Session):
-    from sqlalchemy.orm import noload
-    
-    # Query mais específica para evitar problemas com relacionamentos
-    usuario = db.query(Usuario).options(
-        noload(Usuario.eventos_criados),
-        noload(Usuario.promocoes),
-        noload(Usuario.transacoes),
-        noload(Usuario.checkins)
-    ).filter(Usuario.cpf == cpf).first()
-    
+    usuario = db.query(Usuario).filter(Usuario.cpf == cpf).first()
     if not usuario:
         return False
     if not verificar_senha(senha, usuario.senha_hash):
