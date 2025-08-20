@@ -86,12 +86,9 @@ const ProductsList: React.FC = () => {
           destaque: false,
           habilitado: true,
           promocional: false,
-          tipo: 'FISICO'
-        }
-      ]);
-          descricao: 'Cerveja premium importada',
+          tipo: 'FISICO',
+          descricao: 'Produto demonstrativo',
           estoque: 100,
-          promocional: false,
           created_at: new Date(),
           updated_at: new Date()
         },
@@ -104,15 +101,14 @@ const ProductsList: React.FC = () => {
           valor: 12.00,
           destaque: false,
           habilitado: true,
+          promocional: true,
+          tipo: 'FISICO',
           descricao: 'Drink tradicional brasileiro',
           estoque: 0,
-          promocional: true,
           created_at: new Date(),
           updated_at: new Date()
         }
       ]);
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
     } finally {
       setLoading(false);
     }
