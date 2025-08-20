@@ -103,6 +103,9 @@ export default {
         'slide-in-right': 'slide-in-right 0.3s ease-out',
         'slide-in-left': 'slide-in-left 0.3s ease-out',
         'shimmer': 'shimmer 2s linear infinite',
+      },
+      spacing: {
+        '70': '17.5rem', // 280px - largura do sidebar expandido
       }
     }
   },

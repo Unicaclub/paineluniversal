@@ -222,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -236,17 +236,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <aside 
-        className={`
-          ${sidebarCollapsed ? 'w-20' : 'w-70'} 
-          bg-sidebar border-r border-sidebar-border shadow-lg
-          fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out 
-          flex flex-col
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static lg:inset-0
-        `}
-      >
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside 
+          className={`
+            ${sidebarCollapsed ? 'w-20' : 'w-70'} 
+            bg-sidebar border-r border-sidebar-border shadow-lg
+            fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out 
+            flex flex-col
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            lg:translate-x-0 lg:static lg:inset-0
+          `}
+        >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-sidebar-border">
           {!sidebarCollapsed && (
@@ -480,7 +481,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-70'} transition-all duration-300 ease-in-out`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -541,6 +542,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {children || <Outlet />}
           </motion.div>
         </main>
+      </div>
       </div>
     </div>
   );
