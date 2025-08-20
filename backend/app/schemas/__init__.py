@@ -70,7 +70,7 @@ except ImportError as e:
         token_type: str
     
     class TokenData(BaseModel):
-        username: Optional[str] = None
+        cpf: Optional[str] = None
     
     class LoginRequest(BaseModel):
         cpf: str
