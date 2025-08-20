@@ -39,7 +39,7 @@ async def obter_resumo_dashboard(
     eventos_hoje = eventos_query.filter(func.date(Evento.data_evento) == hoje).count()
     vendas_hoje = transacoes_query.filter(
         func.date(Transacao.criado_em) == hoje,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).count()
     
     return DashboardResumo(
@@ -70,7 +70,7 @@ async def obter_ranking_promoters(
     ).join(
         Transacao, Transacao.lista_id == Lista.id
     ).filter(
-        Transacao.status == "aprovada",
+        Transacao.status == StatusTransacao.APROVADA,
         Usuario.tipo == "promoter"
     )
     
@@ -112,7 +112,7 @@ async def obter_vendas_tempo_real(
     
     vendas_por_hora = query.filter(
         Transacao.criado_em >= datetime.now() - timedelta(hours=24),
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).with_entities(
         func.extract('hour', Transacao.criado_em).label('hora'),
         func.count(Transacao.id).label('vendas'),
@@ -120,7 +120,7 @@ async def obter_vendas_tempo_real(
     ).group_by('hora').order_by('hora').all()
     
     vendas_por_lista = query.join(Lista).filter(
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).with_entities(
         Lista.tipo.label('tipo_lista'),
         func.count(Transacao.id).label('vendas'),
