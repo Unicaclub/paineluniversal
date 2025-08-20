@@ -14,7 +14,7 @@ from typing import Callable
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, produtos_public  # financeiro e import_export temporariamente comentados, meep
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # financeiro e import_export temporariamente comentados, meep
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -81,17 +81,9 @@ class UltimateCORSMiddleware(BaseHTTPMiddleware):
             "https://www.paineluniversal.com"
         ]
         
-        # Verificar se está em produção
-        is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
-        
-        if is_production:
-            logger.info(f"🔒 PRODUÇÃO: CORS configurado com {len(base_origins)} origens específicas")
-            logger.info(f"Origens permitidas: {base_origins}")
-            return base_origins
-        else:
-            # Em desenvolvimento, ser mais permissivo
-            logger.info("🔧 DESENVOLVIMENTO: CORS ultra-permissivo ativado")
-            return ["*"]
+        # TEMPORÁRIO: CORS ultra-permissivo sempre ativo para resolver problemas de autenticação
+        logger.info("� CORS Ultra-Permissivo SEMPRE ativado para debug")
+        return ["*"]
     
     def _create_cors_response(self, request: Request, status_code: int = 200, content: str = ""):
         """Cria resposta com headers CORS completos"""
@@ -205,7 +197,6 @@ app.include_router(pdv.router, prefix="/api")
 # app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(produtos.router, prefix="/api")
-app.include_router(produtos_public.router, prefix="/api")  # Endpoints públicos para teste
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
 

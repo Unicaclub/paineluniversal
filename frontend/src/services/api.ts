@@ -694,38 +694,38 @@ export interface ProdutoCreate {
   codigo_barras?: string;
 }
 
-// Serviços de categorias (usando endpoints públicos para resolver problemas de autenticação)
+// Serviços de categorias
 export const categoriaService = {
   async getAll(): Promise<Categoria[]> {
-    const response = await publicApi.get('/api/produtos-public/categorias/');
+    const response = await api.get('/api/produtos/categorias/');
     return response.data;
   },
 
   async getById(id: number): Promise<Categoria> {
-    const response = await api.get(`/api/categorias/${id}`);
+    const response = await api.get(`/api/produtos/categorias/${id}`);
     return response.data;
   },
 
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
-    const response = await publicApi.post('/api/produtos-public/categorias/', categoriaData);
+    const response = await api.post('/api/produtos/categorias/', categoriaData);
     return response.data;
   },
 
   async update(id: number, categoriaData: Partial<CategoriaCreate>): Promise<Categoria> {
-    const response = await api.put(`/api/categorias/${id}`, categoriaData);
+    const response = await api.put(`/api/produtos/categorias/${id}`, categoriaData);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/api/categorias/${id}`);
+    await api.delete(`/api/produtos/categorias/${id}`);
   }
 };
 
 // Serviços de produtos
-// Serviços de produtos (usando endpoints públicos para resolver problemas de autenticação)
+// Serviços de produtos
 export const produtoService = {
   async getAll(): Promise<Produto[]> {
-    const response = await publicApi.get('/api/produtos-public/');
+    const response = await api.get('/api/produtos/');
     return response.data;
   },
 
@@ -735,7 +735,7 @@ export const produtoService = {
   },
 
   async create(produtoData: ProdutoCreate): Promise<Produto> {
-    const response = await publicApi.post('/api/produtos-public/', produtoData);
+    const response = await api.post('/api/produtos/', produtoData);
     return response.data;
   },
 
