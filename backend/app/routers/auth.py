@@ -5,12 +5,12 @@ from datetime import timedelta
 from ..database import get_db, settings
 from ..models import Usuario, Empresa, TipoUsuario
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
-from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico, get_current_user
+from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
 
 router = APIRouter()
 security = HTTPBearer()
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     """
     Autenticação simplificada:
@@ -66,26 +66,40 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         print(f"Usuario tipo: {usuario.tipo}")
         print(f"Usuario tipo value: {getattr(usuario.tipo, 'value', str(usuario.tipo))}")
         
-        # Construir resposta final garantindo que seja serializável
-        response_data = {
-            "access_token": access_token,
-            "token_type": "bearer", 
-            "usuario": {
+        # Criar resposta manualmente para garantir compatibilidade
+        try:
+            usuario_data = {
                 "id": usuario.id,
                 "cpf": usuario.cpf,
                 "nome": usuario.nome,
-                "email": getattr(usuario, 'email', ''),
-                "telefone": getattr(usuario, 'telefone', ''),
-                "tipo": usuario.tipo.value if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
+                "email": usuario.email,
+                "telefone": usuario.telefone,
+                "tipo": str(usuario.tipo.value) if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
                 "ativo": usuario.ativo,
-                "empresa_id": getattr(usuario, 'empresa_id', None)
+                "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
+                "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
             }
+            print(f"Usuario data criado: {usuario_data}")
+        except Exception as e:
+            print(f"ERRO ao criar usuario_data: {e}")
+            # Fallback mais simples
+            usuario_data = {
+                "id": usuario.id,
+                "cpf": usuario.cpf,
+                "nome": usuario.nome,
+                "email": usuario.email,
+                "tipo": "admin",  # Fallback seguro
+                "ativo": True
+            }
+        
+        response_data = {
+            "access_token": access_token,
+            "token_type": "bearer", 
+            "usuario": usuario_data
         }
         
-        print(f"📤 Response final - Keys: {list(response_data.keys())}")
-        print(f"📤 Response final - hasUsuario: {bool(response_data.get('usuario'))}")
-        print(f"📤 Response final - Usuario nome: {response_data.get('usuario', {}).get('nome', 'N/A')}")
-        
+        print(f"Response data keys: {list(response_data.keys())}")
+        print(f"Response completo: {response_data}")
         return response_data
         
     except HTTPException:
@@ -99,6 +113,21 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno do servidor: {str(e)}"
         )
+
+@router.get("/me", response_model=UsuarioSchema)
+async def obter_usuario_atual_endpoint(
+    current_user: dict = Depends(obter_usuario_atual),
+    db: Session = Depends(get_db)
+):
+    """Obter dados do usuário atual"""
+    try:
+        usuario = db.query(Usuario).filter(Usuario.cpf == current_user["sub"]).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return UsuarioSchema.model_validate(usuario)
+    except Exception as e:
+        print(f"Erro ao buscar usuário atual: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.post("/register", response_model=UsuarioSchema)
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):

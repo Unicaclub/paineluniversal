@@ -208,22 +208,23 @@ export const authService = {
       
       const response = await publicApi.post('/api/auth/login', data);
       
-      console.log('📊 Resposta COMPLETA do login:', response);
-      console.log('📊 Response.data:', response.data);
-      console.log('📊 Response.status:', response.status);
-      console.log('📊 Response.headers:', response.headers);
+      console.log('📊 Resposta do login:', {
+        status: response.status,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        data: response.data
+      });
       
-      // Verificar o formato da resposta
+      // Log mais detalhado da estrutura
       if (response.data) {
-        console.log('🔍 Análise COMPLETA da resposta:', {
+        console.log('🔍 Análise detalhada da resposta:', {
           keys: Object.keys(response.data),
           hasAccessToken: !!response.data.access_token,
           hasTokenType: !!response.data.token_type,
           hasUsuario: !!response.data.usuario,
-          accessToken: response.data.access_token,
-          tokenType: response.data.token_type,
-          usuario: response.data.usuario,
-          responseRaw: JSON.stringify(response.data)
+          accessTokenType: typeof response.data.access_token,
+          usuarioType: typeof response.data.usuario,
+          usuarioKeys: response.data.usuario ? Object.keys(response.data.usuario) : 'N/A'
         });
       }
       
@@ -232,21 +233,15 @@ export const authService = {
         if (response.data.access_token) {
           console.log('✅ Token encontrado!');
           
-          // FORÇA a inclusão do usuário se não existir
-          if (!response.data.usuario) {
-            console.warn('⚠️ FORÇANDO criação de usuário temporário');
-            response.data.usuario = {
-              id: 1,
-              nome: 'Usuário Temporário',
-              cpf: data.cpf,
-              email: '',
-              tipo: 'admin',
-              ativo: true
-            };
+          // Verificar se tem usuário
+          if (response.data.usuario) {
+            console.log('✅ Usuário encontrado! Login bem-sucedido!');
+            return response.data;
+          } else {
+            console.warn('⚠️ Token válido, mas usuário não encontrado na resposta');
+            // Ainda assim retornar o token - o usuário pode ser buscado depois
+            return response.data;
           }
-          
-          console.log('✅ Retornando resposta:', response.data);
-          return response.data;
         }
       }
       
@@ -296,18 +291,6 @@ export const authService = {
   async getProfile(): Promise<Usuario> {
     const response = await api.get('/api/auth/me');
     return response.data;
-  },
-
-  async getCurrentUser(): Promise<Usuario | null> {
-    try {
-      console.log('🔍 AuthService: Buscando dados do usuário atual...');
-      const response = await api.get('/api/auth/me');
-      console.log('✅ AuthService: Dados do usuário obtidos:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('❌ AuthService: Erro ao buscar usuário atual:', error);
-      return null;
-    }
   },
 
   async logout(): Promise<void> {
@@ -686,76 +669,199 @@ export interface CategoriaCreate {
   nome: string;
   descricao?: string;
   cor?: string;
+  evento_id?: number;
 }
 
 export interface Produto {
   id?: number;
   nome: string;
   descricao?: string;
-  tipo: string; // BEBIDA, COMIDA, INGRESSO, FICHA, COMBO, VOUCHER
-  preco: number;
-  estoque_atual?: number;
+  tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
+  valor: number; // Manter consistente com types/produto.ts
+  codigo?: string; // Manter consistente com types/produto.ts
   categoria_id?: number;
   categoria?: Categoria;
   codigo_barras?: string;
-  evento_id: number;
-  status?: string;
+  estoque_atual?: number;
+  destaque?: boolean;
+  habilitado?: boolean;
+  promocional?: boolean;
   ativo?: boolean;
-  criado_em?: string;
-  atualizado_em?: string;
+  created_at?: Date;
+  updated_at?: Date;
+  // Campos adicionais
+  marca?: string;
+  fornecedor?: string;
+  preco_custo?: number;
+  margem_lucro?: number;
+  unidade_medida?: string;
+  volume?: number;
+  teor_alcoolico?: number;
+  temperatura_ideal?: string;
+  validade_dias?: number;
+  ncm?: string;
+  cfop?: string;
+  cest?: string;
+  icms?: number;
+  ipi?: number;
+  observacoes?: string;
+  imagem_url?: string;
+  evento_id?: number;
+  empresa_id?: number;
 }
 
 export interface ProdutoCreate {
   nome: string;
   descricao?: string;
-  tipo: string; // BEBIDA, COMIDA, INGRESSO, FICHA, COMBO, VOUCHER
-  preco: number;
-  estoque_atual?: number;
-  categoria_id?: number;
-  codigo_barras?: string;
+  tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
+  preco: number; // API espera 'preco'
   evento_id: number;
+  categoria_id?: number;
+  codigo_interno?: string; // API espera 'codigo_interno'
+  codigo_barras?: string;
+  estoque_atual?: number;
+  destaque?: boolean;
+  promocional?: boolean;
+  // Campos adicionais
+  marca?: string;
+  fornecedor?: string;
+  preco_custo?: number;
+  margem_lucro?: number;
+  unidade_medida?: string;
+  volume?: number;
+  teor_alcoolico?: number;
+  temperatura_ideal?: string;
+  validade_dias?: number;
+  ncm?: string;
+  cfop?: string;
+  cest?: string;
+  icms?: number;
+  ipi?: number;
+  observacoes?: string;
 }
 
 // Serviços de categorias
 export const categoriaService = {
-  async getAll(): Promise<Categoria[]> {
-    const response = await api.get('/api/categorias/');
-    return response.data;
+  async getAll(eventoId?: number): Promise<Categoria[]> {
+    const params = eventoId ? { evento_id: eventoId } : {};
+    const response = await api.get('/api/produtos/categorias/', { params });
+    return response.data.categorias || response.data;
   },
 
   async getById(id: number): Promise<Categoria> {
-    const response = await api.get(`/api/categorias/${id}`);
+    const response = await api.get(`/api/produtos/categorias/${id}`);
     return response.data;
   },
 
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
-    const response = await api.post('/api/categorias/', categoriaData);
+    // Garantir que evento_id está presente
+    if (!categoriaData.evento_id) {
+      const eventoId = localStorage.getItem('evento_id');
+      if (eventoId) {
+        categoriaData.evento_id = parseInt(eventoId);
+      } else {
+        throw new Error('ID do evento é obrigatório para criar categoria');
+      }
+    }
+    
+    const response = await api.post('/api/produtos/categorias/', categoriaData);
     return response.data;
   },
 
   async update(id: number, categoriaData: Partial<CategoriaCreate>): Promise<Categoria> {
-    const response = await api.put(`/api/categorias/${id}`, categoriaData);
+    const response = await api.put(`/api/produtos/categorias/${id}`, categoriaData);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/api/categorias/${id}`);
+    await api.delete(`/api/produtos/categorias/${id}`);
   }
 };
 
 // Serviços de produtos
 export const produtoService = {
-  async getAll(): Promise<Produto[]> {
-    const response = await api.get('/api/produtos/');
-    return response.data;
+  async getAll(eventoId?: number): Promise<Produto[]> {
+    const params = eventoId ? { evento_id: eventoId } : {};
+    const response = await api.get('/api/produtos/', { params });
+    
+    // A API retorna { produtos: [], total: 0, ... } mas precisa retornar Produto[]
+    const produtosApi = response.data.produtos || response.data;
+    
+    // Transformar dados da API para o formato frontend
+    return produtosApi.map((produto: any) => ({
+      id: produto.id?.toString() || '',
+      nome: produto.nome,
+      codigo: produto.codigo_interno || produto.codigo || '',
+      tipo: produto.tipo,
+      categoria_id: produto.categoria_id?.toString() || '',
+      categoria: produto.categoria_produto ? {
+        id: produto.categoria_produto.id?.toString(),
+        nome: produto.categoria_produto.nome,
+        mostrar_dashboard: true,
+        mostrar_pos: true,
+        ordem: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      } : undefined,
+      ncm: produto.ncm || '',
+      cfop: produto.cfop || '',
+      cest: produto.cest || '',
+      valor: produto.preco || produto.valor || 0,
+      destaque: produto.destaque || false,
+      habilitado: produto.status === 'ATIVO',
+      descricao: produto.descricao || '',
+      estoque: produto.estoque_atual || 0,
+      promocional: produto.promocional || false,
+      marca: produto.marca,
+      fornecedor: produto.fornecedor,
+      preco_custo: produto.preco_custo,
+      margem_lucro: produto.margem_lucro,
+      unidade_medida: produto.unidade_medida,
+      volume: produto.volume,
+      teor_alcoolico: produto.teor_alcoolico,
+      temperatura_ideal: produto.temperatura_ideal,
+      validade_dias: produto.validade_dias,
+      icms: produto.icms,
+      ipi: produto.ipi,
+      observacoes: produto.observacoes,
+      created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
+      updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date()
+    }));
   },
 
   async getById(id: number): Promise<Produto> {
     const response = await api.get(`/api/produtos/${id}`);
-    return response.data;
+    const produto = response.data;
+    
+    // Transformar dados da API para o formato frontend
+    return {
+      id: produto.id?.toString() || '',
+      nome: produto.nome,
+      codigo: produto.codigo_interno || produto.codigo || '',
+      tipo: produto.tipo,
+      categoria_id: produto.categoria_id?.toString() || '',
+      valor: produto.preco || produto.valor || 0,
+      destaque: produto.destaque || false,
+      habilitado: produto.status === 'ATIVO',
+      descricao: produto.descricao || '',
+      promocional: produto.promocional || false,
+      created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
+      updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date()
+    };
   },
 
   async create(produtoData: ProdutoCreate): Promise<Produto> {
+    // Garantir que evento_id está presente
+    if (!produtoData.evento_id) {
+      // Tentar obter o evento_id do localStorage ou context
+      const eventoId = localStorage.getItem('evento_id');
+      if (eventoId) {
+        produtoData.evento_id = parseInt(eventoId);
+      } else {
+        throw new Error('ID do evento é obrigatório para criar produto');
+      }
+    }
+    
     const response = await api.post('/api/produtos/', produtoData);
     return response.data;
   },

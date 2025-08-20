@@ -2,6 +2,7 @@ export interface Produto {
   id: string;
   nome: string;
   codigo?: string;
+  tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
   categoria_id: string;
   categoria?: Categoria;
   ncm?: string;
@@ -26,29 +27,10 @@ export interface Produto {
   ipi?: number;
   promocional: boolean;
   observacoes?: string;
+  evento_id?: number;
+  empresa_id?: number;
   created_at: Date;
   updated_at: Date;
-}
-
-export interface ProdutoCreate {
-  nome: string;
-  descricao?: string;
-  preco: number;
-  codigo_barras?: string;
-  categoria_id?: number;
-  tipo?: string;
-  estoque_atual?: number;
-  marca?: string;
-  fornecedor?: string;
-  preco_custo?: number;
-  margem_lucro?: number;
-  unidade_medida?: string;
-  volume?: number;
-  teor_alcoolico?: number;
-  temperatura_ideal?: string;
-  ncm?: string;
-  destaque?: boolean;
-  promocional?: boolean;
 }
 
 export interface Categoria {

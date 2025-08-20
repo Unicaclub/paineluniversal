@@ -7,122 +7,12 @@ import logging
 
 from ..database import get_db
 from ..models import CategoriaProduto, Produto, Evento, TipoProduto, StatusProduto
+from ..schemas.produtos import (
+    CategoriaCreate, CategoriaUpdate, CategoriaResponse, CategoriaList,
+    ProdutoCreate, ProdutoUpdate, ProdutoResponse, ProdutoList, ProdutoFilter,
+    ProdutoStats, CategoriaStats
+)
 from ..auth import obter_usuario_atual, verificar_permissao
-
-# Schemas inline para evitar problemas de import
-from pydantic import BaseModel, Field, validator
-from typing import Optional, List
-from decimal import Decimal
-from enum import Enum
-
-# Enums
-class TipoProdutoEnum(str, Enum):
-    BEBIDA = "BEBIDA"
-    COMIDA = "COMIDA"
-    INGRESSO = "INGRESSO"
-    FICHA = "FICHA"
-    COMBO = "COMBO"
-    VOUCHER = "VOUCHER"
-
-class StatusProdutoEnum(str, Enum):
-    ATIVO = "ATIVO"
-    INATIVO = "INATIVO"
-    ESGOTADO = "ESGOTADO"
-
-# Categoria Schemas
-class CategoriaBase(BaseModel):
-    nome: str = Field(..., min_length=1, max_length=100)
-    descricao: Optional[str] = Field(None, max_length=1000)
-    cor: Optional[str] = Field("#3b82f6")
-
-class CategoriaCreate(CategoriaBase):
-    evento_id: int = Field(..., gt=0)
-
-class CategoriaUpdate(BaseModel):
-    nome: Optional[str] = Field(None, min_length=1, max_length=100)
-    descricao: Optional[str] = Field(None, max_length=1000)
-    cor: Optional[str] = Field(None)
-    ativo: Optional[bool] = None
-
-class CategoriaResponse(CategoriaBase):
-    id: int
-    evento_id: int
-    ativo: bool
-    criado_em: datetime
-    atualizado_em: Optional[datetime] = None
-    produtos_count: int = 0
-
-    class Config:
-        from_attributes = True
-
-class CategoriaList(BaseModel):
-    total: int
-    categorias: List[CategoriaResponse]
-
-# Produto Schemas
-class ProdutoBase(BaseModel):
-    nome: str = Field(..., min_length=1, max_length=200)
-    descricao: Optional[str] = Field(None, max_length=1000)
-    preco: Decimal = Field(..., ge=0, decimal_places=2)
-    codigo_barras: Optional[str] = Field(None, max_length=50)
-    tipo: TipoProdutoEnum = TipoProdutoEnum.BEBIDA
-    imagem_url: Optional[str] = Field(None, max_length=500)
-
-class ProdutoCreate(ProdutoBase):
-    categoria_id: int = Field(..., gt=0)
-    estoque_inicial: int = Field(0, ge=0)
-
-class ProdutoUpdate(BaseModel):
-    nome: Optional[str] = Field(None, min_length=1, max_length=200)
-    descricao: Optional[str] = Field(None, max_length=1000)
-    preco: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
-    codigo_barras: Optional[str] = Field(None, max_length=50)
-    tipo: Optional[TipoProdutoEnum] = None
-    categoria_id: Optional[int] = Field(None, gt=0)
-    imagem_url: Optional[str] = Field(None, max_length=500)
-    estoque_atual: Optional[int] = Field(None, ge=0)
-    status: Optional[StatusProdutoEnum] = None
-
-class ProdutoResponse(ProdutoBase):
-    id: int
-    categoria_id: int
-    categoria_nome: Optional[str] = None
-    categoria_cor: Optional[str] = None
-    estoque_atual: int
-    status: StatusProdutoEnum
-    criado_em: datetime
-    atualizado_em: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-class ProdutoList(BaseModel):
-    total: int
-    produtos: List[ProdutoResponse]
-
-class ProdutoFilter(BaseModel):
-    categoria_id: Optional[int] = None
-    tipo: Optional[TipoProdutoEnum] = None
-    status: Optional[StatusProdutoEnum] = None
-    nome: Optional[str] = None
-    preco_min: Optional[Decimal] = None
-    preco_max: Optional[Decimal] = None
-    estoque_min: Optional[int] = None
-
-class ProdutoStats(BaseModel):
-    total_produtos: int
-    produtos_ativos: int
-    produtos_inativos: int
-    produtos_esgotados: int
-    valor_total_estoque: Decimal
-    categoria_mais_produtos: Optional[str] = None
-    tipo_mais_comum: Optional[str] = None
-
-class CategoriaStats(BaseModel):
-    total_categorias: int
-    categorias_ativas: int
-    categorias_inativas: int
-    produtos_por_categoria: List[dict]
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/produtos", tags=["produtos"])

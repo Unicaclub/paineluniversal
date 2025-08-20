@@ -185,10 +185,6 @@ class CategoriaProduto(Base):
     produtos = relationship("Produto", back_populates="categoria_produto")
 
 class TipoProduto(enum.Enum):
-    FISICO = "FISICO"
-    DIGITAL = "DIGITAL"
-    SERVICO = "SERVICO"
-    # Manter compatibilidade com tipos antigos
     BEBIDA = "BEBIDA"
     COMIDA = "COMIDA"
     INGRESSO = "INGRESSO"

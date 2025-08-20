@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
+import { toast } from '../../hooks/use-toast';
 import {
   Form,
   FormControl,
@@ -32,6 +33,7 @@ import {
 } from '../ui/dialog';
 import { Upload, X } from 'lucide-react';
 import { Produto, Categoria } from '../../types/produto';
+import { categoriaService } from '../../services/api';
 import ImageUpload from './ImageUpload';
 
 const produtoSchema = z.object({
@@ -46,6 +48,9 @@ const produtoSchema = z.object({
   
   categoria_id: z.string()
     .min(1, 'Categoria é obrigatória'),
+  
+  tipo: z.enum(['BEBIDA', 'COMIDA', 'INGRESSO', 'FICHA', 'COMBO', 'VOUCHER'])
+    .refine((val) => val, { message: 'Tipo é obrigatório' }),
   
   valor: z.coerce.number()
     .min(0.01, 'Valor deve ser maior que zero'),
@@ -111,6 +116,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       nome: '',
       codigo: '',
       categoria_id: '',
+      tipo: 'BEBIDA',
       valor: 0,
       destaque: false,
       habilitado: true,
@@ -133,6 +139,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         nome: produto.nome,
         codigo: produto.codigo || '',
         categoria_id: produto.categoria_id,
+        tipo: produto.tipo || 'BEBIDA',
         valor: produto.valor,
         destaque: produto.destaque,
         habilitado: produto.habilitado,
@@ -165,11 +172,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const loadCategorias = async () => {
     try {
-      // TODO: Implementar chamada para API
-      // const response = await api.get('/categorias');
-      // setCategorias(response.data);
+      const categorias = await categoriaService.getAll();
+      setCategorias(categorias);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar categorias. Verifique sua conexão.",
+        variant: "destructive"
+      });
       
-      // Mock data para desenvolvimento
+      // Mock data como fallback se a API falhar
       setCategorias([
         { id: '1', nome: 'CERVEJA', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
         { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
@@ -177,8 +190,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
         { id: '4', nome: 'ENTRADA', mostrar_dashboard: false, mostrar_pos: true, ordem: 4, created_at: new Date(), updated_at: new Date() },
         { id: '5', nome: 'CAMAROTE', mostrar_dashboard: true, mostrar_pos: true, ordem: 5, created_at: new Date(), updated_at: new Date() }
       ]);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
     }
   };
 
@@ -269,6 +280,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
                               {categoria.nome}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="tipo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="BEBIDA">Bebida</SelectItem>
+                          <SelectItem value="COMIDA">Comida</SelectItem>
+                          <SelectItem value="INGRESSO">Ingresso</SelectItem>
+                          <SelectItem value="FICHA">Ficha</SelectItem>
+                          <SelectItem value="COMBO">Combo</SelectItem>
+                          <SelectItem value="VOUCHER">Voucher</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

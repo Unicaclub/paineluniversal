@@ -29,9 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Computed property para isAuthenticated
-  const isAuthenticated = Boolean(token && (usuario || token.length > 10));
-
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem('token');
@@ -95,7 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.access_token) {
         try {
           setToken(response.access_token);
-          localStorage.setItem('token', response.access_token);
           
           // Verificar se tem usuário na resposta
           if (response.usuario) {
@@ -103,42 +99,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             localStorage.setItem('usuario', JSON.stringify(response.usuario));
             console.log('✅ AuthContext: Login completo com usuário');
           } else {
-            console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário - tentando buscar');
-            // Buscar dados do usuário usando o token
-            try {
-              const userData = await authService.getCurrentUser();
-              if (userData) {
-                setUsuario(userData);
-                localStorage.setItem('usuario', JSON.stringify(userData));
-                console.log('✅ AuthContext: Dados do usuário obtidos posteriormente');
-              } else {
-                // Criar usuário temporário para permitir navegação
-                const tempUser: Usuario = {
-                  id: 0,
-                  cpf: '',
-                  nome: 'Usuário',
-                  email: '',
-                  tipo: 'admin', // Tipo padrão para não bloquear navegação
-                  ativo: true
-                };
-                setUsuario(tempUser);
-                localStorage.setItem('usuario', JSON.stringify(tempUser));
-                console.warn('⚠️ AuthContext: Usando usuário temporário');
-              }
-            } catch (userError) {
-              console.error('❌ AuthContext: Erro ao buscar dados do usuário:', userError);
-              // Ainda assim manter o token válido
-              const tempUser: Usuario = {
-                id: 0,
-                cpf: '',
-                nome: 'Usuário',
-                email: '',
-                tipo: 'admin',
-                ativo: true
-              };
-              setUsuario(tempUser);
-              localStorage.setItem('usuario', JSON.stringify(tempUser));
-            }
+            console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário');
+            // Buscar dados do usuário separadamente se necessário
+            // Por enquanto, continuar sem dados do usuário
+            setUsuario(null);
+            localStorage.removeItem('usuario');
           }
           
           localStorage.setItem('token', response.access_token);
@@ -192,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     loading,
-    isAuthenticated // Usar a computed property
+    isAuthenticated: !!token // Autenticado se tem token, usuário é opcional
   };
 
   return (

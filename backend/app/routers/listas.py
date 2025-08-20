@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from ..database import get_db
-from ..models import Lista, Evento, Usuario, TipoLista, Transacao, Checkin, StatusTransacao
+from ..models import Lista, Evento, Usuario, TipoLista, Transacao, Checkin
 from ..schemas import (
     Lista as ListaSchema, ListaCreate, ListaDetalhada, 
     DashboardListas, ConvidadoCreate, ConvidadoImport
@@ -164,17 +164,17 @@ async def obter_lista_detalhada(
     
     total_convidados = db.query(Transacao).filter(
         Transacao.lista_id == lista_id,
-        Transacao.status == StatusTransacao.APROVADA
+        Transacao.status == "aprovada"
     ).count()
     
     convidados_presentes = db.query(Checkin).join(Transacao).filter(
         Transacao.lista_id == lista_id,
-        Transacao.status == StatusTransacao.APROVADA
+        Transacao.status == "aprovada"
     ).count()
     
     receita_gerada = db.query(func.sum(Transacao.valor)).filter(
         Transacao.lista_id == lista_id,
-        Transacao.status == StatusTransacao.APROVADA
+        Transacao.status == "aprovada"
     ).scalar() or Decimal('0.00')
     
     taxa_presenca = (convidados_presentes / total_convidados * 100) if total_convidados > 0 else 0

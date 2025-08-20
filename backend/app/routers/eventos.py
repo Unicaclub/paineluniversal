@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from ..database import get_db
-from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, TipoUsuario, StatusTransacao
+from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, TipoUsuario
 from ..schemas import (
     Evento as EventoSchema, 
     EventoCreate, 

@@ -14,16 +14,20 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
+import { toast } from '../../hooks/use-toast';
 import { Produto, ProdutoFilter } from '../../types/produto';
 import { DataTable } from '../shared/DataTable';
 import StatusToggle from '../shared/StatusToggle';
 import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
-import { produtoService, categoriaService } from '../../services/api';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
+import { produtoService, ProdutoCreate } from '../../services/api';
+import { useEvento } from '../../contexts/EventoContext';
+import EventoAutoConfig from '../desenvolvimento/EventoAutoConfig';
 
 const ProductsList: React.FC = () => {
+  const { eventoId } = useEvento();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ProdutoFilter>({
@@ -43,52 +47,44 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      console.log('📡 Carregando produtos da API...');
-      
-      // Importar serviço diretamente para evitar problemas
-      const { produtoService } = await import('../../services/api');
-      
-      const response = await produtoService.getAll();
-      console.log('📦 Produtos recebidos:', response);
-      
-      // Converter formato se necessário
-      const produtosFormatados = response.map((produto: any) => ({
-        id: produto.id.toString(),
-        nome: produto.nome,
-        codigo: `PROD${produto.id.toString().padStart(3, '0')}`,
-        categoria_id: produto.categoria_id?.toString() || '',
-        categoria: produto.categoria || { id: produto.categoria_id, nome: 'Sem categoria' },
-        valor: produto.preco,
-        destaque: false,
-        habilitado: true,
-        promocional: false,
-        tipo: produto.tipo || 'FISICO',
-        descricao: produto.descricao || '',
-        evento_id: produto.evento_id
-      }));
-      
-      setProdutos(produtosFormatados);
-      console.log('✅ Produtos carregados com sucesso!');
-      
+      if (!eventoId) {
+        toast({
+          title: "Aviso",
+          description: "Nenhum evento selecionado. Selecione um evento primeiro.",
+          variant: "default"
+        });
+        setProdutos([]);
+        return;
+      }
+
+      const produtos = await produtoService.getAll(eventoId);
+      setProdutos(produtos);
     } catch (error) {
-      console.error('❌ Erro ao carregar produtos:', error);
+      console.error('Erro ao carregar produtos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar produtos. Verifique sua conexão.",
+        variant: "destructive"
+      });
       
-      // Fallback para dados mock em caso de erro
-      console.log('🔄 Usando dados mock como fallback...');
+      // Mock data como fallback se a API falhar
       setProdutos([
         {
           id: '1',
-          nome: 'Produto Demo',
-          codigo: 'DEMO001',
+          nome: 'Cerveja Heineken 600ml',
+          codigo: 'CERV001',
+          tipo: 'BEBIDA',
           categoria_id: '1',
-          categoria: { id: '1', nome: 'DEMO', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
-          valor: 10.00,
-          destaque: false,
+          categoria: { id: '1', nome: 'CERVEJA', mostrar_dashboard: true, mostrar_pos: true, ordem: 1, created_at: new Date(), updated_at: new Date() },
+          ncm: '22030000',
+          cfop: '5102',
+          cest: '0300700',
+          valor: 8.50,
+          destaque: true,
           habilitado: true,
-          promocional: false,
-          tipo: 'FISICO',
-          descricao: 'Produto demonstrativo',
+          descricao: 'Cerveja premium importada',
           estoque: 100,
+          promocional: false,
           created_at: new Date(),
           updated_at: new Date()
         },
@@ -96,15 +92,15 @@ const ProductsList: React.FC = () => {
           id: '2',
           nome: 'Caipirinha de Cachaça',
           codigo: 'DRINK001',
+          tipo: 'BEBIDA',
           categoria_id: '2',
           categoria: { id: '2', nome: 'DRINKS', mostrar_dashboard: true, mostrar_pos: true, ordem: 2, created_at: new Date(), updated_at: new Date() },
           valor: 12.00,
           destaque: false,
           habilitado: true,
-          promocional: true,
-          tipo: 'FISICO',
           descricao: 'Drink tradicional brasileiro',
           estoque: 0,
+          promocional: true,
           created_at: new Date(),
           updated_at: new Date()
         }
@@ -180,65 +176,78 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
-      console.log('🔄 Função handleSaveProduct iniciada');
-      console.log('📥 Dados recebidos:', data);
-      console.log('🖼️ Arquivo de imagem:', imageFile);
-      
-      // Validar dados obrigatórios (campo correto é 'valor')
-      console.log('🔍 Validando campos obrigatórios...');
-      console.log('nome:', data.nome, 'valor:', data.valor);
-      
-      if (!data.nome || !data.valor) {
-        console.error('❌ Validação falhou - campos obrigatórios ausentes');
-        alert('Nome e preço são obrigatórios!');
+      if (!eventoId) {
+        toast({
+          title: "Erro",
+          description: "ID do evento não encontrado. Selecione um evento primeiro.",
+          variant: "destructive"
+        });
         return;
       }
-      
-      console.log('✅ Validação passou');
-      
-      // Adicionar campos obrigatórios com validação (SEM evento_id)
-      const produtoData = {
+
+      // Converter os dados do formulário para o formato esperado pela API
+      const produtoData: ProdutoCreate = {
         nome: data.nome,
         descricao: data.descricao || '',
-        preco: parseFloat(data.valor) || 0, // Usar 'valor' do frontend
-        tipo: data.tipo || 'FISICO', // Padrão físico
-        categoria_id: data.categoria_id || null
+        tipo: data.tipo,
+        preco: data.valor, // Frontend usa 'valor', API usa 'preco'
+        evento_id: eventoId,
+        categoria_id: data.categoria_id ? parseInt(data.categoria_id) : undefined,
+        codigo_interno: data.codigo || undefined, // Frontend usa 'codigo', API usa 'codigo_interno'
+        estoque_atual: 0, // Valor padrão
+        destaque: data.destaque || false,
+        promocional: data.promocional || false,
+        // Campos adicionais
+        marca: data.marca || undefined,
+        fornecedor: data.fornecedor || undefined,
+        preco_custo: data.preco_custo || undefined,
+        margem_lucro: data.margem_lucro || undefined,
+        unidade_medida: data.unidade_medida || 'UN',
+        volume: data.volume || undefined,
+        teor_alcoolico: data.teor_alcoolico || undefined,
+        temperatura_ideal: data.temperatura_ideal || undefined,
+        validade_dias: data.validade_dias || undefined,
+        ncm: data.ncm || undefined,
+        cfop: data.cfop || undefined,
+        cest: data.cest || undefined,
+        icms: data.icms || undefined,
+        ipi: data.ipi || undefined,
+        observacoes: data.observacoes || undefined,
       };
-      
-      console.log('📤 Dados finais para envio:', produtoData);
-      
-      // Importar o serviço diretamente para evitar problemas de cache
-      const { produtoService } = await import('../../services/api');
-      
+
       if (editingProduct) {
-        console.log('✏️ Atualizando produto existente...');
-        await produtoService.update(editingProduct.id, produtoData);
-        console.log('✅ Produto atualizado com sucesso!');
+        // Atualizar produto existente
+        await produtoService.update(parseInt(editingProduct.id), produtoData);
+        toast({
+          title: "Sucesso",
+          description: "Produto atualizado com sucesso!",
+        });
       } else {
-        console.log('🆕 Criando novo produto...');
-        const novoProduto = await produtoService.create(produtoData);
-        console.log('✅ Produto criado com sucesso:', novoProduto);
+        // Criar novo produto
+        await produtoService.create(produtoData);
+        toast({
+          title: "Sucesso",
+          description: "Produto criado com sucesso!",
+        });
       }
-      
-      // Fechar modal
-      handleCloseModal();
       
       // Recarregar lista
-      console.log('🔄 Recarregando lista de produtos...');
       await loadProdutos();
-      
-      console.log('🎉 Processo concluído com sucesso!');
-      
     } catch (error: any) {
-      console.error('❌ Erro ao salvar produto:', error);
+      console.error('Erro ao salvar produto:', error);
       
-      // Log mais detalhado do erro
-      if (error.response) {
-        console.error('Status:', error.response.status);
-        console.error('Data:', error.response.data);
-        console.error('Headers:', error.response.headers);
+      let errorMessage = 'Erro desconhecido ao salvar produto.';
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -394,12 +403,15 @@ const ProductsList: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <EventoAutoConfig />
+      
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-foreground">PRODUTOS</h1>
           <p className="text-muted-foreground mt-1">
             Gerencie todos os produtos do estabelecimento
+            {eventoId && <span className="ml-2 text-blue-600">• Evento ID: {eventoId}</span>}
           </p>
         </div>
         
