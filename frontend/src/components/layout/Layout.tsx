@@ -221,16 +221,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => {
-    // Sempre mostrar alguns itens básicos mesmo sem usuário carregado
+  const filteredMenuItems = (() => {
     const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'PDV', 'Produtos'];
+    
     if (!usuario || !usuario.tipo) {
-      return basicItems.includes(item.label);
+      // Mostrar itens básicos para usuários não autenticados
+      return menuItems.filter(item => basicItems.includes(item.label));
     }
     
     // Se usuário está carregado, filtrar por roles
-    return item.roles.includes(usuario.tipo);
-  });
+    return menuItems.filter(item => item.roles.includes(usuario.tipo));
+  })();
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
