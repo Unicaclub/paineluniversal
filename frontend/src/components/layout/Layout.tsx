@@ -239,7 +239,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -253,16 +253,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </AnimatePresence>
 
-      <div className="flex min-h-screen">
+      <div className="w-full flex min-h-screen">
         {/* Sidebar */}
         <aside 
           className={`
             ${sidebarCollapsed ? 'w-20' : 'w-70'} 
             bg-sidebar border-r border-sidebar-border shadow-lg
-            fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out 
-            flex flex-col
+            transition-all duration-300 ease-in-out 
+            flex flex-col shrink-0
+            fixed inset-y-0 left-0 z-50 transform
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            lg:translate-x-0 lg:static lg:inset-0
+            lg:translate-x-0 lg:relative lg:z-auto
           `}
         >
         {/* Header */}
@@ -625,7 +626,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main content area */}
-      <div className={`flex-1 flex flex-col min-h-screen ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-70'} transition-all duration-300 ease-in-out`}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">

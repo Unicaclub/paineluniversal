@@ -306,4 +306,10 @@ body {
   .w-70 {
     width: 17.5rem;
   }
+  
+  /* Garantir que sidebar seja visível no desktop */
+  aside[class*="translate-x-0"] {
+    position: relative !important;
+    transform: none !important;
+  }
 }
