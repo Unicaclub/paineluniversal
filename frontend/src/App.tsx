@@ -49,22 +49,22 @@ function App() {
                         </ProtectedRoute>
                       } />
                       <Route path="vendas" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
                           <SalesModule />
                         </ProtectedRoute>
                       } />
                       <Route path="checkin" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
                           <CheckinModule />
                         </ProtectedRoute>
                       } />
                       <Route path="checkin-inteligente" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
                           <CheckinModule />
                         </ProtectedRoute>
                       } />
                       <Route path="mobile-checkin" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'operador']}>
+                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
                           <MobileCheckinModule />
                         </ProtectedRoute>
                       } />

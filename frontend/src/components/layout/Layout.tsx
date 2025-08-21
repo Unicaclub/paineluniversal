@@ -108,7 +108,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: BarChart3, 
       label: 'Dashboard', 
       path: '/app/dashboard', 
-      roles: ['admin', 'promoter', 'operador'],
+      roles: ['admin', 'promoter', 'cliente'],
       description: 'Visão geral do sistema'
     },
     { 
@@ -122,21 +122,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: ShoppingCart, 
       label: 'Vendas', 
       path: '/app/vendas', 
-      roles: ['admin', 'promoter', 'operador'],
+      roles: ['admin', 'promoter', 'cliente'],
       description: 'Sistema de vendas'
     },
     { 
       icon: UserCheck, 
       label: 'Check-in Inteligente', 
       path: '/app/checkin', 
-      roles: ['admin', 'promoter', 'operador'],
+      roles: ['admin', 'promoter', 'cliente'],
       description: 'Check-in de participantes'
     },
     { 
       icon: Smartphone, 
       label: 'Check-in Mobile', 
       path: '/app/mobile-checkin', 
-      roles: ['admin', 'promoter', 'operador'],
+      roles: ['admin', 'promoter', 'cliente'],
       description: 'Check-in via dispositivos móveis'
     },
     { 
@@ -222,15 +222,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const filteredMenuItems = (() => {
-    const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'PDV', 'Produtos'];
-    
-    if (!usuario || !usuario.tipo) {
-      // Mostrar itens básicos para usuários não autenticados
+    // Se o usuário não está carregado ou não há token, mostrar apenas itens básicos
+    if (!usuario || !localStorage.getItem('token')) {
+      const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'PDV', 'Produtos'];
       return menuItems.filter(item => basicItems.includes(item.label));
     }
     
-    // Se usuário está carregado, filtrar por roles
-    return menuItems.filter(item => item.roles.includes(usuario.tipo));
+    // Se usuário está autenticado, filtrar por roles
+    // Se não tem tipo definido, assumir 'cliente' como fallback
+    const userType = usuario.tipo || 'cliente';
+    return menuItems.filter(item => item.roles.includes(userType));
   })();
 
   const getInitials = (name: string) => {
@@ -309,9 +310,129 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <div className="space-y-2">
             {filteredMenuItems.length === 0 ? (
-              // Fallback: mostrar menu mínimo se não há itens filtrados
-              <div className="text-center p-4">
-                <p className="text-sidebar-foreground/60 text-sm">Carregando menu...</p>
+              // Fallback: mostrar todos os itens se não há filtros válidos
+              <div className="space-y-2">
+                {menuItems.map((item) => {
+                  const isActive = item.hasSubmenu 
+                    ? location.pathname.startsWith(item.path)
+                    : location.pathname === item.path;
+                  const isExpanded = expandedMenus[item.label];
+                  
+                  return (
+                    <div key={item.path}>
+                      <motion.div
+                        whileHover={{ x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link
+                          to={item.hasSubmenu ? '#' : item.path}
+                          className={`
+                            group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
+                            ${isActive 
+                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
+                              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                            }
+                          `}
+                          onClick={(e) => {
+                            if (item.hasSubmenu) {
+                              e.preventDefault();
+                              toggleSubmenu(item.label);
+                              if (!isExpanded) {
+                                // Apenas expande o menu
+                              } else {
+                                // Se já está expandido, navega para a página principal
+                                navigate(item.path);
+                              }
+                            }
+                            setSidebarOpen(false);
+                          }}
+                          title={sidebarCollapsed ? item.label : undefined}
+                        >
+                          {isActive && (
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
+                              layoutId="activeTab"
+                              initial={false}
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30
+                              }}
+                            />
+                          )}
+                          
+                          <div className="relative z-10 flex items-center flex-1">
+                            <item.icon className={`
+                              ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
+                              ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
+                            `} />
+                            
+                            {!sidebarCollapsed && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex-1 min-w-0"
+                              >
+                                <div className="truncate">{item.label}</div>
+                                {!isActive && (
+                                  <div className="text-xs opacity-60 truncate mt-0.5">
+                                    {item.description}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </div>
+                          
+                          {item.hasSubmenu && !sidebarCollapsed && (
+                            <motion.div
+                              animate={{ rotate: isExpanded ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="relative z-10"
+                            >
+                              <ChevronDown className={`h-4 w-4 transition-colors ${
+                                isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60'
+                              }`} />
+                            </motion.div>
+                          )}
+                        </Link>
+                      </motion.div>
+                      
+                      {/* Submenu */}
+                      {item.hasSubmenu && isExpanded && !sidebarCollapsed && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="ml-4 mt-1 space-y-1 bg-sidebar-accent/30 rounded-lg p-2"
+                        >
+                          {item.submenu?.map((subItem) => {
+                            const isSubActive = location.pathname === subItem.path;
+                            return (
+                              <Link
+                                key={subItem.path}
+                                to={subItem.path}
+                                className={`
+                                  block py-2 px-3 text-sm rounded-md transition-colors
+                                  ${isSubActive
+                                    ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
+                                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                                  }
+                                `}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <div className="truncate">{subItem.label}</div>
+                                <div className="text-xs opacity-60 truncate mt-0.5">
+                                  {subItem.description}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               filteredMenuItems.map((item) => {
