@@ -149,32 +149,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const revalidateUser = async () => {
     try {
       if (!token) {
-        console.log('🔍 AuthContext: Sem token para revalidar');
         return;
       }
-
-      console.log('🔄 AuthContext: Revalidando dados do usuário...');
       
       // Tentar buscar dados atualizados do usuário
-      // Por enquanto, só vamos verificar se os dados locais são válidos
       const storedUsuario = localStorage.getItem('usuario');
       if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
         try {
           const parsedUsuario = JSON.parse(storedUsuario);
           if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
             setUsuario(parsedUsuario);
-            console.log('✅ AuthContext: Usuário revalidado com sucesso');
           } else {
-            console.warn('⚠️ AuthContext: Dados do usuário inválidos');
             setUsuario(null);
           }
         } catch (error) {
-          console.error('❌ AuthContext: Erro ao fazer parse do usuário:', error);
           setUsuario(null);
         }
       }
     } catch (error) {
-      console.error('❌ AuthContext: Erro na revalidação:', error);
+      // Silently handle error
     }
   };
 

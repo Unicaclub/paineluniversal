@@ -52,16 +52,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     'Produtos': location.pathname.startsWith('/app/produtos')
   });
 
-  // Debug do estado da autenticação
+  // Revalidar usuário se necessário
   React.useEffect(() => {
-    console.log('🔍 Layout: Estado da autenticação:', {
-      usuario: usuario ? { nome: usuario.nome, tipo: usuario.tipo, email: usuario.email } : null,
-      hasToken: !!localStorage.getItem('token')
-    });
-
     // Se há token mas não há usuário, tentar revalidar
     if (!usuario && localStorage.getItem('token')) {
-      console.log('🔄 Layout: Token existe mas usuário não. Tentando revalidar...');
       revalidateUser();
     }
   }, [usuario, revalidateUser]);

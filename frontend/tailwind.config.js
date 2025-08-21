@@ -104,7 +104,7 @@ export default {
         'slide-in-left': 'slide-in-left 0.3s ease-out',
         'shimmer': 'shimmer 2s linear infinite',
       },
-      spacing: {
+      width: {
         '70': '17.5rem', // 280px - largura do sidebar expandido
       }
     }
