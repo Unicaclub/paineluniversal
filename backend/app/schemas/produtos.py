@@ -96,7 +96,6 @@ class ProdutoUpdate(BaseModel):
 
 class ProdutoResponse(ProdutoBase):
     id: int
-    empresa_id: Optional[int]
     criado_em: datetime
     atualizado_em: datetime
 

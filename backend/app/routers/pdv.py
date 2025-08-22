@@ -30,10 +30,6 @@ async def criar_produto(
 ):
     """Criar novo produto"""
     
-    evento = db.query(Evento).filter(Evento.id == produto.evento_id).first()
-    if not evento:
-        raise HTTPException(status_code=404, detail="Evento não encontrado")
-    
     # Role-based permission check handled by verificar_permissao_admin
     
     if not produto.codigo_interno:
@@ -53,18 +49,13 @@ async def criar_produto(
 
 @router.get("/produtos", response_model=List[ProdutoSchema])
 async def listar_produtos(
-    evento_id: int,
     categoria: Optional[str] = None,
     status: Optional[str] = None,
     busca: Optional[str] = None,
     db: Session = Depends(get_db),
     usuario_atual = Depends(obter_usuario_atual)
 ):
-    """Listar produtos do evento"""
-    
-    evento = db.query(Evento).filter(Evento.id == evento_id).first()
-    if not evento:
-        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    """Listar produtos"""
     
     if usuario_atual.tipo.value not in ["admin", "promoter"]:
         raise HTTPException(
@@ -72,10 +63,10 @@ async def listar_produtos(
             detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
-    query = db.query(Produto).filter(Produto.evento_id == evento_id)
+    query = db.query(Produto)
     
     if categoria:
-        query = query.filter(Produto.categoria == categoria)
+        query = query.filter(Produto.categoria.ilike(f"%{categoria}%"))
     
     if status:
         query = query.filter(Produto.status == status)
@@ -83,7 +74,6 @@ async def listar_produtos(
     if busca:
         query = query.filter(
             Produto.nome.ilike(f"%{busca}%") |
-            Produto.codigo_barras.ilike(f"%{busca}%") |
             Produto.codigo_interno.ilike(f"%{busca}%")
         )
     
@@ -124,7 +114,7 @@ async def atualizar_produto(
     
     # Role-based permission check handled by verificar_permissao_admin
     
-    for field, value in produto_update.model_dump(exclude={'evento_id'}).items():
+    for field, value in produto_update.model_dump().items():
         if hasattr(produto, field):
             setattr(produto, field, value)
     

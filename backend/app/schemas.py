@@ -401,7 +401,6 @@ class ProdutoBase(BaseModel):
     descricao: Optional[str] = None
     tipo: TipoProduto
     preco: Decimal
-    codigo_barras: Optional[str] = None
     codigo_interno: Optional[str] = None
     estoque_atual: int = 0
     estoque_minimo: int = 0
@@ -411,13 +410,11 @@ class ProdutoBase(BaseModel):
     imagem_url: Optional[str] = None
 
 class ProdutoCreate(ProdutoBase):
-    evento_id: int
+    pass
 
 class Produto(ProdutoBase):
     id: int
     status: StatusProduto
-    evento_id: int
-    empresa_id: int
     criado_em: datetime
     atualizado_em: Optional[datetime] = None
     

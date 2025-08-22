@@ -227,7 +227,6 @@ class Produto(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(255), nullable=False)
-    descricao = Column(Text)
     tipo = Column(Enum(TipoProduto), nullable=False)
     preco = Column(Numeric(10, 2), nullable=False)
     codigo_interno = Column(String(20))
@@ -238,11 +237,9 @@ class Produto(Base):
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
     categoria = Column(String(100))  # Campo principal para categoria
     imagem_url = Column(String(500))
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
     
-    empresa = relationship("Empresa")
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
 
