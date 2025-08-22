@@ -8,17 +8,7 @@ build.dockerfile = "frontend/Dockerfile"
 # Backend Service  
 [services.backend]
 build.dockerfile = "backend/Dockerfile"
-start.command = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 
 # MEEP Service
 [services.meep-service]
 build.dockerfile = "meep-service/Dockerfile"
-start.command = "cd meep-service && npm start"
-
-# Build configuration for Railway
-[build]
-builder = "dockerfile"
-
-# Environment
-[deploy]
-replicas = 1
