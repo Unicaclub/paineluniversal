@@ -12,6 +12,15 @@ RUN npm ci --no-audit --no-fund
 # Copy source code
 COPY . .
 
+# Debug: List files to verify structure
+RUN echo "=== Listing source structure ===" && \
+    find src -type f -name "*.ts" -o -name "*.tsx" | head -20
+
+# Debug: Check if specific files exist
+RUN echo "=== Checking specific files ===" && \
+    ls -la src/lib/ && \
+    ls -la src/components/ui/ | head -10
+
 # Build arguments (Railway will pass these via environment)
 ARG VITE_API_URL
 ARG VITE_MEEP_API_URL  
