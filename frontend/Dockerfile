@@ -47,19 +47,12 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built application from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port (Railway will set PORT env var)
+# Expose port 3000
 EXPOSE 3000
-
-# Create startup script that handles dynamic port
-RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
-    echo 'PORT=${PORT:-3000}' >> /docker-entrypoint.sh && \
-    echo 'sed -i "s/listen 3000/listen $PORT/g" /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
-    echo 'exec nginx -g "daemon off;"' >> /docker-entrypoint.sh && \
-    chmod +x /docker-entrypoint.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
-# Use custom entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
