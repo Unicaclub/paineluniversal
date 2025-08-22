@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { useUIStore } from '@/stores/uiStore';
+import { api } from '../lib/api';
+import { useUIStore } from '../stores/uiStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

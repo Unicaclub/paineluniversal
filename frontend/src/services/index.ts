@@ -1,4 +1,4 @@
-import { api, publicApi } from '@/lib/api';
+import { api, publicApi } from '../lib/api';
 import type { 
   LoginRequest, 
   Token, 
