@@ -45,13 +45,13 @@ const Produtos: React.FC = () => {
 
   const { data: produtos = [], isLoading, error } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => api.get('/produtos').then(res => res.data),
+    queryFn: () => api.get('/produtos').then((res: any) => res.data),
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
   const { data: categorias = [] } = useQuery({
     queryKey: ['categorias'],
-    queryFn: () => api.get('/categorias').then(res => res.data),
+    queryFn: () => api.get('/categorias').then((res: any) => res.data),
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 
