@@ -26,21 +26,17 @@ ENV NODE_ENV=production
 # Build the application
 RUN npm run build
 
-# Production stage - use nginx alpine
+# Production stage
 FROM nginx:alpine
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy simple nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Copy only the built application (no package.json or node files)
+# Copy only the built application
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port (Railway will set PORT via environment variable)
-EXPOSE $PORT
+# Expose standard port
+EXPOSE 80
 
-# Use custom entrypoint that handles dynamic port
-ENTRYPOINT ["/entrypoint.sh"]
+# Start nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]
