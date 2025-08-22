@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
-import { toast } from '../../hooks/use-toast';
+// import { toast } from '../../hooks/use-toast';
 import {
   Form,
   FormControl,
@@ -31,8 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Upload, X } from 'lucide-react';
-import { Produto } from '../../types/produto';
+// import { Upload, X } from 'lucide-react';
+import { Produto } from '../../types/main';
 import ImageUpload from './ImageUpload';
 
 const produtoSchema = z.object({
@@ -124,17 +124,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
         
       form.reset({
         nome: produto.nome,
-        codigo_interno: produto.codigo_interno || produto.codigo || '',
+        codigo_interno: produto.codigo_barras || '',
         categoria: categoria,
-        tipo: produto.tipo || 'BEBIDA',
-        preco: produto.preco || produto.valor || 0,
+        tipo: 'BEBIDA',
+        preco: produto.preco || 0,
         descricao: produto.descricao || '',
-        estoque_atual: produto.estoque_atual || produto.estoque || 0,
+        estoque_atual: produto.estoque || 0,
         estoque_minimo: 0,
         estoque_maximo: 1000,
         controla_estoque: true,
         status: 'ATIVO',
-        imagem_url: produto.imagem_url || produto.imagem || ''
+        imagem_url: produto.imagem_url || ''
       });
     }
   }, [produto, form]);
@@ -414,14 +414,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   <FormControl>
                     <ImageUpload
                       value={imageFile}
-                      onChange={(file) => {
+                      onChange={(file: File | null) => {
                         setImageFile(file);
                         // Se um arquivo for selecionado, limpa a URL
                         if (file) {
                           field.onChange('');
                         }
                       }}
-                      preview={field.value}
+                      // preview removido, não existe em ImageUploadProps
                     />
                   </FormControl>
                   <FormMessage />

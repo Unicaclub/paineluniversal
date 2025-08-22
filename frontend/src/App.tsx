@@ -1,166 +1,232 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/layout/Layout';
-import LoginForm from './components/auth/LoginForm';
-import Dashboard from './components/dashboard/Dashboard';
-import SalesModule from './components/sales/SalesModule';
-import CheckinModule from './components/checkin/CheckinModule';
-import EventosModule from './components/eventos/EventosModule';
-import MobileCheckinModule from './components/mobile/MobileCheckinModule';
-import PDVModule from './components/pdv/PDVModule';
-import DashboardPDV from './components/pdv/DashboardPDV';
-import DashboardAvancado from './components/dashboard/DashboardAvancado';
-import ListasModule from './components/listas/ListasModule';
-import CaixaEvento from './components/financeiro/CaixaEvento';
-import RankingModule from './components/ranking/RankingModule';
-import EstoqueModule from './components/estoque/EstoqueModule';
-import { UsuariosModule } from './components/usuarios';
-import PublicRegisterPage from './components/auth/PublicRegisterPage';
-import LandingPage from './components/landing/LandingPage';
-import ProdutosLayout from './components/produtos/ProdutosLayout';
-import ProductsList from './components/produtos/ProductsList';
-import CategoriasList from './components/produtos/CategoriasList';
-import AgendamentosList from './components/produtos/AgendamentosList';
-import ImportExportModule from './components/produtos/ImportExportModule';
-import './App.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { useUIStore } from './stores/uiStore';
+import { useAuthStore } from './stores/authStore';
+import { Toaster } from './components/ui/toaster';
 
-function App() {
+// Layout Components
+import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LoadingScreen from './components/common/LoadingScreen';
+import NotificationContainer from './components/common/NotificationContainer';
+
+// Auth Pages
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+
+// Main Pages
+import Dashboard from './pages/Dashboard';
+import Produtos from './pages/Produtos';
+
+// CSS
+import './index.css';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+const App: React.FC = () => {
+  const { theme } = useUIStore();
+  const { isLoading, user } = useAuthStore();
+
+  // Apply theme to document
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  // Check for existing session on app start
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && !user) {
+      // TODO: Validate token and restore user session
+      useAuthStore.getState().validateToken();
+    }
+  }, [user]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <ThemeProvider defaultTheme="system" storageKey="universal-eventos-theme">
-      <AuthProvider>
-        <Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="min-h-screen bg-background text-foreground">
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/register" element={<PublicRegisterPage />} />
-            <Route
-              path="/app/*"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="dashboard" element={<Dashboard />} />
-                      <Route path="/" element={<Navigate to="dashboard" replace />} />
-                      <Route path="eventos" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <EventosModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="vendas" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
-                          <SalesModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="checkin" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
-                          <CheckinModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="checkin-inteligente" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
-                          <CheckinModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="mobile-checkin" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter', 'cliente']}>
-                          <MobileCheckinModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="pdv" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <PDVModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="pdv/dashboard" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <DashboardPDV eventoId={1} />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="usuarios" element={
-                        <ProtectedRoute requiredRoles={['admin']}>
-                          <UsuariosModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="empresas" element={
-                        <ProtectedRoute requiredRoles={['admin']}>
-                          <div className="p-8 text-center animate-fade-in">
-                            <h1 className="text-2xl font-heading font-bold text-foreground">Módulo de Empresas</h1>
-                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                          </div>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="listas" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <ListasModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="produtos/*" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <ProdutosLayout />
-                        </ProtectedRoute>
-                      }>
-                        <Route index element={<ProductsList />} />
-                        <Route path="categorias" element={<CategoriasList />} />
-                        <Route path="agendamento" element={<AgendamentosList />} />
-                        <Route path="importexport" element={<ImportExportModule />} />
-                        <Route path="lista" element={
-                          <div className="p-8 text-center">
-                            <h1 className="text-2xl font-bold">Lista</h1>
-                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                          </div>
-                        } />
-                        <Route path="acesso" element={
-                          <div className="p-8 text-center">
-                            <h1 className="text-2xl font-bold">Limitar Acesso</h1>
-                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                          </div>
-                        } />
-                        <Route path="ignorados" element={
-                          <div className="p-8 text-center">
-                            <h1 className="text-2xl font-bold">Produtos Ignorados</h1>
-                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                          </div>
-                        } />
-                      </Route>
-                      <Route path="estoque" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <EstoqueModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="financeiro" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <CaixaEvento />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="ranking" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <RankingModule />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="relatorios" element={
-                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <DashboardAvancado />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="configuracoes" element={
-                        <ProtectedRoute requiredRoles={['admin']}>
-                          <div className="p-8 text-center animate-fade-in">
-                            <h1 className="text-2xl font-heading font-bold text-foreground">Configurações</h1>
-                            <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
-                          </div>
-                        </ProtectedRoute>
-                      } />
-                    </Routes>
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Protected Routes */}
+            <Route path="/app" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/app/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="produtos" element={<Produtos />} />
+              
+              {/* Placeholder routes - TODO: Create components */}
+              <Route path="eventos" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Eventos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="vendas" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Vendas</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="checkin" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Check-in Inteligente</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="mobile-checkin" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Check-in Mobile</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="pdv" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">PDV</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="listas" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Listas & Convidados</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="estoque" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Estoque</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="financeiro" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Caixa & Financeiro</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="ranking" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Ranking & Gamificação</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="usuarios" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Usuários</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="empresas" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Empresas</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="relatorios" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Relatórios</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="configuracoes" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Configurações</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              
+              {/* Produtos sub-routes */}
+              <Route path="produtos/categorias" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Categorias de Produtos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="produtos/agendamento" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Agendamento de Produtos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="produtos/importexport" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Import/Export de Produtos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="produtos/lista" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Lista de Produtos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="produtos/acesso" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Limitar Acesso a Produtos</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+              <Route path="produtos/ignorados" element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Produtos Ignorados</h1>
+                  <p className="text-muted-foreground">Página em desenvolvimento</p>
+                </div>
+              } />
+            </Route>
+            
+            {/* Redirect root to dashboard */}
+            <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+            
+            {/* 404 fallback */}
+            <Route path="*" element={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold mb-4">404</h1>
+                  <p className="text-muted-foreground mb-4">Página não encontrada</p>
+                  <button
+                    onClick={() => window.location.href = '/app/dashboard'}
+                    className="text-primary hover:underline"
+                  >
+                    Voltar ao Dashboard
+                  </button>
+                </div>
+              </div>
+            } />
           </Routes>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+          
+          {/* Global Components */}
+          <NotificationContainer />
+          <Toaster />
+        </div>
+      </Router>
+      
+      {/* Development Tools */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

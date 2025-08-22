@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
-import { toast } from '../../hooks/use-toast';
+// import { toast } from '../../hooks/use-toast';
 import {
   Form,
   FormControl,
@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Upload, X } from 'lucide-react';
+// import { Upload, X } from 'lucide-react';
 import { Produto } from '../../types/produto';
 import ImageUpload from './ImageUpload';
 
@@ -404,14 +404,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <FormField
               control={form.control}
               name="imagem_url"
-              render={({ field }) => (
+              render={({ /* field */ }) => (
                 <FormItem>
                   <FormLabel>Imagem</FormLabel>
                   <FormControl>
                     <ImageUpload
                       value={imageFile}
                       onChange={setImageFile}
-                      preview={field.value}
+                      // preview removido, não existe em ImageUploadProps
                     />
                   </FormControl>
                   <FormMessage />
