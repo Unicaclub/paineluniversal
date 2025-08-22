@@ -7,8 +7,7 @@ build.dockerfile = "frontend/Dockerfile"
 
 # Backend Service  
 [services.backend]
-source = "backend"
-build.dockerfile = "Dockerfile"
+build.dockerfile = "backend/Dockerfile.root-context"
 
 # MEEP Service
 [services.meep-service]
