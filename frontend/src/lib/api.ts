@@ -9,7 +9,16 @@ const getApiBaseUrl = (): string => {
                 hostname.includes('vercel.app');
   
   if (isProd) {
-    return 'https://backend-painel-universal-production.up.railway.app';
+    // Tentar múltiplas URLs do backend na Railway
+    const possibleBackendUrls = [
+      'https://backend-painel-universal-production.up.railway.app',
+      'https://paineluniversal-backend.up.railway.app', 
+      'https://backend-paineluniversal.up.railway.app',
+      'https://painel-universal-backend.up.railway.app'
+    ];
+    
+    // Por enquanto, usar a primeira URL - depois implementar failover
+    return possibleBackendUrls[0];
   } else {
     return 'http://localhost:8000';
   }
