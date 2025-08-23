@@ -8,3 +8,4 @@ build.dockerfile = "frontend/Dockerfile"
 # Backend Service (Python + FastAPI)
 [services.backend]
 build.dockerfile = "backend/Dockerfile.inline-deps"
+build.buildCommand = "echo 'Building backend with inline dependencies'"
