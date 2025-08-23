@@ -1,11 +1,12 @@
 # Railway Configuration
 # Each service uses its own specific Dockerfile
+# Updated to force cache refresh
 
 # Frontend Service (Node.js + nginx)
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (Python + FastAPI)
+# Backend Service (Python + FastAPI) - Force refresh v3
 [services.backend]
 build.dockerfile = "backend/Dockerfile.inline-deps"
-build.buildCommand = "echo 'Building backend with inline dependencies'"
+build.buildCommand = "echo 'Building backend with inline dependencies v3'"

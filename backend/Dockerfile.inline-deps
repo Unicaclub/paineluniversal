@@ -37,11 +37,16 @@ RUN pip install --no-cache-dir --upgrade pip && \
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
 
-# Copy project files (adjust based on context)
+# Copy project files (backend context)
 COPY . .
 
-# Ensure we have the right files
-RUN ls -la /app/
+# Debug: List files to confirm correct context
+RUN echo "=== Files in /app ===" && ls -la /app/
+
+# Ensure we have essential backend files
+RUN echo "=== Checking essential files ===" && \
+    ls -la /app/main.py || echo "main.py not found" && \
+    ls -la /app/app/ || echo "app/ directory not found"
 
 # Make start script executable if it exists
 RUN if [ -f "/app/start.sh" ]; then chmod +x /app/start.sh; fi
