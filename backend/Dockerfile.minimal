@@ -41,11 +41,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser
 
-# Copy project from root context (Railway uses root context)
-COPY --chown=appuser:appuser backend/ .
+# Copy project (with backend source context, use . not backend/)
+COPY --chown=appuser:appuser . .
 
-# Make start script executable
-RUN chmod +x /app/start.sh
+# Make start script executable if it exists
+RUN if [ -f "/app/start.sh" ]; then chmod +x /app/start.sh; fi
 
 # Switch to non-root user
 USER appuser
@@ -53,9 +53,5 @@ USER appuser
 # Expose port (Railway will set PORT env var)
 EXPOSE 8000
 
-# Health check for Railway
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-8000}/healthz || exit 1
-
-# Run the application with startup script
-CMD ["/app/start.sh"]
+# Run the application with startup script, fallback to direct uvicorn
+CMD if [ -f "/app/start.sh" ]; then /app/start.sh; else uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}; fi
