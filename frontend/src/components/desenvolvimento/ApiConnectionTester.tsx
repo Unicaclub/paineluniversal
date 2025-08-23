@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { testApiConnection } from '@/lib/api';
+import { testApiConnection, getBackendStatus, forceBackendSwitch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, RefreshCw, WifiOff } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, WifiOff, Server, ArrowRight } from 'lucide-react';
 
 interface ConnectionStatus {
   success: boolean;
@@ -13,6 +13,9 @@ interface ConnectionStatus {
     status?: number;
     statusText?: string;
     baseURL?: string;
+    currentBackend?: number;
+    totalBackends?: number;
+    fallbacksAvailable?: boolean;
   };
   timestamp?: Date;
 }
@@ -21,6 +24,7 @@ const ApiConnectionTester: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [autoTest, setAutoTest] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<any>(null);
 
   const runConnectionTest = async () => {
     setIsLoading(true);
@@ -30,6 +34,10 @@ const ApiConnectionTester: React.FC = () => {
         ...result,
         timestamp: new Date()
       });
+      
+      // Atualizar status do sistema de backends
+      const status = getBackendStatus();
+      setBackendStatus(status);
     } catch (error: any) {
       setConnectionStatus({
         success: false,
@@ -38,6 +46,13 @@ const ApiConnectionTester: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBackendSwitch = () => {
+    const switched = forceBackendSwitch();
+    if (switched) {
+      runConnectionTest(); // Testar novo backend
     }
   };
 
@@ -93,6 +108,16 @@ const ApiConnectionTester: React.FC = () => {
               {isLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Testar Agora
             </Button>
+            {import.meta.env.PROD && connectionStatus && !connectionStatus.success && (
+              <Button
+                onClick={handleBackendSwitch}
+                size="sm"
+                variant="secondary"
+              >
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Próximo Backend
+              </Button>
+            )}
             <Button
               onClick={() => setAutoTest(!autoTest)}
               size="sm"
@@ -142,6 +167,25 @@ const ApiConnectionTester: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Informações do Sistema de Auto-Recovery */}
+        {import.meta.env.PROD && backendStatus && (
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+              <Server className="h-4 w-4" />
+              Sistema de Auto-Recovery (Produção)
+            </h4>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div><strong>Backend Atual:</strong> #{backendStatus.currentIndex + 1} de {backendStatus.totalBackends}</div>
+              <div><strong>URL Ativa:</strong> {backendStatus.currentBackend}</div>
+              <div><strong>Health Check:</strong> {backendStatus.healthCheckActive ? '✅ Ativo' : '❌ Inativo'}</div>
+              <div><strong>Fallbacks Disponíveis:</strong> {backendStatus.totalBackends - 1}</div>
+              {connectionStatus?.details?.fallbacksAvailable && (
+                <div className="text-green-700">✅ Sistema de recuperação automática ativo</div>
+              )}
+            </div>
           </div>
         )}
 
