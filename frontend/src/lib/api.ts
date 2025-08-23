@@ -62,5 +62,3 @@ if (import.meta.env.PROD) {
 }
 
 export { API_BASE_URL };
-
-export { API_BASE_URL };
