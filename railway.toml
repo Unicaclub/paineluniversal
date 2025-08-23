@@ -5,9 +5,9 @@
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service
+# Backend Service (using minimal Dockerfile for reliability)
 [services.backend]
-build.dockerfile = "backend/Dockerfile"
+build.dockerfile = "backend/Dockerfile.minimal"
 
 # MEEP Service
 [services.meep-service]
