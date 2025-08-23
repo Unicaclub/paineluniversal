@@ -18,19 +18,38 @@ RUN apt-get update \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (from root context)
-COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies directly (no external file needed)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    sqlalchemy==2.0.23 \
+    psycopg2-binary==2.9.9 \
+    python-jose[cryptography]==3.3.0 \
+    python-multipart==0.0.6 \
+    passlib[bcrypt]==1.7.4 \
+    python-dotenv==1.0.0 \
+    alembic==1.12.1 \
+    pytest==7.4.3 \
+    httpx==0.25.2
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser
+# Create non-root user and set ownership
+RUN adduser --disabled-password --gecos '' appuser && \
+    chown -R appuser:appuser /app
 
-# Copy project (from root context)
-COPY --chown=appuser:appuser backend/ .
+# Copy project files (backend context)
+COPY . .
 
-# Make start script executable
-RUN chmod +x /app/start.sh
+# Debug: List files to confirm correct context
+RUN echo "=== DOCKERFILE.INLINE-DEPS ACTIVE - v4 ===" && ls -la /app/
+
+# Ensure we have essential backend files
+RUN echo "=== Checking essential files ===" && \
+    ls -la /app/main.py || echo "main.py not found" && \
+    ls -la /app/app/ || echo "app/ directory not found"
+
+# Make start script executable if it exists
+RUN if [ -f "/app/start.sh" ]; then chmod +x /app/start.sh; fi
 
 # Switch to non-root user
 USER appuser
@@ -38,9 +57,5 @@ USER appuser
 # Expose port (Railway will set PORT env var)
 EXPOSE 8000
 
-# Health check simples
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:8000/healthz || exit 1
-
-# Run the application with startup script
-CMD ["/app/start.sh"]
+# Start application (fallback to uvicorn if start.sh doesn't exist)
+CMD if [ -f "/app/start.sh" ]; then /app/start.sh; else uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}; fi

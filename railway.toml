@@ -6,7 +6,7 @@
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (Python + FastAPI) - Force refresh v4
+# Backend Service (Python + FastAPI) - Using corrected Dockerfile v5
 [services.backend]
-build.dockerfile = "Dockerfile.inline-deps"
+build.dockerfile = "Dockerfile"
 source = "backend"
