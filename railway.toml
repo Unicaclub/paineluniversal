@@ -1,14 +1,10 @@
 # Railway Configuration
-# Defines how to deploy each service
+# Each service uses its own specific Dockerfile
 
-# Frontend Service
+# Frontend Service (Node.js + nginx)
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (using simple Dockerfile for reliability)
+# Backend Service (Python + FastAPI)
 [services.backend]
-build.dockerfile = "backend/Dockerfile.simple"
-
-# MEEP Service
-[services.meep-service]
-build.dockerfile = "meep-service/Dockerfile"
+build.dockerfile = "backend/Dockerfile"
