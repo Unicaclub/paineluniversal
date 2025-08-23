@@ -5,7 +5,7 @@
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (Python + FastAPI) - Back to working version
+# Backend Service (Python + FastAPI) - Complete dependencies version
 [services.backend]
-build.dockerfile = "Dockerfile"
+build.dockerfile = "Dockerfile.complete"
 source = "backend"

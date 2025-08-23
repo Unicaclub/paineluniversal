@@ -1,0 +1,65 @@
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        curl \
+        gcc \
+        python3-dev \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ALL Python dependencies (complete from requirements.txt)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    sqlalchemy==2.0.23 \
+    psycopg2-binary==2.9.9 \
+    python-jose[cryptography]==3.3.0 \
+    passlib[bcrypt]==1.7.4 \
+    python-multipart==0.0.6 \
+    pydantic-settings==2.0.3 \
+    python-dotenv==1.0.0 \
+    alembic==1.12.1 \
+    redis==5.0.1 \
+    websockets==12.0 \
+    httpx==0.25.2 \
+    reportlab==4.0.7 \
+    pandas==2.1.3 \
+    qrcode==7.4.2 \
+    pillow==10.1.0 \
+    openpyxl==3.1.2 \
+    schedule==1.2.0 \
+    aiohttp==3.9.1 \
+    email-validator==2.1.0
+
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser
+
+# Copy project files (backend context with source = "backend")
+COPY . .
+
+# Set ownership
+RUN chown -R appuser:appuser /app
+
+# Make start script executable
+RUN if [ -f "/app/start.sh" ]; then chmod +x /app/start.sh; fi
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Start with simple uvicorn command (no complex fallbacks)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
