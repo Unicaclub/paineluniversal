@@ -168,7 +168,7 @@ api.interceptors.response.use(
     
     // Se chegou aqui, o backend atual está funcionando
     // Reset para backend principal após 5 minutos de sucesso
-    if (currentBackendIndex > 0 && config.isProduction) {
+    if (currentBackendIndex > 0 && getApiConfiguration().isProduction) {
       setTimeout(() => {
         if (currentBackendIndex > 0) {
           console.log('🔄 Tentando retornar ao backend principal após período de sucesso');
@@ -190,11 +190,12 @@ api.interceptors.response.use(
       isNetworkError: !error.response,
       isCorsError: error.message?.includes('CORS') || error.message?.includes('Access-Control'),
       currentBackendIndex,
-      isProduction: config.isProduction
+      isProduction: getApiConfiguration().isProduction
     });
 
     // 🚨 AUTO-RECOVERY EM PRODUÇÃO
-    if (config.isProduction && (
+    const currentConfig = getApiConfiguration();
+    if (currentConfig.isProduction && (
       !error.response || // Erro de rede
       error.response.status >= 500 || // Erro de servidor
       error.response.status === 502 || // Bad Gateway
@@ -266,11 +267,12 @@ publicApi.interceptors.response.use(
       isNetworkError: !error.response,
       isCorsError: error.message?.includes('CORS') || error.message?.includes('Access-Control'),
       currentBackendIndex,
-      isProduction: config.isProduction
+      isProduction: getApiConfiguration().isProduction
     });
     
     // 🚨 AUTO-RECOVERY EM PRODUÇÃO para Public API também
-    if (config.isProduction && (
+    const currentConfig = getApiConfiguration();
+    if (currentConfig.isProduction && (
       !error.response || 
       error.response.status >= 500 || 
       error.response.status === 502 || 
@@ -313,13 +315,13 @@ const performHealthCheck = async (): Promise<void> => {
   lastHealthCheck = now;
   
   console.log('🔍 [Health Check] Testing all available backends...');
-  const allBackends = [config.baseURL, ...config.fallbackURLs];
+  const currentConfig = getApiConfiguration();
+  const allBackends = [currentConfig.baseURL, ...currentConfig.fallbackURLs];
   
   for (let i = 0; i < allBackends.length; i++) {
     try {
       const testResponse = await fetch(`${allBackends[i]}/healthz`, {
         method: 'GET',
-        timeout: 5000,
         signal: AbortSignal.timeout(5000)
       });
       
@@ -396,19 +398,21 @@ export const testApiConnection = async (): Promise<{
   try {
     // Testar backend atual primeiro
     const response = await publicApi.get('/api/cors-test', { timeout: 10000 });
+    const currentConfig = getApiConfiguration();
     return { 
       success: true, 
       data: response.data,
       details: {
         baseURL: API_BASE_URL,
         currentBackend: currentBackendIndex,
-        totalBackends: [config.baseURL, ...config.fallbackURLs].length,
-        fallbacksAvailable: config.fallbackURLs.length > 0
+        totalBackends: [currentConfig.baseURL, ...currentConfig.fallbackURLs].length,
+        fallbacksAvailable: currentConfig.fallbackURLs.length > 0
       }
     };
   } catch (error: any) {
+    const currentConfig = getApiConfiguration();
     // Em caso de erro, tentar health check para encontrar backend funcionando
-    if (config.isProduction) {
+    if (currentConfig.isProduction) {
       console.log('🔍 Testing connection failed, performing health check...');
       await performHealthCheck();
     }
@@ -421,8 +425,8 @@ export const testApiConnection = async (): Promise<{
         statusText: error.response?.statusText,
         baseURL: API_BASE_URL,
         currentBackend: currentBackendIndex,
-        totalBackends: [config.baseURL, ...config.fallbackURLs].length,
-        fallbacksAvailable: config.fallbackURLs.length > 0
+        totalBackends: [currentConfig.baseURL, ...currentConfig.fallbackURLs].length,
+        fallbacksAvailable: currentConfig.fallbackURLs.length > 0
       }
     };
   }
@@ -435,13 +439,14 @@ export const forceBackendSwitch = (): boolean => {
 
 // 🔧 UTILITÁRIO PARA OBTER STATUS ATUAL DO SISTEMA
 export const getBackendStatus = () => {
-  const allBackends = [config.baseURL, ...config.fallbackURLs];
+  const currentConfig = getApiConfiguration();
+  const allBackends = [currentConfig.baseURL, ...currentConfig.fallbackURLs];
   return {
     currentBackend: API_BASE_URL,
     currentIndex: currentBackendIndex,
     totalBackends: allBackends.length,
     allBackends,
-    isProduction: config.isProduction,
+    isProduction: currentConfig.isProduction,
     healthCheckActive: !!healthCheckInterval
   };
 };
