@@ -61,5 +61,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Start with simple uvicorn command (no complex fallbacks)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start with Railway-compatible command (uses dynamic PORT)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
