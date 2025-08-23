@@ -6,7 +6,7 @@
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (Python + FastAPI) - Using minimal working Dockerfile
+# Backend Service (Python + FastAPI) - Ultra minimal for debugging
 [services.backend]
-build.dockerfile = "Dockerfile.minimal-working"
+build.dockerfile = "Dockerfile.ultra-minimal"
 source = "backend"

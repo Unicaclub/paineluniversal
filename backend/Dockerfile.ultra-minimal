@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install minimal dependencies
+RUN pip install fastapi uvicorn
+
+# Create simple working app
+RUN echo 'from fastapi import FastAPI\nfrom fastapi.middleware.cors import CORSMiddleware\napp = FastAPI()\napp.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])\n@app.get("/")\ndef root(): return {"status": "ok", "service": "Backend Minimal"}\n@app.get("/healthz")\ndef health(): return {"status": "healthy", "message": "Backend working"}' > main.py
+
+EXPOSE 8000
+
+# Start with uvicorn directly
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 120
