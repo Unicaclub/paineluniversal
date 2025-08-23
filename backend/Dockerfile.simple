@@ -1,0 +1,54 @@
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        curl \
+        gcc \
+        python3-dev \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies (inline for reliability)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        fastapi==0.104.1 \
+        uvicorn[standard]==0.24.0 \
+        sqlalchemy==2.0.23 \
+        psycopg2-binary==2.9.9 \
+        python-jose[cryptography]==3.3.0 \
+        passlib[bcrypt]==1.7.4 \
+        python-multipart==0.0.6 \
+        pydantic-settings==2.0.3 \
+        python-dotenv==1.0.0 \
+        alembic==1.12.1 \
+        redis==5.0.1 \
+        websockets==12.0 \
+        httpx==0.25.2 \
+        schedule==1.2.0 \
+        aiohttp==3.9.1 \
+        email-validator==2.1.0
+
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser
+
+# Copy project from root context
+COPY --chown=appuser:appuser backend/ .
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Start directly with uvicorn using Railway's PORT variable
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
