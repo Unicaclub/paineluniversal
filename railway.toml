@@ -1,6 +1,5 @@
-# Configuração Railway para o projeto raiz
-# Este arquivo define como deployar cada serviço
-# Updated: Forcing redeploy with root context Dockerfile
+# Railway Configuration
+# Defines how to deploy each service
 
 # Frontend Service
 [services.frontend]
