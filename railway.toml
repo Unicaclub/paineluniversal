@@ -7,4 +7,4 @@ build.dockerfile = "frontend/Dockerfile"
 
 # Backend Service (Python + FastAPI)
 [services.backend]
-build.dockerfile = "backend/Dockerfile"
+build.dockerfile = "backend/Dockerfile.simple"
