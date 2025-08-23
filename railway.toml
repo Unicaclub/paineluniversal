@@ -5,10 +5,8 @@
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service  
+# Backend Service
 [services.backend]
-build.dockerfile = "backend/Dockerfile.root-context"
-
-# MEEP Service
+build.dockerfile = "backend/Dockerfile"# MEEP Service
 [services.meep-service]
 build.dockerfile = "meep-service/Dockerfile"

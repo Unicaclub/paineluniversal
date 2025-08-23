@@ -18,16 +18,16 @@ RUN apt-get update \
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
+# Install Python dependencies (from root context)
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser
 
-# Copy project
-COPY --chown=appuser:appuser . .
+# Copy project (from root context)
+COPY --chown=appuser:appuser backend/ .
 
 # Make start script executable
 RUN chmod +x /app/start.sh
