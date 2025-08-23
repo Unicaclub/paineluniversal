@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
 import { Eye, EyeOff, Calendar, Lock, Mail } from 'lucide-react';
+import ApiConnectionTester from '../../components/desenvolvimento/ApiConnectionTester';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -195,6 +196,18 @@ const Login: React.FC = () => {
           <p>Sistema Universal de Eventos</p>
           <p>Gestão completa para seus eventos</p>
         </motion.div>
+
+        {/* Componente de teste de conectividade - apenas em desenvolvimento */}
+        {!import.meta.env.PROD && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mt-8"
+          >
+            <ApiConnectionTester />
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );

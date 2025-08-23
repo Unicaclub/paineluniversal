@@ -21,6 +21,7 @@ import { Checkbox } from '../ui/checkbox';
 // import { Input } from '../ui/input';
 import { toast } from '../../hooks/use-toast';
 import { Produto } from '../../types/main';
+import { ProdutoFormData } from '../../types';
 
 interface ProdutoFilter {
   categoria?: string;
@@ -34,7 +35,7 @@ interface ProdutoFilter {
 // import ProductFilters from './ProductFilters';
 // import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
-import { produtoService, ProdutoCreate } from '../../services/api';
+import { produtoService } from '../../services';
 import { useEvento } from '../../contexts/EventoContext';
 import EventoAutoConfig from '../desenvolvimento/EventoAutoConfig';
 
@@ -69,8 +70,8 @@ const ProductsList: React.FC = () => {
         return;
       }
 
-      const produtos = await produtoService.getAll(eventoId);
-  setProdutos(produtos as any); // ajuste temporário para tipos
+      const produtos = await produtoService.getAll();
+      setProdutos(produtos as any); // ajuste temporário para tipos
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
       toast({
@@ -189,7 +190,7 @@ const ProductsList: React.FC = () => {
       }
 
       // Converter os dados do formulário para o formato esperado pela API
-      const produtoData: ProdutoCreate = {
+      const produtoData: ProdutoFormData = {
         nome: data.nome,
         descricao: data.descricao || '',
         tipo: data.tipo,

@@ -16,6 +16,22 @@ import type {
   // PaginatedResponse removido
 } from '../types';
 
+// Re-exportar tipos para compatibilidade
+export type {
+  LoginRequest,
+  Token,
+  Usuario,
+  Evento,
+  EventoCreate,
+  Produto,
+  ProdutoFormData,
+  Venda,
+  VendaCreate,
+  Checkin,
+  Lista,
+  DashboardResumo,
+};
+
 // Serviços de Autenticação
 export const authService = {
   async login(data: LoginRequest): Promise<Token> {
