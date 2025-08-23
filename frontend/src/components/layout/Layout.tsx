@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import ConnectionDebugger from '../debugging/ConnectionDebugger';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -44,6 +45,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </motion.div>
         </main>
       </div>
+      
+      {/* Debug Component - Apenas em development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <ConnectionDebugger />
+        </div>
+      )}
     </div>
   );
 };

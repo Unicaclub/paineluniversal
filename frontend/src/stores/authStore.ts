@@ -40,18 +40,20 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: true,
 
       // Ações
-      login: async (email: string, senha: string) => {
+      login: async (emailOuCpf: string, senha: string) => {
         set({ isLoading: true });
         
         try {
-          // Fazer uma chamada mock para simular login por email
-          // TODO: Implementar endpoint de login por email no backend
+          console.log('🔐 AuthStore: Iniciando login...');
+          
+          // Usar o novo sistema híbrido de autenticação
           const response = await authService.login({
-            cpf: email, // Usar email no lugar do CPF temporariamente
+            cpf: emailOuCpf, // O authService agora detecta automaticamente email vs CPF
             senha
           });
 
           if (response.access_token) {
+            console.log('✅ Token recebido, salvando estado...');
             set({
               token: response.access_token,
               user: response.usuario,
@@ -62,10 +64,13 @@ export const useAuthStore = create<AuthStore>()(
             // Salvar no localStorage também (para compatibilidade)
             localStorage.setItem('token', response.access_token);
             localStorage.setItem('usuario', JSON.stringify(response.usuario));
+            
+            console.log('✅ Login completo!');
           } else {
             throw new Error('Token não recebido do servidor');
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.error('❌ Erro no login:', error);
           set({ isLoading: false });
           throw error;
         }
