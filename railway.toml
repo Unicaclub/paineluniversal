@@ -8,5 +8,5 @@ build.dockerfile = "frontend/Dockerfile"
 
 # Backend Service (Python + FastAPI) - Force refresh v3
 [services.backend]
-build.dockerfile = "backend/Dockerfile.inline-deps"
-build.buildCommand = "echo 'Building backend with inline dependencies v3'"
+build.dockerfile = "Dockerfile.inline-deps"
+source = "backend"

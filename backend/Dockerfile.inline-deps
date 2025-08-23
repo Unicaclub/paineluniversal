@@ -58,4 +58,4 @@ USER appuser
 EXPOSE 8000
 
 # Start application (fallback to uvicorn if start.sh doesn't exist)
-CMD if [ -f "/app/start.sh" ]; then /app/start.sh; else uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}; fi
+CMD if [ -f "/app/start.sh" ]; then /app/start.sh; else uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}; fi
