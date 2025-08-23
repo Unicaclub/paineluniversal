@@ -41,7 +41,7 @@ RUN adduser --disabled-password --gecos '' appuser && \
 COPY . .
 
 # Debug: List files to confirm correct context
-RUN echo "=== Files in /app ===" && ls -la /app/
+RUN echo "=== DOCKERFILE.INLINE-DEPS ACTIVE - v4 ===" && ls -la /app/
 
 # Ensure we have essential backend files
 RUN echo "=== Checking essential files ===" && \
