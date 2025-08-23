@@ -16,9 +16,9 @@ RUN pip install --no-cache-dir \
 COPY app/ ./app/
 
 # Create minimal main.py if needed
-RUN echo 'from fastapi import FastAPI\napp = FastAPI()\n@app.get("/")\ndef root(): return {"status": "ok"}\n@app.get("/healthz")\ndef health(): return {"status": "healthy"}' > minimal_main.py
+RUN echo 'from fastapi import FastAPI\nfrom fastapi.middleware.cors import CORSMiddleware\napp = FastAPI()\napp.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])\n@app.get("/")\ndef root(): return {"status": "ok", "service": "backend"}\n@app.get("/healthz")\ndef health(): return {"status": "healthy"}\n@app.get("/api/health")\ndef api_health(): return {"status": "healthy", "api": "ready"}' > minimal_main.py
 
 EXPOSE 8000
 
-# Direct uvicorn start with fallback
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} || uvicorn minimal_main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Start with faster cold boot options
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --access-log || uvicorn minimal_main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1

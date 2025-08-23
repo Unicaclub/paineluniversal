@@ -32,7 +32,7 @@ export const publicApi: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000, // Aumentado para 60s devido à inicialização lenta da Railway
   withCredentials: false,
 });
 
@@ -42,7 +42,7 @@ export const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000, // Aumentado para 60s devido à inicialização lenta da Railway
   withCredentials: false,
 });
 
