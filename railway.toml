@@ -1,12 +1,11 @@
 # Railway Configuration
 # Each service uses its own specific Dockerfile
-# Updated to force cache refresh - FORCE REBUILD NOW
 
-# Frontend Service (Node.js + nginx)
+# Frontend Service (Node.js + nginx) - WORKING - DO NOT CHANGE
 [services.frontend]
 build.dockerfile = "frontend/Dockerfile"
 
-# Backend Service (Python + FastAPI) - Ultra minimal for debugging
+# Backend Service (Python + FastAPI) - Back to working version
 [services.backend]
-build.dockerfile = "Dockerfile.ultra-minimal"
+build.dockerfile = "Dockerfile"
 source = "backend"
