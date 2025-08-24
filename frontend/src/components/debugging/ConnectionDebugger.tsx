@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { testApiConnection, getBackendStatus, forceBackendSwitch } from '@/lib/api';
+import { getBackendStatus, forceBackendSwitch } from '@/lib/api';
 import { authService } from '@/services';
 
 interface ConnectionStatus {
