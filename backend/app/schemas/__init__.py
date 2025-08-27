@@ -89,7 +89,10 @@ except ImportError as e:
     class UsuarioRegister(BaseModel):
         nome: str
         email: str
+        cpf: str
+        telefone: Optional[str] = None
         password: str
+        tipo: Optional[str] = "cliente"  # Default para cliente
         
     class Usuario(UsuarioBase):
         id: int

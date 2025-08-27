@@ -203,41 +203,107 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         
         # Verificar se CPF já existe (com timeout)
         print(f"🔍 Verificando CPF: {cpf_limpo}")
-        usuario_existente = db.query(Usuario).filter(Usuario.cpf == cpf_limpo).first()
-        if usuario_existente:
+        try:
+            usuario_existente = db.query(Usuario).filter(Usuario.cpf == cpf_limpo).first()
+            if usuario_existente:
+                print(f"❌ CPF já existe no banco: {usuario_existente.nome}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="CPF já cadastrado"
+                )
+            print(f"✅ CPF disponível")
+        except HTTPException:
+            raise
+        except Exception as cpf_check_error:
+            print(f"❌ Erro ao verificar CPF: {cpf_check_error}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="CPF já cadastrado"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao verificar CPF no banco: {str(cpf_check_error)}"
             )
         
         # Verificar se email já existe (com timeout)
         print(f"📧 Verificando email: {usuario_data.email}")
-        email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
-        if email_existente:
+        try:
+            email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
+            if email_existente:
+                print(f"❌ Email já existe no banco: {email_existente.nome}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email já cadastrado"
+                )
+            print(f"✅ Email disponível")
+        except HTTPException:
+            raise
+        except Exception as email_check_error:
+            print(f"❌ Erro ao verificar email: {email_check_error}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email já cadastrado"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao verificar email no banco: {str(email_check_error)}"
             )
         
         # Criar hash da senha
         print(f"🔐 Gerando hash da senha...")
-        senha_hash = gerar_hash_senha(usuario_data.senha)
+        try:
+            senha_hash = gerar_hash_senha(usuario_data.senha)
+            print(f"✅ Hash da senha gerado com sucesso (length: {len(senha_hash)})")
+        except Exception as hash_error:
+            print(f"❌ Erro ao gerar hash da senha: {hash_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro na criptografia da senha: {str(hash_error)}"
+            )
         
         # Criar usuário
         print(f"👤 Criando usuário no banco...")
-        novo_usuario = Usuario(
-            cpf=cpf_limpo,
-            nome=usuario_data.nome.strip(),
-            email=usuario_data.email.lower().strip(),
-            telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
-            senha_hash=senha_hash,
-            tipo=usuario_data.tipo,
-            ativo=True  # Usuários registrados publicamente ficam ativos por padrão
-        )
         
+        # Converter tipo para enum correto
+        tipo_usuario = usuario_data.tipo.upper() if usuario_data.tipo else "CLIENTE"
+        print(f"📋 Tipo de usuário: {tipo_usuario}")
+        
+        # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
+        try:
+            novo_usuario = Usuario(
+                cpf=cpf_limpo,
+                nome=usuario_data.nome.strip(),
+                email=usuario_data.email.lower().strip(),
+                telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
+                senha_hash=senha_hash,
+                tipo=tipo_usuario,  # Usar tipo convertido
+                ativo=True  # Usuários registrados publicamente ficam ativos por padrão
+            )
+            
+            print(f"✅ Objeto usuário criado com sucesso")
+            
+        except Exception as usuario_creation_error:
+            print(f"❌ Erro ao criar objeto usuário: {usuario_creation_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro na criação do usuário: {str(usuario_creation_error)}"
+            )
+        
+        print(f"💾 Adicionando usuário à sessão do banco...")
         db.add(novo_usuario)
-        db.commit()
-        db.refresh(novo_usuario)
+        
+        print(f"💾 Fazendo commit no banco de dados...")
+        try:
+            db.commit()
+            print(f"✅ Commit realizado com sucesso")
+        except Exception as commit_error:
+            print(f"❌ Erro no commit: {commit_error}")
+            print(f"🔄 Fazendo rollback...")
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao salvar no banco de dados: {str(commit_error)}"
+            )
+        
+        print(f"🔄 Fazendo refresh do objeto usuário...")
+        try:
+            db.refresh(novo_usuario)
+            print(f"✅ Refresh realizado com sucesso")
+        except Exception as refresh_error:
+            print(f"❌ Erro no refresh: {refresh_error}")
+            # Refresh não é crítico, pode continuar
         
         print(f"✅ Usuário registrado com sucesso: {novo_usuario.nome} (ID: {novo_usuario.id})")
         

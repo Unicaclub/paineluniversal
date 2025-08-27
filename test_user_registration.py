@@ -6,8 +6,8 @@ Teste de registro de usuário para debug
 import requests
 import json
 
-# URL do backend - testar local primeiro
-API_BASE = "http://localhost:8000"
+# URL do backend - testar produção após push
+API_BASE = "https://backend-painel-universal-production.up.railway.app"
 
 def test_register():
     """Testar registro de usuário"""
