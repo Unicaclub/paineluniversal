@@ -437,6 +437,128 @@ except ImportError as e:
         vendas_por_hora: list = []
         produtos_mais_vendidos: list = []
         alertas: list = []
+    
+    # MEEP Schemas
+    class ClienteEventoBase(BaseModel):
+        cpf: str
+        nome_completo: str
+        nome_social: Optional[str] = None
+        data_nascimento: Optional[datetime] = None
+        nome_mae: Optional[str] = None
+        telefone: Optional[str] = None
+        email: Optional[str] = None
+        status: str = "ativo"
+        
+    class ClienteEventoCreate(ClienteEventoBase):
+        pass
+        
+    class ClienteEventoResponse(ClienteEventoBase):
+        id: int
+        criado_em: Optional[datetime] = None
+        atualizado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class ValidacaoAcessoBase(BaseModel):
+        evento_id: int
+        cliente_id: Optional[int] = None
+        cpf_hash: str
+        qr_code_data: str
+        cpf_digits: str
+        ip_address: Optional[str] = None
+        user_agent: Optional[str] = None
+        sucesso: bool = False
+        motivo_falha: Optional[str] = None
+        latitude: Optional[float] = None
+        longitude: Optional[float] = None
+        device_info: Optional[str] = None
+        
+    class ValidacaoAcessoResponse(ValidacaoAcessoBase):
+        id: int
+        timestamp_validacao: Optional[datetime] = None
+        criado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class EquipamentoEventoBase(BaseModel):
+        evento_id: int
+        nome: str
+        tipo: str
+        ip_address: str
+        mac_address: Optional[str] = None
+        status: str = "offline"
+        configuracao: Optional[str] = None
+        localizacao: Optional[str] = None
+        responsavel_id: Optional[int] = None
+        heartbeat_interval: int = 30
+        
+    class EquipamentoEventoCreate(EquipamentoEventoBase):
+        pass
+        
+    class EquipamentoEventoResponse(EquipamentoEventoBase):
+        id: int
+        ultima_atividade: Optional[datetime] = None
+        criado_em: Optional[datetime] = None
+        atualizado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class PrevisaoIABase(BaseModel):
+        evento_id: int
+        tipo_previsao: str
+        dados_entrada: str
+        resultado_previsao: str
+        confiabilidade: Optional[float] = None
+        aplicada: bool = False
+        feedback_real: Optional[str] = None
+        precisao_real: Optional[float] = None
+        
+    class PrevisaoIAResponse(PrevisaoIABase):
+        id: int
+        timestamp_previsao: Optional[datetime] = None
+        criado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class AnalyticsMEEPBase(BaseModel):
+        evento_id: int
+        metrica: str
+        valor: Optional[float] = None
+        valor_anterior: Optional[float] = None
+        percentual_mudanca: Optional[float] = None
+        periodo: Optional[str] = None
+        dados_detalhados: Optional[str] = None
+        alertas: Optional[str] = None
+        
+    class AnalyticsMEEPResponse(AnalyticsMEEPBase):
+        id: int
+        timestamp_coleta: Optional[datetime] = None
+        criado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class LogSegurancaMEEPBase(BaseModel):
+        evento_id: Optional[int] = None
+        tipo_evento: str
+        gravidade: str = "info"
+        ip_address: Optional[str] = None
+        user_agent: Optional[str] = None
+        dados_evento: str
+        usuario_id: Optional[int] = None
+        resolvido: bool = False
+        
+    class LogSegurancaMEEPResponse(LogSegurancaMEEPBase):
+        id: int
+        timestamp_evento: Optional[datetime] = None
+        criado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
 
 # Re-export para compatibilidade
 __all__ = [
@@ -509,4 +631,19 @@ __all__ = [
     "RankingGamificado",
     "DashboardGamificacao",
     "FiltrosRanking",
+    # MEEP Schemas
+    "ClienteEventoBase",
+    "ClienteEventoCreate",
+    "ClienteEventoResponse",
+    "ValidacaoAcessoBase",
+    "ValidacaoAcessoResponse",
+    "EquipamentoEventoBase",
+    "EquipamentoEventoCreate",
+    "EquipamentoEventoResponse",
+    "PrevisaoIABase",
+    "PrevisaoIAResponse",
+    "AnalyticsMEEPBase",
+    "AnalyticsMEEPResponse",
+    "LogSegurancaMEEPBase",
+    "LogSegurancaMEEPResponse",
 ]

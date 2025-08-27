@@ -126,7 +126,7 @@ async def get_validacoes_evento(
     limit: int = 50,
     sucesso: Optional[bool] = None,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Listar validações de acesso de um evento"""
     
@@ -155,7 +155,7 @@ async def get_equipamentos_evento(
     evento_id: int,
     incluir_offline: bool = False,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Listar equipamentos de um evento"""
     
@@ -197,7 +197,7 @@ async def get_equipamentos_evento(
 async def criar_equipamento(
     equipamento: EquipamentoEventoCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Registrar novo equipamento"""
     
@@ -234,7 +234,7 @@ async def get_previsoes_evento(
     tipo: Optional[str] = None,
     limit: int = 10,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Obter previsões de IA para um evento"""
     
@@ -271,7 +271,7 @@ async def get_logs_seguranca(
     page: int = 1,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Obter logs de segurança de um evento"""
     
@@ -318,7 +318,7 @@ async def criar_log_seguranca(
     gravidade: str = "info",
     dados_evento: dict = {},
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Criar log de segurança"""
     
@@ -341,7 +341,7 @@ async def get_stats_evento(
     evento_id: int,
     periodo: str = "7d",
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Estatísticas completas de um evento"""
     
@@ -419,7 +419,7 @@ async def get_stats_evento(
 async def get_cliente_by_cpf(
     cpf: str,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Buscar cliente por CPF"""
     
@@ -434,7 +434,7 @@ async def get_cliente_by_cpf(
 async def criar_cliente(
     cliente: ClienteEventoCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_atual)
 ):
     """Criar novo cliente"""
     
