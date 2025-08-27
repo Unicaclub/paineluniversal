@@ -114,15 +114,25 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             detail=f"Erro interno do servidor: {str(e)}"
         )
 
-@router.get("/me", response_model=UsuarioSchema)
+@router.get("/me")
 async def obter_usuario_atual_endpoint(
     current_user: Usuario = Depends(obter_usuario_atual),
     db: Session = Depends(get_db)
 ):
     """Obter dados do usuário atual"""
     try:
-        # current_user já é o objeto Usuario completo
-        return UsuarioSchema.model_validate(current_user)
+        # Retornar dict manual com todos os campos para garantir que funcionem
+        return {
+            "id": current_user.id,
+            "cpf": current_user.cpf,
+            "nome": current_user.nome,
+            "email": current_user.email,
+            "telefone": current_user.telefone,
+            "tipo": current_user.tipo.value if current_user.tipo else None,
+            "ativo": current_user.ativo,
+            "ultimo_login": current_user.ultimo_login,
+            "criado_em": current_user.criado_em
+        }
     except Exception as e:
         print(f"Erro ao buscar usuário atual: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
