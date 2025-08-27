@@ -32,11 +32,15 @@ RUN adduser --disabled-password --gecos '' appuser
 # Copy backend source code
 COPY --chown=appuser:appuser backend/ .
 
-# Create startup script inline (para evitar problemas de path)
+# Create migrations directory if it doesn't exist
+RUN mkdir -p app/migrations
+
+# Create startup script with migration check
 RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'export PORT=${PORT:-8000}' >> /app/start.sh && \
     echo 'echo "🚀 Starting Backend on port $PORT"' >> /app/start.sh && \
     echo 'echo "PYTHONPATH: $PYTHONPATH"' >> /app/start.sh && \
+    echo 'echo "🔧 Sistema com migração automática integrada"' >> /app/start.sh && \
     echo 'sleep 2' >> /app/start.sh && \
     echo 'exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --access-log --log-level info' >> /app/start.sh && \
     chmod +x /app/start.sh

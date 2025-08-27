@@ -11,6 +11,7 @@ import os
 import logging
 import traceback
 from typing import Callable
+import time
 
 from .database import engine, get_db
 from .models import Base
@@ -19,6 +20,7 @@ from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
 from .websocket import manager
+from .migrations.auto_migrate import run_auto_migration, deploy_monitor
 
 Base.metadata.create_all(bind=engine)
 
@@ -187,6 +189,38 @@ app.add_middleware(LoggingMiddleware)
 
 # Inicializar scheduler
 start_scheduler()
+
+@app.on_event("startup")
+async def startup_event():
+    """Eventos executados no startup da aplicação"""
+    logger.info("🚀 Iniciando Sistema de Gestão de Eventos...")
+    
+    # Log de informações do deploy
+    deploy_monitor.log_startup_info()
+    
+    # Executar migração automática
+    logger.info("🔧 Verificando necessidade de migração automática...")
+    migration_start = time.time()
+    migration_success = run_auto_migration()
+    migration_duration = time.time() - migration_start
+    
+    # Log do resultado da migração
+    deploy_monitor.log_migration_status(migration_success, migration_duration)
+    
+    if migration_success:
+        logger.info("✅ Migração automática concluída com sucesso")
+    else:
+        logger.warning("⚠️ Migração automática falhou, aplicação continuará")
+    
+    # Outras inicializações...
+    logger.info("🎉 Sistema iniciado com sucesso!")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Eventos executados no shutdown da aplicação"""
+    logger.info("🛑 Encerrando Sistema de Gestão de Eventos...")
+    # Cleanup adicional se necessário
+    logger.info("✅ Sistema encerrado com sucesso")
 
 # 📡 ROTAS COM CORS EXPLÍCITO
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
