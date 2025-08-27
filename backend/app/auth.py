@@ -10,15 +10,45 @@ from .models import Usuario
 from .schemas import TokenData
 import secrets
 import string
+import os
+import time
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 🔧 OTIMIZAÇÃO: bcrypt configurado para produção (rounds reduzidos para performance)
+is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
+bcrypt_rounds = 10 if is_production else 12  # Produção usa menos rounds para evitar timeout
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__rounds=bcrypt_rounds
+)
 security = HTTPBearer()
 
 def verificar_senha(senha_plana: str, senha_hash: str) -> bool:
-    return pwd_context.verify(senha_plana, senha_hash)
+    """Verificar senha com timing logging"""
+    start_time = time.time()
+    result = pwd_context.verify(senha_plana, senha_hash)
+    duration = time.time() - start_time
+    
+    if duration > 1.0:  # Log se demorar mais de 1 segundo
+        print(f"⚠️ Verificação de senha lenta: {duration:.2f}s")
+    
+    return result
 
 def gerar_hash_senha(senha: str) -> str:
-    return pwd_context.hash(senha)
+    """Gerar hash de senha com otimização para produção"""
+    start_time = time.time()
+    print(f"🔐 Gerando hash da senha (rounds: {bcrypt_rounds})...")
+    
+    hash_result = pwd_context.hash(senha)
+    
+    duration = time.time() - start_time
+    print(f"✅ Hash gerado em {duration:.2f}s (length: {len(hash_result)})")
+    
+    if duration > 5.0:  # Alertar se demorar mais de 5 segundos
+        print(f"⚠️ Hash da senha muito lento: {duration:.2f}s - considere reduzir rounds")
+    
+    return hash_result
 
 def gerar_codigo_verificacao() -> str:
     """Gera código de 6 dígitos para autenticação multi-fator"""

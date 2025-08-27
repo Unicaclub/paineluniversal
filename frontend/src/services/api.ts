@@ -65,7 +65,7 @@ export const publicApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000, // 60 segundos para operações públicas como registro
+  timeout: 90000, // 90 segundos para operações públicas (incluindo registro com bcrypt)
   withCredentials: false, // Explicitamente desabilitar credentials
 });
 
@@ -304,9 +304,19 @@ export const authService = {
         tipo: data.tipo || 'cliente'
       };
       
-      const response = await publicApi.post('/api/auth/register', userData);
+      // 🚀 OTIMIZAÇÃO: Timeout aumentado e request otimizado para registro
+      const startTime = Date.now();
+      console.log('⏱️ Enviando requisição de registro...');
       
-      console.log('✅ Usuário registrado com sucesso:', {
+      const response = await publicApi.post('/api/auth/register', userData, {
+        timeout: 90000, // 90 segundos especificamente para registro
+        onUploadProgress: (progressEvent) => {
+          console.log('📤 Enviando dados...', progressEvent.loaded, '/', progressEvent.total);
+        }
+      });
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ Usuário registrado com sucesso em ${duration}ms:`, {
         id: response.data.id,
         nome: response.data.nome,
         email: response.data.email
@@ -317,10 +327,12 @@ export const authService = {
     } catch (error: any) {
       console.error('❌ Erro no registro:', error);
       
-      // Verificar se é erro de rede/timeout
+      // 🔧 MELHOR TRATAMENTO DE TIMEOUT
       if (!error.response) {
-        if (error.code === 'ECONNABORTED') {
-          throw new Error('Timeout: O servidor demorou muito para responder. Tente novamente.');
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+          throw new Error('O servidor está processando sua solicitação. Isso pode levar alguns momentos devido à criptografia da senha. Aguarde ou tente novamente.');
+        } else if (error.message?.includes('Network Error')) {
+          throw new Error('Erro de conexão: Verifique sua internet e tente novamente.');
         } else {
           throw new Error('Erro de conexão: Verifique sua internet e tente novamente.');
         }
@@ -333,7 +345,7 @@ export const authService = {
       } else if (error.response.status === 409) {
         throw new Error('CPF ou email já cadastrado');
       } else if (error.response.status >= 500) {
-        throw new Error('Erro no servidor. Tente novamente em alguns instantes.');
+        throw new Error('Erro no servidor. O sistema está processando muitas solicitações. Tente novamente em alguns instantes.');
       }
       
       // Erro genérico

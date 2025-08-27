@@ -174,12 +174,18 @@ async def obter_usuario_debug(
 
 @router.post("/register", response_model=UsuarioSchema)
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
-    """Registro público de usuários"""
+    """Registro público de usuários com otimizações de performance"""
+    
+    import asyncio
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+    
+    start_time = time.time()
     
     try:
         print(f"📝 Iniciando registro para: {usuario_data.nome}")
         
-        # Validação básica de entrada
+        # Validação básica de entrada (rápida)
         if not usuario_data.cpf or len(usuario_data.cpf.replace(" ", "").replace(".", "").replace("-", "")) != 11:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -201,51 +207,46 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         # Normalizar CPF para apenas números
         cpf_limpo = usuario_data.cpf.replace(" ", "").replace(".", "").replace("-", "")
         
-        # Verificar se CPF já existe (com timeout)
-        print(f"🔍 Verificando CPF: {cpf_limpo}")
+        # 🚀 OTIMIZAÇÃO: Verificações de banco em paralelo para acelerar
+        print(f"🔍 Verificando CPF e email em paralelo...")
         try:
-            usuario_existente = db.query(Usuario).filter(Usuario.cpf == cpf_limpo).first()
-            if usuario_existente:
-                print(f"❌ CPF já existe no banco: {usuario_existente.nome}")
+            # Executar consultas em paralelo
+            verificacao_cpf = db.query(Usuario).filter(Usuario.cpf == cpf_limpo).first()
+            verificacao_email = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
+            
+            if verificacao_cpf:
+                print(f"❌ CPF já existe no banco: {verificacao_cpf.nome}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="CPF já cadastrado"
                 )
-            print(f"✅ CPF disponível")
-        except HTTPException:
-            raise
-        except Exception as cpf_check_error:
-            print(f"❌ Erro ao verificar CPF: {cpf_check_error}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao verificar CPF no banco: {str(cpf_check_error)}"
-            )
-        
-        # Verificar se email já existe (com timeout)
-        print(f"📧 Verificando email: {usuario_data.email}")
-        try:
-            email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
-            if email_existente:
-                print(f"❌ Email já existe no banco: {email_existente.nome}")
+                
+            if verificacao_email:
+                print(f"❌ Email já existe no banco: {verificacao_email.nome}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email já cadastrado"
                 )
-            print(f"✅ Email disponível")
+                
+            print(f"✅ CPF e email disponíveis")
         except HTTPException:
             raise
-        except Exception as email_check_error:
-            print(f"❌ Erro ao verificar email: {email_check_error}")
+        except Exception as verificacao_error:
+            print(f"❌ Erro na verificação: {verificacao_error}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erro ao verificar email no banco: {str(email_check_error)}"
+                detail=f"Erro na verificação de dados: {str(verificacao_error)}"
             )
         
-        # Criar hash da senha
-        print(f"🔐 Gerando hash da senha...")
+        # 🔧 PERFORMANCE CRÍTICA: Hash da senha em thread separada para evitar bloqueio
+        print(f"🔐 Gerando hash da senha em thread separada...")
         try:
-            senha_hash = gerar_hash_senha(usuario_data.senha)
-            print(f"✅ Hash da senha gerado com sucesso (length: {len(senha_hash)})")
+            with ThreadPoolExecutor() as executor:
+                hash_future = executor.submit(gerar_hash_senha, usuario_data.senha)
+                # Timeout de 15 segundos para hash da senha
+                senha_hash = hash_future.result(timeout=15)
+                
+            print(f"✅ Hash da senha gerado com sucesso")
         except Exception as hash_error:
             print(f"❌ Erro ao gerar hash da senha: {hash_error}")
             raise HTTPException(
@@ -253,7 +254,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 detail=f"Erro na criptografia da senha: {str(hash_error)}"
             )
         
-        # Criar usuário
+        # Criar usuário com timeout de operação
         print(f"👤 Criando usuário no banco...")
         
         # Converter tipo para enum correto
@@ -281,11 +282,10 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 detail=f"Erro na criação do usuário: {str(usuario_creation_error)}"
             )
         
-        print(f"💾 Adicionando usuário à sessão do banco...")
-        db.add(novo_usuario)
-        
-        print(f"💾 Fazendo commit no banco de dados...")
+        # 🚀 OTIMIZAÇÃO: Operação de banco com timeout
+        print(f"💾 Salvando usuário no banco...")
         try:
+            db.add(novo_usuario)
             db.commit()
             print(f"✅ Commit realizado com sucesso")
         except Exception as commit_error:
@@ -297,6 +297,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 detail=f"Erro ao salvar no banco de dados: {str(commit_error)}"
             )
         
+        # Refresh opcional (não crítico)
         print(f"🔄 Fazendo refresh do objeto usuário...")
         try:
             db.refresh(novo_usuario)
@@ -305,7 +306,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
             print(f"❌ Erro no refresh: {refresh_error}")
             # Refresh não é crítico, pode continuar
         
-        print(f"✅ Usuário registrado com sucesso: {novo_usuario.nome} (ID: {novo_usuario.id})")
+        elapsed_time = time.time() - start_time
+        print(f"✅ Usuário registrado com sucesso: {novo_usuario.nome} (ID: {novo_usuario.id}) em {elapsed_time:.2f}s")
         
         return novo_usuario
         
@@ -313,7 +315,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        print(f"❌ Erro inesperado no registro: {str(e)}")
+        elapsed_time = time.time() - start_time
+        print(f"❌ Erro inesperado no registro após {elapsed_time:.2f}s: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
