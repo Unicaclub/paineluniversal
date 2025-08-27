@@ -212,8 +212,30 @@ const ProductsList: React.FC = () => {
       };
 
       if (editingProduct) {
+        // Validar ID antes da conversão
+        const productId = editingProduct.id;
+        if (!productId) {
+          throw new Error('ID do produto não encontrado');
+        }
+        
+        // Conversão mais segura do ID
+        let numericId: number;
+        if (typeof productId === 'string') {
+          numericId = parseInt(productId, 10);
+          if (isNaN(numericId) || numericId <= 0) {
+            throw new Error(`ID do produto inválido: "${productId}"`);
+          }
+        } else if (typeof productId === 'number') {
+          numericId = productId;
+          if (isNaN(numericId) || numericId <= 0) {
+            throw new Error(`ID do produto inválido: ${productId}`);
+          }
+        } else {
+          throw new Error(`Tipo de ID do produto inválido: ${typeof productId}`);
+        }
+        
         // Atualizar produto existente
-        await produtoService.update(parseInt(editingProduct.id), produtoData);
+        await produtoService.update(numericId, produtoData);
         toast({
           title: "Sucesso",
           description: "Produto atualizado com sucesso!",
