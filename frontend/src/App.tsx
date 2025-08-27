@@ -25,6 +25,7 @@ import CategoriasList from './components/produtos/CategoriasList';
 import AgendamentosList from './components/produtos/AgendamentosList';
 import ImportExportModule from './components/produtos/ImportExportModule';
 import { MEEPDashboard, MEEPAnalytics, MEEPValidacaoCPF, MEEPEquipamentos } from './components/meep';
+import DiagnosticPage from './pages/DiagnosticPage';
 import './App.css';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<PublicRegisterPage />} />
+            <Route path="/diagnostic" element={<DiagnosticPage />} />
             <Route
               path="/app/*"
               element={

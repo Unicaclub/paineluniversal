@@ -119,24 +119,48 @@ console.log('🔍 API Configuration:', {
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   
-  // 🔍 LOG DA REQUISIÇÃO
-  console.log('🚀 API Request:', {
-    method: config.method?.toUpperCase(),
-    url: config.url,
-    baseURL: config.baseURL,
-    fullURL: `${config.baseURL}${config.url}`,
-    headers: config.headers
-  });
+  // Limpar e validar token
+  if (token && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
+    const cleanToken = token.trim();
+    config.headers.Authorization = `Bearer ${cleanToken}`;
+    
+    // 🔍 LOG DA REQUISIÇÃO COM TOKEN
+    console.log('🚀 API Request (Authenticated):', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      hasToken: true,
+      tokenLength: cleanToken.length,
+      tokenPreview: cleanToken.substring(0, 20) + '...'
+    });
+  } else {
+    // 🔍 LOG DA REQUISIÇÃO SEM TOKEN
+    console.log('🚀 API Request (Unauthenticated):', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      hasToken: false,
+      tokenStatus: token ? 'invalid' : 'missing'
+    });
+  }
   
   return config;
 });
 
 api.interceptors.response.use(
   (response) => {
+    // Log de sucesso
+    console.log('✅ API Response Success:', {
+      method: response.config.method?.toUpperCase(),
+      url: response.config.url,
+      status: response.status,
+      dataType: typeof response.data,
+      hasData: !!response.data
+    });
+    
     // Verificar se a resposta tem conteúdo válido
     if (response.config.responseType === 'json' || !response.config.responseType) {
       const contentType = response.headers['content-type'] || '';
@@ -152,18 +176,30 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API Error:', {
+    console.error('❌ API Error Details:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
       baseURL: error.config?.baseURL,
-      message: error.message
+      method: error.config?.method?.toUpperCase(),
+      message: error.message,
+      detail: error.response?.data?.detail,
+      hasToken: !!error.config?.headers?.Authorization
     });
 
     if (error.response?.status === 401) {
+      console.warn('🔑 Token inválido ou expirado, limpando autenticação...');
+      
+      // Limpar dados de autenticação
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
-      window.location.href = '/login';
+      
+      // Só redirecionar se não estiver já na página de login
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        console.log('🔄 Redirecionando para login...');
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);
