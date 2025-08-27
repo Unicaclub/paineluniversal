@@ -153,6 +153,12 @@ class Usuario(UsuarioBase):
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
+    # Explicitamente incluir campos do UsuarioBase para garantir serialização
+    cpf: str
+    nome: str
+    email: EmailStr
+    telefone: Optional[str] = None
+    tipo: TipoUsuario
     
     class Config:
         from_attributes = True
