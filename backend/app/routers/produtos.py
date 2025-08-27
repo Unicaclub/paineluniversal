@@ -85,9 +85,9 @@ async def criar_produto(
                     detail="Já existe um produto com este código interno"
                 )
         
-        # ✅ Criar produto global (evento_id = None)
+        # ✅ Criar produto global (sem evento_id)
         produto_data = produto.dict()
-        produto_data['evento_id'] = None  # Forçar produtos globais
+        # evento_id removido - produtos são globais
         db_produto = Produto(**produto_data)
         
         db.add(db_produto)

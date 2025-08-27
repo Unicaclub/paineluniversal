@@ -238,13 +238,13 @@ class Produto(Base):
     status = Column(Enum(StatusProduto), default=StatusProduto.ATIVO)
     categoria = Column(String(100))  # Campo principal para categoria
     imagem_url = Column(String(500))
-    evento_id = Column(Integer, ForeignKey("eventos.id"), nullable=True)  # ✅ Adicionado como opcional
+    # evento_id REMOVIDO - produtos são globais, não atrelados a eventos específicos
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     criado_em = Column(DateTime(timezone=True), server_default=func.now())
     atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
     
     empresa = relationship("Empresa")
-    evento = relationship("Evento")  # ✅ Adicionado relacionamento opcional
+    # evento relationship REMOVIDO - produtos não são mais vinculados a eventos
     itens_venda = relationship("ItemVendaPDV", back_populates="produto")
     movimentos_estoque = relationship("MovimentoEstoque", back_populates="produto")
 

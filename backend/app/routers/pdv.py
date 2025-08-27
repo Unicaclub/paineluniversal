@@ -38,9 +38,9 @@ async def criar_produto(
         import uuid
         produto.codigo_interno = f"PROD{datetime.now().strftime('%Y%m%d%H%M%S')}{str(uuid.uuid4())[:8].upper()}"
     
-    # ✅ Criar produto global (evento_id = None)
+    # ✅ Criar produto global (sem evento_id)
     produto_data = produto.model_dump()
-    produto_data['evento_id'] = None  # Forçar produtos globais
+    # evento_id removido - produtos são globais
     
     db_produto = Produto(
         **produto_data,
@@ -74,10 +74,8 @@ async def listar_produtos(
             detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
-    # ✅ Incluir produtos específicos do evento E produtos globais (evento_id = NULL)
-    query = db.query(Produto).filter(
-        or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
-    )
+    # ✅ Buscar todos os produtos (agora todos são globais)
+    query = db.query(Produto)
     
     if categoria:
         query = query.filter(Produto.categoria == categoria)
@@ -534,7 +532,7 @@ async def obter_dashboard_pdv(
     
     produtos_em_falta = db.query(func.count(Produto.id)).filter(
         and_(
-            or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None)),  # ✅ Incluir produtos globais
+            # evento_id removido - todos os produtos são globais agora
             Produto.controla_estoque == True,
             Produto.estoque_atual <= Produto.estoque_minimo
         )
