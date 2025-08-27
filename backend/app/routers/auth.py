@@ -116,15 +116,13 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UsuarioSchema)
 async def obter_usuario_atual_endpoint(
-    current_user: dict = Depends(obter_usuario_atual),
+    current_user: Usuario = Depends(obter_usuario_atual),
     db: Session = Depends(get_db)
 ):
     """Obter dados do usuário atual"""
     try:
-        usuario = db.query(Usuario).filter(Usuario.cpf == current_user["sub"]).first()
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
-        return UsuarioSchema.model_validate(usuario)
+        # current_user já é o objeto Usuario completo
+        return UsuarioSchema.model_validate(current_user)
     except Exception as e:
         print(f"Erro ao buscar usuário atual: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")

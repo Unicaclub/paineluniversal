@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from ..database import get_db
-from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, TipoUsuario
+from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, TipoUsuario, StatusTransacao
 from ..schemas import (
     Evento as EventoSchema, 
     EventoCreate, 
@@ -366,12 +366,12 @@ async def obter_evento_detalhado(
     
     total_vendas = db.query(func.count(Transacao.id)).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).scalar() or 0
     
     receita_total = db.query(func.sum(Transacao.valor)).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).scalar() or Decimal('0.00')
     
     total_checkins = db.query(func.count(Checkin.id)).filter(
@@ -559,7 +559,7 @@ async def obter_status_financeiro(
         Transacao, Transacao.lista_id == Lista.id
     ).filter(
         Lista.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).group_by(Lista.id, Lista.nome, Lista.tipo, Lista.preco).all()
     
     vendas_por_promoter = db.query(
@@ -572,7 +572,7 @@ async def obter_status_financeiro(
         Transacao, Transacao.lista_id == Lista.id
     ).filter(
         Lista.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).group_by(Usuario.id, Usuario.nome).all()
     
     total_receita = sum(row.receita or 0 for row in vendas_por_lista)
@@ -706,12 +706,12 @@ async def exportar_evento_pdf(
     
     total_vendas = db.query(func.count(Transacao.id)).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).scalar() or 0
     
     receita_total = db.query(func.sum(Transacao.valor)).filter(
         Transacao.evento_id == evento_id,
-        Transacao.status == "aprovada"
+        Transacao.status == StatusTransacao.APROVADA
     ).scalar() or Decimal('0.00')
     
     y_position -= 30
