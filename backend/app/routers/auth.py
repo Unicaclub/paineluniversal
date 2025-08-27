@@ -127,6 +127,41 @@ async def obter_usuario_atual_endpoint(
         print(f"Erro ao buscar usuário atual: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
+@router.get("/me-debug")
+async def obter_usuario_debug(
+    current_user: Usuario = Depends(obter_usuario_atual),
+    db: Session = Depends(get_db)
+):
+    """Endpoint para debug - retorna dados completos do usuário"""
+    try:
+        # Retornar dict manual com todos os campos
+        user_data = {
+            "id": current_user.id,
+            "cpf": current_user.cpf,
+            "nome": current_user.nome,
+            "email": current_user.email,
+            "telefone": current_user.telefone,
+            "tipo": current_user.tipo.value if current_user.tipo else None,
+            "ativo": current_user.ativo,
+            "ultimo_login": current_user.ultimo_login.isoformat() if current_user.ultimo_login else None,
+            "criado_em": current_user.criado_em.isoformat() if current_user.criado_em else None
+        }
+        
+        return {
+            "success": True,
+            "message": "Debug schema - todos os campos",
+            "user_data": user_data,
+            "schema_status": {
+                "cpf_present": user_data["cpf"] is not None,
+                "tipo_present": user_data["tipo"] is not None,
+                "expected_tipo": "admin",
+                "actual_tipo": user_data["tipo"]
+            }
+        }
+    except Exception as e:
+        print(f"Erro no debug: {e}")
+        return {"error": str(e)}
+
 @router.post("/register", response_model=UsuarioSchema)
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
     """Registro público de usuários"""

@@ -148,17 +148,17 @@ class UsuarioRegister(BaseModel):
             raise ValueError('CPF deve ter 11 dígitos')
         return cpf  # Manter apenas os números para o registro público
 
-class Usuario(UsuarioBase):
+class Usuario(BaseModel):
+    # Campos básicos do usuário
     id: int
-    ativo: bool
-    ultimo_login: Optional[datetime] = None
-    criado_em: datetime
-    # Explicitamente incluir campos do UsuarioBase para garantir serialização
     cpf: str
     nome: str
     email: EmailStr
     telefone: Optional[str] = None
     tipo: TipoUsuario
+    ativo: bool
+    ultimo_login: Optional[datetime] = None
+    criado_em: datetime
     
     class Config:
         from_attributes = True

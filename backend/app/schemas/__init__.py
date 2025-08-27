@@ -59,6 +59,9 @@ try:
         CupomUpdate,
     )
     
+    # Import adicionais dos models
+    from app.models import TipoUsuario, StatusTransacao, StatusEvento
+    
 except ImportError as e:
     # Fallback: definir schemas básicos necessários
     from pydantic import BaseModel
