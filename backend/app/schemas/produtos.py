@@ -70,7 +70,7 @@ class ProdutoBase(BaseModel):
     controla_estoque: Optional[bool] = Field(True, description="Se controla estoque")
     status: Optional[StatusProdutoEnum] = Field(StatusProdutoEnum.ATIVO, description="Status do produto")
     imagem_url: Optional[str] = Field(None, max_length=500, description="URL da imagem")
-    evento_id: Optional[int] = Field(None, description="ID do evento (opcional)")  # ✅ Adicionado como opcional
+    # evento_id removido do schema frontend - produtos são globais
 
     @validator('nome')
     def validar_nome(cls, v):

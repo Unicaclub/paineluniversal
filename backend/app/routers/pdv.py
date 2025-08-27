@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_
+from sqlalchemy import func, desc, and_, or_
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
@@ -28,11 +28,9 @@ async def criar_produto(
     db: Session = Depends(get_db),
     usuario_atual = Depends(verificar_permissao_admin)
 ):
-    """Criar novo produto"""
+    """Criar novo produto (global, não atrelado a evento)"""
     
-    evento = db.query(Evento).filter(Evento.id == produto.evento_id).first()
-    if not evento:
-        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    # ✅ Produtos agora são globais - sem validação de evento obrigatório
     
     # Role-based permission check handled by verificar_permissao_admin
     
@@ -40,8 +38,12 @@ async def criar_produto(
         import uuid
         produto.codigo_interno = f"PROD{datetime.now().strftime('%Y%m%d%H%M%S')}{str(uuid.uuid4())[:8].upper()}"
     
+    # ✅ Criar produto global (evento_id = None)
+    produto_data = produto.model_dump()
+    produto_data['evento_id'] = None  # Forçar produtos globais
+    
     db_produto = Produto(
-        **produto.model_dump(),
+        **produto_data,
         status=StatusProduto.ATIVO
     )
     
@@ -60,7 +62,7 @@ async def listar_produtos(
     db: Session = Depends(get_db),
     usuario_atual = Depends(obter_usuario_atual)
 ):
-    """Listar produtos do evento"""
+    """Listar produtos do evento (incluindo produtos globais)"""
     
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
     if not evento:
@@ -72,7 +74,10 @@ async def listar_produtos(
             detail="Acesso negado: apenas admins e promoters podem acessar este recurso"
         )
     
-    query = db.query(Produto).filter(Produto.evento_id == evento_id)
+    # ✅ Incluir produtos específicos do evento E produtos globais (evento_id = NULL)
+    query = db.query(Produto).filter(
+        or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
+    )
     
     if categoria:
         query = query.filter(Produto.categoria == categoria)
@@ -529,7 +534,7 @@ async def obter_dashboard_pdv(
     
     produtos_em_falta = db.query(func.count(Produto.id)).filter(
         and_(
-            Produto.evento_id == evento_id,
+            or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None)),  # ✅ Incluir produtos globais
             Produto.controla_estoque == True,
             Produto.estoque_atual <= Produto.estoque_minimo
         )

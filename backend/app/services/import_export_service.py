@@ -408,8 +408,10 @@ class ImportExportService:
     
     async def preview_export(self, config: ConfiguracaoExportacao, evento_id: int) -> PreviewExportacao:
         """Gerar preview da exportação"""
-        # Construir query base
-        query = self.db.query(Produto).filter(Produto.evento_id == evento_id)
+        # Construir query base - incluir produtos específicos do evento E produtos globais
+        query = self.db.query(Produto).filter(
+            or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
+        )
         
         # Aplicar filtros
         if config.filtros:
@@ -525,8 +527,10 @@ class ImportExportService:
         self.db.commit()
         
         try:
-            # Buscar dados
-            query = self.db.query(Produto).filter(Produto.evento_id == evento_id)
+            # Buscar dados - incluir produtos específicos do evento E produtos globais
+            query = self.db.query(Produto).filter(
+                or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
+            )
             
             if config.filtros:
                 query = self._apply_export_filters(query, config.filtros)
@@ -691,10 +695,10 @@ class ImportExportService:
             )
         ).count()
         
-        # Produtos atualizados hoje
+        # Produtos atualizados hoje - incluir produtos específicos do evento E produtos globais
         produtos_atualizados = self.db.query(Produto).filter(
             and_(
-                Produto.evento_id == evento_id,
+                or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None)),
                 func.date(Produto.atualizado_em) == today
             )
         ).count()

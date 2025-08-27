@@ -305,7 +305,7 @@ export interface ProdutoCreate {
   ipi?: number;
   observacoes?: string;
   imagem_url?: string;
-  evento_id?: number;
+  // evento_id removido - produtos são globais, não atrelados a eventos
   empresa_id?: number;
 }
 

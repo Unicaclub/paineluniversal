@@ -72,7 +72,7 @@ async def criar_produto(
     produto: ProdutoCreate,
     db: Session = Depends(get_db)
 ):
-    """Criar novo produto"""
+    """Criar novo produto (global, não atrelado a evento)"""
     try:
         # Verificar código interno único se fornecido
         if produto.codigo_interno:
@@ -85,15 +85,16 @@ async def criar_produto(
                     detail="Já existe um produto com este código interno"
                 )
         
-        # Criar produto
+        # ✅ Criar produto global (evento_id = None)
         produto_data = produto.dict()
+        produto_data['evento_id'] = None  # Forçar produtos globais
         db_produto = Produto(**produto_data)
         
         db.add(db_produto)
         db.commit()
         db.refresh(db_produto)
         
-        logger.info(f"Produto criado: {db_produto.nome} (ID: {db_produto.id})")
+        logger.info(f"Produto global criado: {db_produto.nome} (ID: {db_produto.id})")
         return db_produto
         
     except HTTPException:
