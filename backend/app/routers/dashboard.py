@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from ..database import get_db
-from ..models import Evento, Transacao, Checkin, Usuario, Lista, PromoterEvento, StatusTransacao
+from ..models import Evento, Transacao, Checkin, Usuario, Lista, PromoterEvento, StatusTransacao, TipoUsuario
 from ..schemas import DashboardResumo, RankingPromoter, DashboardAvancado, FiltrosDashboard, RankingPromoterAvancado, DadosGrafico
 from ..auth import obter_usuario_atual
 
@@ -71,7 +71,7 @@ async def obter_ranking_promoters(
         Transacao, Transacao.lista_id == Lista.id
     ).filter(
         Transacao.status == StatusTransacao.APROVADA,
-        Usuario.tipo == "promoter"
+        Usuario.tipo == TipoUsuario.PROMOTER
     )
     
     # Role-based filtering removed - promoters and admins have access to all data
@@ -319,7 +319,7 @@ async def obter_dashboard_avancado(
     ).count()
     
     inadimplentes = transacoes_query.filter(
-        Transacao.status == "pendente"
+        Transacao.status == StatusTransacao.PENDENTE
     ).count()
     
     aniversariantes_mes = 0
@@ -480,7 +480,7 @@ async def obter_ranking_promoters_avancado(
         Checkin, Transacao.cpf_comprador == Checkin.cpf
     ).filter(
         Transacao.status == StatusTransacao.APROVADA,
-        Usuario.tipo == "promoter"
+        Usuario.tipo == TipoUsuario.PROMOTER
     )
     
     # Role-based filtering removed - promoters and admins have access to all data
