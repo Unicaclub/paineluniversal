@@ -1,5 +1,35 @@
 import axios from 'axios';
 
+// 🔄 IMPORTAR TIPOS DO ARQUIVO CENTRALIZADO
+import type {
+  LoginRequest,
+  Token,
+  Usuario,
+  UsuarioCreate,
+  Empresa,
+  EmpresaCreate,
+  Evento,
+  EventoCreate,
+  Lista,
+  ListaCreate,
+  Transacao,
+  TransacaoCreate,
+  Checkin,
+  CheckinCreate,
+  Produto as ProdutoType,
+  ProdutoCreate as ProdutoCreateType,
+  CategoriaProduto as CategoriaType,
+  CategoriaCreate as CategoriaCreateType,
+  ApiResponse,
+  PaginatedResponse
+} from '../types/database';
+
+// Aliases para compatibilidade
+type Categoria = CategoriaType;
+type CategoriaCreate = CategoriaCreateType;
+type Produto = ProdutoType;
+type ProdutoCreate = ProdutoCreateType;
+
 // Configuração da URL da API baseada no ambiente
 const getApiBaseUrl = () => {
   // Detectar se está em produção pela URL ou variável de ambiente
@@ -139,66 +169,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Interfaces
-export interface LoginRequest {
-  cpf: string;
-  senha: string;
-  codigo_verificacao?: string;
-}
-
-export interface Usuario {
-  id?: number;
-  cpf: string;
-  nome: string;
-  email: string;
-  telefone?: string;
-  tipo: 'admin' | 'promoter' | 'cliente';
-  ativo?: boolean;
-  criado_em?: string;
-  ultimo_login?: string;
-}
-
-export interface Token {
-  access_token: string;
-  token_type: string;
-  usuario: Usuario;
-}
-
-export interface Empresa {
-  id?: number;
-  nome: string;
-  cnpj: string;
-  email: string;
-  telefone?: string;
-  endereco?: string;
-  ativa?: boolean;
-}
-
-export interface Evento {
-  id?: number;
-  nome: string;
-  descricao?: string;
-  data_evento: string;
-  local: string;
-  endereco?: string;
-  limite_idade?: number;
-  capacidade_maxima?: number;
-  status?: string;
-  empresa_id?: number;  // Agora opcional
-  criador_id?: number;
-}
-
-export interface EventoCreate {
-  nome: string;
-  descricao?: string;
-  data_evento: string;
-  local: string;
-  endereco?: string;
-  limite_idade: number;
-  capacidade_maxima?: number;
-  empresa_id?: number;
-}
 
 // Serviços de autenticação
 export const authService = {
@@ -654,77 +624,6 @@ export const pdvService = {
   }
 };
 
-// Interfaces para produtos
-export interface Categoria {
-  id?: number;
-  nome: string;
-  descricao?: string;
-  cor?: string;
-  ativo?: boolean;
-  criado_em?: string;
-  atualizado_em?: string;
-}
-
-export interface CategoriaCreate {
-  nome: string;
-  descricao?: string;
-  cor?: string;
-  evento_id?: number;
-}
-
-export interface Produto {
-  id?: number;
-  nome: string;
-  descricao?: string;
-  tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
-  valor: number; // Manter consistente com types/produto.ts
-  codigo?: string; // Manter consistente com types/produto.ts
-  categoria_id?: number;
-  categoria?: Categoria;
-  codigo_barras?: string;
-  estoque_atual?: number;
-  destaque?: boolean;
-  habilitado?: boolean;
-  promocional?: boolean;
-  ativo?: boolean;
-  created_at?: Date;
-  updated_at?: Date;
-  // Campos adicionais
-  marca?: string;
-  fornecedor?: string;
-  preco_custo?: number;
-  margem_lucro?: number;
-  unidade_medida?: string;
-  volume?: number;
-  teor_alcoolico?: number;
-  temperatura_ideal?: string;
-  validade_dias?: number;
-  ncm?: string;
-  cfop?: string;
-  cest?: string;
-  icms?: number;
-  ipi?: number;
-  observacoes?: string;
-  imagem_url?: string;
-  evento_id?: number;
-  empresa_id?: number;
-}
-
-export interface ProdutoCreate {
-  nome: string;
-  descricao?: string;
-  tipo: 'BEBIDA' | 'COMIDA' | 'INGRESSO' | 'FICHA' | 'COMBO' | 'VOUCHER';
-  preco: number;
-  categoria?: string; // Categoria como string
-  codigo_interno?: string;
-  estoque_atual?: number;
-  estoque_minimo?: number;
-  estoque_maximo?: number;
-  controla_estoque?: boolean;
-  status?: 'ATIVO' | 'INATIVO' | 'ESGOTADO';
-  imagem_url?: string;
-}
-
 // Serviços de categorias
 export const categoriaService = {
   async getAll(eventoId?: number): Promise<Categoria[]> {
@@ -774,29 +673,20 @@ export const produtoService = {
     
     // Transformar dados da API para o formato frontend
     return produtosApi.map((produto: any) => ({
-      id: produto.id?.toString() || '',
+      id: produto.id,
       nome: produto.nome,
-      codigo: produto.codigo_interno || produto.codigo || '',
       tipo: produto.tipo,
-      categoria_id: produto.categoria_id?.toString() || '',
-      categoria: produto.categoria_produto ? {
-        id: produto.categoria_produto.id?.toString(),
-        nome: produto.categoria_produto.nome,
-        mostrar_dashboard: true,
-        mostrar_pos: true,
-        ordem: 1,
-        created_at: new Date(),
-        updated_at: new Date()
-      } : undefined,
-      ncm: produto.ncm || '',
-      cfop: produto.cfop || '',
-      cest: produto.cest || '',
-      valor: produto.preco || produto.valor || 0,
+      preco: produto.preco || produto.valor || 0,
+      codigo_interno: produto.codigo_interno || produto.codigo,
+      codigo_barras: produto.codigo_barras,
+      categoria_id: produto.categoria_id,
+      categoria: produto.categoria_produto,
+      descricao: produto.descricao,
+      estoque_atual: produto.estoque_atual,
       destaque: produto.destaque || false,
       habilitado: produto.status === 'ATIVO',
-      descricao: produto.descricao || '',
-      estoque: produto.estoque_atual || 0,
       promocional: produto.promocional || false,
+      ativo: produto.ativo !== false,
       marca: produto.marca,
       fornecedor: produto.fornecedor,
       preco_custo: produto.preco_custo,
@@ -806,11 +696,15 @@ export const produtoService = {
       teor_alcoolico: produto.teor_alcoolico,
       temperatura_ideal: produto.temperatura_ideal,
       validade_dias: produto.validade_dias,
+      ncm: produto.ncm,
+      cfop: produto.cfop,
+      cest: produto.cest,
       icms: produto.icms,
       ipi: produto.ipi,
       observacoes: produto.observacoes,
-      created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
-      updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date()
+      imagem_url: produto.imagem_url,
+      criado_em: produto.criado_em,
+      atualizado_em: produto.atualizado_em
     }));
   },
 
@@ -822,16 +716,42 @@ export const produtoService = {
     return {
       id: produto.id?.toString() || '',
       nome: produto.nome,
-      codigo: produto.codigo_interno || produto.codigo || '',
+      codigo_interno: produto.codigo_interno || produto.codigo || '',
       tipo: produto.tipo,
+      preco: produto.preco || produto.valor || 0,
       categoria_id: produto.categoria_id?.toString() || '',
-      valor: produto.preco || produto.valor || 0,
+      categoria: produto.categoria_produto ? {
+        id: produto.categoria_produto.id?.toString(),
+        nome: produto.categoria_produto.nome,
+        descricao: produto.categoria_produto.descricao,
+        cor: produto.categoria_produto.cor,
+        ativo: produto.categoria_produto.ativo,
+        criado_em: produto.categoria_produto.criado_em,
+        atualizado_em: produto.categoria_produto.atualizado_em
+      } : undefined,
+      descricao: produto.descricao || '',
+      estoque_atual: produto.estoque_atual || 0,
       destaque: produto.destaque || false,
       habilitado: produto.status === 'ATIVO',
-      descricao: produto.descricao || '',
       promocional: produto.promocional || false,
-      created_at: produto.criado_em ? new Date(produto.criado_em) : new Date(),
-      updated_at: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date()
+      ativo: produto.ativo !== false,
+      marca: produto.marca,
+      fornecedor: produto.fornecedor,
+      preco_custo: produto.preco_custo,
+      margem_lucro: produto.margem_lucro,
+      unidade_medida: produto.unidade_medida,
+      volume: produto.volume,
+      teor_alcoolico: produto.teor_alcoolico,
+      temperatura_ideal: produto.temperatura_ideal,
+      validade_dias: produto.validade_dias,
+      ncm: produto.ncm,
+      cfop: produto.cfop,
+      cest: produto.cest,
+      icms: produto.icms,
+      ipi: produto.ipi,
+      observacoes: produto.observacoes,
+      criado_em: produto.criado_em ? new Date(produto.criado_em) : new Date(),
+      atualizado_em: produto.atualizado_em ? new Date(produto.atualizado_em) : new Date()
     };
   },
 
