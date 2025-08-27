@@ -330,14 +330,14 @@ async def obter_dashboard_avancado(
         total_eventos=eventos_query.count(),
         total_vendas=total_vendas,
         total_checkins=total_checkins,
-        receita_total=receita_total,
+        receita_total=float(receita_total),
         taxa_conversao=round(taxa_conversao, 2),
         vendas_hoje=vendas_hoje,
         vendas_semana=vendas_semana,
         vendas_mes=vendas_mes,
-        receita_hoje=receita_hoje,
-        receita_semana=receita_semana,
-        receita_mes=receita_mes,
+        receita_hoje=float(receita_hoje),
+        receita_semana=float(receita_semana),
+        receita_mes=float(receita_mes),
         checkins_hoje=checkins_hoje,
         checkins_semana=checkins_semana,
         taxa_presenca=round(taxa_presenca, 2),
@@ -345,7 +345,7 @@ async def obter_dashboard_avancado(
         cortesias=cortesias,
         inadimplentes=inadimplentes,
         aniversariantes_mes=aniversariantes_mes,
-        consumo_medio=consumo_medio
+        consumo_medio=float(consumo_medio)
     )
 
 @router.get("/graficos/vendas-tempo")

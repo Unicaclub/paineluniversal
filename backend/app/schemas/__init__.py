@@ -236,8 +236,25 @@ except ImportError as e:
         total_vendas: float = 0.0
         
     class DashboardAvancado(BaseModel):
-        resumo: DashboardResumo
-        ranking_promoters: list = []
+        total_eventos: int = 0
+        total_vendas: int = 0
+        total_checkins: int = 0
+        receita_total: float = 0.0
+        taxa_conversao: float = 0.0
+        vendas_hoje: int = 0
+        vendas_semana: int = 0
+        vendas_mes: int = 0
+        receita_hoje: float = 0.0
+        receita_semana: float = 0.0
+        receita_mes: float = 0.0
+        checkins_hoje: int = 0
+        checkins_semana: int = 0
+        taxa_presenca: float = 0.0
+        fila_espera: int = 0
+        cortesias: int = 0
+        inadimplentes: int = 0
+        aniversariantes_mes: int = 0
+        consumo_medio: float = 0.0
         
     class FiltrosDashboard(BaseModel):
         data_inicio: Optional[datetime] = None
