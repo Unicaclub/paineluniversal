@@ -24,6 +24,7 @@ import ProductsList from './components/produtos/ProductsList';
 import CategoriasList from './components/produtos/CategoriasList';
 import AgendamentosList from './components/produtos/AgendamentosList';
 import ImportExportModule from './components/produtos/ImportExportModule';
+import { MEEPDashboard, MEEPAnalytics, MEEPValidacaoCPF, MEEPEquipamentos } from './components/meep';
 import './App.css';
 
 function App() {
@@ -150,6 +151,26 @@ function App() {
                             <h1 className="text-2xl font-heading font-bold text-foreground">Configurações</h1>
                             <p className="text-muted-foreground mt-2">Em desenvolvimento</p>
                           </div>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="meep/dashboard" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <MEEPDashboard />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="meep/analytics" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <MEEPAnalytics />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="meep/validacao-cpf" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <MEEPValidacaoCPF />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="meep/equipamentos" element={
+                        <ProtectedRoute requiredRoles={['admin', 'promoter']}>
+                          <MEEPEquipamentos />
                         </ProtectedRoute>
                       } />
                     </Routes>

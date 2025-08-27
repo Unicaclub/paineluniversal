@@ -22,7 +22,12 @@ import {
   ChevronDown,
   Bell,
   Search,
-  Package
+  Package,
+  Shield,
+  Zap,
+  Activity,
+  Database,
+  Tablet
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -191,6 +196,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       roles: ['admin', 'promoter'],
       description: 'Sistema de pontuação'
     },
+    // === MÓDULOS MEEP ===
+    { 
+      icon: Shield, 
+      label: 'MEEP Integration', 
+      path: '/app/meep', 
+      roles: ['admin', 'promoter'],
+      description: 'Monitoramento, Eventos, Engajamento e Performance',
+      hasSubmenu: true,
+      submenu: [
+        { label: 'Dashboard MEEP', path: '/app/meep/dashboard', description: 'Painel principal MEEP' },
+        { label: 'Analytics Avançado', path: '/app/meep/analytics', description: 'Analytics com IA e insights' },
+        { label: 'Validação CPF', path: '/app/meep/validacao-cpf', description: 'Validação CPF com Receita Federal' },
+        { label: 'Equipamentos', path: '/app/meep/equipamentos', description: 'Gestão de equipamentos do evento' }
+      ]
+    },
     { 
       icon: Users, 
       label: 'Usuários', 
@@ -222,15 +242,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const filteredMenuItems = (() => {
-    // Se o usuário não está carregado ou não há token, mostrar apenas itens básicos
+    // Se o usuário não está carregado ou não há token, mostrar mais itens para melhor experiência
     if (!usuario || !localStorage.getItem('token')) {
-      const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'PDV', 'Produtos'];
-      return menuItems.filter(item => basicItems.includes(item.label));
+      // Mostrar funcionalidades básicas + MEEP para demonstração
+      const publicItems = [
+        'Dashboard', 
+        'Eventos', 
+        'Vendas', 
+        'Check-in Inteligente',
+        'Check-in Mobile',
+        'PDV', 
+        'Listas & Convidados',
+        'Produtos',
+        'Estoque',
+        'MEEP Integration',
+        'Relatórios'
+      ];
+      return menuItems.filter(item => publicItems.includes(item.label));
     }
     
     // Se usuário está autenticado, filtrar por roles
-    // Se não tem tipo definido, assumir 'cliente' como fallback
-    const userType = usuario.tipo || 'cliente';
+    // Se não tem tipo definido, assumir 'promoter' como fallback para mostrar mais funcionalidades
+    const userType = usuario.tipo || 'promoter';
     return menuItems.filter(item => item.roles.includes(userType));
   })();
 
