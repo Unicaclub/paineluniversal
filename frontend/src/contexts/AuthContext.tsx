@@ -31,46 +31,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem('token');
-      const storedUsuario = localStorage.getItem('usuario');
+    const initializeAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem('token');
+        const storedUsuario = localStorage.getItem('usuario');
 
-      console.log('🔍 AuthContext: Verificando localStorage...', {
-        hasToken: !!storedToken,
-        hasUsuario: !!storedUsuario,
-        tokenLength: storedToken?.length,
-        usuarioContent: storedUsuario?.substring(0, 50)
-      });
+        console.log('🔍 AuthContext: Verificando localStorage...', {
+          hasToken: !!storedToken,
+          hasUsuario: !!storedUsuario,
+          tokenLength: storedToken?.length,
+          usuarioContent: storedUsuario?.substring(0, 50)
+        });
 
-      if (storedToken && storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
-        try {
+        if (storedToken) {
           setToken(storedToken);
-          const parsedUsuario = JSON.parse(storedUsuario);
-          if (parsedUsuario && typeof parsedUsuario === 'object') {
-            setUsuario(parsedUsuario);
-            console.log('✅ AuthContext: Dados restaurados com sucesso');
-          } else {
-            throw new Error('Usuário inválido');
+          
+          // Verificar se temos dados válidos do usuário
+          let usuarioValido = false;
+          if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
+            try {
+              const parsedUsuario = JSON.parse(storedUsuario);
+              if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
+                setUsuario(parsedUsuario);
+                usuarioValido = true;
+                console.log('✅ AuthContext: Dados do usuário restaurados com sucesso');
+              }
+            } catch (error) {
+              console.error('❌ AuthContext: Erro ao fazer parse do usuário armazenado:', error);
+            }
           }
-        } catch (error) {
-          console.error('❌ AuthContext: Erro ao fazer parse do usuário armazenado:', error);
-          // Limpar dados corrompidos
-          localStorage.removeItem('token');
-          localStorage.removeItem('usuario');
+
+          // Se tem token mas não tem dados válidos do usuário, buscar do backend
+          if (!usuarioValido) {
+            console.log('🔄 AuthContext: Token encontrado, mas sem dados do usuário. Buscando do backend...');
+            try {
+              const userData = await authService.getProfile();
+              if (userData) {
+                setUsuario(userData);
+                localStorage.setItem('usuario', JSON.stringify(userData));
+                console.log('✅ AuthContext: Dados do usuário obtidos do backend');
+              }
+            } catch (error: any) {
+              console.error('❌ AuthContext: Erro ao buscar dados do usuário:', error);
+              // Se token é inválido (401), limpar tudo
+              if (error.response?.status === 401) {
+                console.log('🔑 AuthContext: Token inválido, limpando dados...');
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                setToken(null);
+                setUsuario(null);
+              }
+            }
+          }
+        } else {
+          console.log('⚠️ AuthContext: Nenhum token encontrado');
+          // Limpar dados órfãos
+          if (storedUsuario) {
+            localStorage.removeItem('usuario');
+          }
         }
-      } else {
-        console.log('⚠️ AuthContext: Dados do localStorage inválidos ou inexistentes');
-        // Limpar dados inválidos
-        if (storedToken === 'undefined' || storedUsuario === 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('usuario');
-        }
+      } catch (error) {
+        console.error('❌ AuthContext: Erro crítico ao inicializar autenticação:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        setToken(null);
+        setUsuario(null);
       }
-    } catch (error) {
-      console.error('❌ AuthContext: Erro crítico ao verificar localStorage:', error);
-      localStorage.clear();
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (cpf: string, senha: string, codigoVerificacao?: string) => {
@@ -149,25 +179,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const revalidateUser = async () => {
     try {
       if (!token) {
+        console.log('🔍 revalidateUser: Sem token, saindo...');
         return;
       }
       
-      // Tentar buscar dados atualizados do usuário
-      const storedUsuario = localStorage.getItem('usuario');
-      if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
-        try {
-          const parsedUsuario = JSON.parse(storedUsuario);
-          if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
-            setUsuario(parsedUsuario);
-          } else {
+      console.log('🔄 revalidateUser: Buscando dados atualizados do usuário...');
+      
+      try {
+        const userData = await authService.getProfile();
+        if (userData) {
+          setUsuario(userData);
+          localStorage.setItem('usuario', JSON.stringify(userData));
+          console.log('✅ revalidateUser: Dados do usuário atualizados');
+        }
+      } catch (error: any) {
+        console.error('❌ revalidateUser: Erro ao buscar dados do usuário:', error);
+        
+        // Se token é inválido, limpar tudo
+        if (error.response?.status === 401) {
+          console.log('🔑 revalidateUser: Token inválido, fazendo logout...');
+          logout();
+          return;
+        }
+        
+        // Para outros erros, tentar dados do localStorage como fallback
+        const storedUsuario = localStorage.getItem('usuario');
+        if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
+          try {
+            const parsedUsuario = JSON.parse(storedUsuario);
+            if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
+              setUsuario(parsedUsuario);
+              console.log('⚠️ revalidateUser: Usando dados do localStorage como fallback');
+            } else {
+              setUsuario(null);
+            }
+          } catch (parseError) {
+            console.error('❌ revalidateUser: Erro ao fazer parse do fallback:', parseError);
             setUsuario(null);
           }
-        } catch (error) {
-          setUsuario(null);
         }
       }
     } catch (error) {
-      // Silently handle error
+      console.error('❌ revalidateUser: Erro crítico:', error);
     }
   };
 
