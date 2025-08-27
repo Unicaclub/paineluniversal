@@ -65,7 +65,7 @@ export const publicApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000, // 60 segundos para operações públicas como registro
   withCredentials: false, // Explicitamente desabilitar credentials
 });
 
@@ -291,7 +291,55 @@ export const authService = {
     senha: string;
     tipo?: 'admin' | 'promoter' | 'cliente';
   }): Promise<Usuario> {
-    return publicService.register(data);
+    try {
+      console.log('📝 Iniciando registro de usuário...', { 
+        nome: data.nome, 
+        email: data.email,
+        cpf: data.cpf.slice(0, 3) + '***',
+        tipo: data.tipo 
+      });
+      
+      const userData = {
+        ...data,
+        tipo: data.tipo || 'cliente'
+      };
+      
+      const response = await publicApi.post('/api/auth/register', userData);
+      
+      console.log('✅ Usuário registrado com sucesso:', {
+        id: response.data.id,
+        nome: response.data.nome,
+        email: response.data.email
+      });
+      
+      return response.data;
+      
+    } catch (error: any) {
+      console.error('❌ Erro no registro:', error);
+      
+      // Verificar se é erro de rede/timeout
+      if (!error.response) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Timeout: O servidor demorou muito para responder. Tente novamente.');
+        } else {
+          throw new Error('Erro de conexão: Verifique sua internet e tente novamente.');
+        }
+      }
+      
+      // Verificar status codes específicos
+      if (error.response.status === 400) {
+        const detail = error.response.data?.detail || 'Dados inválidos';
+        throw new Error(detail);
+      } else if (error.response.status === 409) {
+        throw new Error('CPF ou email já cadastrado');
+      } else if (error.response.status >= 500) {
+        throw new Error('Erro no servidor. Tente novamente em alguns instantes.');
+      }
+      
+      // Erro genérico
+      const message = error.response.data?.detail || error.message || 'Erro desconhecido no registro';
+      throw new Error(message);
+    }
   },
 
   async getProfile(): Promise<Usuario> {

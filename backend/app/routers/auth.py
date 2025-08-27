@@ -176,31 +176,60 @@ async def obter_usuario_debug(
 async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends(get_db)):
     """Registro público de usuários"""
     
-    # Verificar se CPF já existe
-    usuario_existente = db.query(Usuario).filter(Usuario.cpf == usuario_data.cpf).first()
-    if usuario_existente:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="CPF já cadastrado"
-        )
-    
-    # Verificar se email já existe
-    email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
-    if email_existente:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email já cadastrado"
-        )
-    
     try:
-        # Criar usuário sem empresa obrigatória
+        print(f"📝 Iniciando registro para: {usuario_data.nome}")
+        
+        # Validação básica de entrada
+        if not usuario_data.cpf or len(usuario_data.cpf.replace(" ", "").replace(".", "").replace("-", "")) != 11:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CPF deve ter 11 dígitos"
+            )
+        
+        if not usuario_data.email or "@" not in usuario_data.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email inválido"
+            )
+            
+        if not usuario_data.senha or len(usuario_data.senha) < 4:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Senha deve ter pelo menos 4 caracteres"
+            )
+        
+        # Normalizar CPF para apenas números
+        cpf_limpo = usuario_data.cpf.replace(" ", "").replace(".", "").replace("-", "")
+        
+        # Verificar se CPF já existe (com timeout)
+        print(f"🔍 Verificando CPF: {cpf_limpo}")
+        usuario_existente = db.query(Usuario).filter(Usuario.cpf == cpf_limpo).first()
+        if usuario_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CPF já cadastrado"
+            )
+        
+        # Verificar se email já existe (com timeout)
+        print(f"📧 Verificando email: {usuario_data.email}")
+        email_existente = db.query(Usuario).filter(Usuario.email == usuario_data.email).first()
+        if email_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email já cadastrado"
+            )
+        
+        # Criar hash da senha
+        print(f"🔐 Gerando hash da senha...")
         senha_hash = gerar_hash_senha(usuario_data.senha)
         
+        # Criar usuário
+        print(f"👤 Criando usuário no banco...")
         novo_usuario = Usuario(
-            cpf=usuario_data.cpf,
-            nome=usuario_data.nome,
-            email=usuario_data.email,
-            telefone=usuario_data.telefone or "",
+            cpf=cpf_limpo,
+            nome=usuario_data.nome.strip(),
+            email=usuario_data.email.lower().strip(),
+            telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
             senha_hash=senha_hash,
             tipo=usuario_data.tipo,
             ativo=True  # Usuários registrados publicamente ficam ativos por padrão
@@ -210,15 +239,19 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         db.commit()
         db.refresh(novo_usuario)
         
-        print(f"Novo usuario registrado: {novo_usuario.nome}")
+        print(f"✅ Usuário registrado com sucesso: {novo_usuario.nome} (ID: {novo_usuario.id})")
         
         return novo_usuario
         
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
+        print(f"❌ Erro inesperado no registro: {str(e)}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao criar usuário: {str(e)}"
+            detail=f"Erro interno do servidor: {str(e)}"
         )
 
 @router.get("/me", response_model=UsuarioSchema)

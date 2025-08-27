@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Eye, EyeOff, User, Mail, Phone, CreditCard } from 'lucide-react';
 import { authService } from '../../services/api';
+import SystemStatus from '../ui/SystemStatus';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -28,6 +29,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [systemOnline, setSystemOnline] = useState(true);
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -131,9 +133,24 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
       
     } catch (error: any) {
       console.error('Erro ao registrar usuário:', error);
-      if (error.response?.data?.detail) {
+      
+      let errorMessage = 'Erro interno do servidor';
+      
+      if (error.message) {
+        if (error.message.includes('Timeout') || error.message.includes('timeout')) {
+          errorMessage = 'O servidor está demorando para responder. Tente novamente em alguns instantes.';
+        } else if (error.message.includes('Network Error') || error.message.includes('Erro de conexão')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.message.includes('CPF já cadastrado')) {
+          errorMessage = 'Este CPF já está cadastrado no sistema.';
+        } else if (error.message.includes('Email já cadastrado')) {
+          errorMessage = 'Este email já está cadastrado no sistema.';
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (error.response?.data?.detail) {
         if (typeof error.response.data.detail === 'string') {
-          setErrors({ submit: error.response.data.detail });
+          errorMessage = error.response.data.detail;
         } else if (Array.isArray(error.response.data.detail)) {
           const fieldErrors: Record<string, string> = {};
           error.response.data.detail.forEach((err: any) => {
@@ -142,10 +159,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
             }
           });
           setErrors(fieldErrors);
+          return; // Não mostrar erro geral se tiver erros específicos
         }
-      } else {
-        setErrors({ submit: 'Erro interno do servidor' });
       }
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -167,17 +185,21 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2">
-          <User className="h-5 w-5" />
-          Criar Conta
-        </CardTitle>
-        <CardDescription>
-          Preencha os dados para criar sua conta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full max-w-md">
+      {/* Status do sistema */}
+      <SystemStatus onStatusChange={setSystemOnline} />
+      
+      <Card className="w-full">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
+            <User className="h-5 w-5" />
+            Criar Conta
+          </CardTitle>
+          <CardDescription>
+            Preencha os dados para criar sua conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* CPF */}
           <div className="space-y-2">
@@ -356,7 +378,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
           <div className="space-y-2">
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || !systemOnline}
               className="w-full"
             >
               {loading ? 'Criando conta...' : 'Criar Conta'}
@@ -376,6 +398,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 };
 

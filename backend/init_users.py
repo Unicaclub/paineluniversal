@@ -13,9 +13,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
     from app.database import engine
     from app.models import Base, Empresa, Usuario, TipoUsuario
+    from app.auth import gerar_hash_senha  # Usar função existente
     
     # Configuração de senha
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    # Configuração removida - usar gerar_hash_senha
     
     print("🗄️ Criando tabelas...")
     Base.metadata.create_all(bind=engine)
@@ -51,7 +52,7 @@ try:
         
         if not admin_existente:
             print("👤 Criando usuário admin...")
-            senha_hash = pwd_context.hash("admin123")
+            senha_hash = gerar_hash_senha("admin123")
             
             admin = Usuario(
                 cpf="00000000000",
@@ -60,8 +61,7 @@ try:
                 telefone="(11) 99999-0000",
                 senha_hash=senha_hash,
                 tipo=TipoUsuario.ADMIN,
-                ativo=True,
-                empresa_id=empresa.id
+                ativo=True
             )
             db.add(admin)
             db.commit()
@@ -78,7 +78,7 @@ try:
         
         if not promoter_existente:
             print("👤 Criando promoter de exemplo...")
-            senha_hash = pwd_context.hash("promoter123")
+            senha_hash = gerar_hash_senha("promoter123")
             
             promoter = Usuario(
                 cpf="11111111111",
@@ -87,8 +87,7 @@ try:
                 telefone="(11) 99999-1111",
                 senha_hash=senha_hash,
                 tipo=TipoUsuario.PROMOTER,
-                ativo=True,
-                empresa_id=empresa.id
+                ativo=True
             )
             db.add(promoter)
             db.commit()
