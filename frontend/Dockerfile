@@ -18,9 +18,9 @@ ARG VITE_MEEP_API_URL
 ARG VITE_WS_URL
 
 # Set environment variables for build with defaults
-ENV VITE_API_URL=${VITE_API_URL:-https://backend-painel-universal-production.up.railway.app}
+ENV VITE_API_URL=${VITE_API_URL:-https://paineluniversal-backend-production.up.railway.app/api}
 ENV VITE_MEEP_API_URL=${VITE_MEEP_API_URL:-https://meep-service-production.up.railway.app}
-ENV VITE_WS_URL=${VITE_WS_URL:-wss://backend-painel-universal-production.up.railway.app}
+ENV VITE_WS_URL=${VITE_WS_URL:-wss://paineluniversal-backend-production.up.railway.app}
 ENV NODE_ENV=production
 
 # Build the application

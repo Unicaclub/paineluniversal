@@ -27,21 +27,30 @@ const getApiConfiguration = () => {
   // 🚨 CONFIGURAÇÃO ESPECÍFICA PARA PRODUÇÃO - MÚLTIPLOS BACKENDS
   const backends = {
     production: [
-      // Backend principal Railway
-      'https://backend-painel-universal-production.up.railway.app',
-      // Fallbacks para produção
-      'https://paineluniversal-backend.up.railway.app',
-      'https://backend-paineluniversal.up.railway.app',
-      // Backend de backup (se houver)
-      'https://api.paineluniversal.com',
+      // URLs baseadas em variáveis de ambiente primeiro
+      import.meta.env.VITE_API_URL,
+      import.meta.env.VITE_BACKEND_URL,
+      // URLs corretas baseadas na estrutura real do Railway
+      'https://paineluniversal-backend-production.up.railway.app/api',
+      'https://backend-paineluniversal-production.up.railway.app/api',
+      'https://painel-universal-backend.up.railway.app/api',
+      // URLs sem /api suffix (caso o backend já tenha)
+      'https://paineluniversal-backend-production.up.railway.app',
+      'https://backend-paineluniversal-production.up.railway.app',
+      'https://painel-universal-backend.up.railway.app',
+      // URLs antigas como fallback
+      'https://backend-painel-universal-production.up.railway.app/api',
+      'https://paineluniversal-backend.up.railway.app/api',
+      'https://backend-paineluniversal.up.railway.app/api',
       // Em último caso, tentar localhost se acessível
-      'http://localhost:8000',
-    ],
+      'http://localhost:8000/api',
+    ].filter(Boolean), // Remove valores undefined/null
     development: [
-      'http://localhost:8000',
-      'http://127.0.0.1:8000',
+      'http://localhost:8000/api',
+      'http://127.0.0.1:8000/api',
       // Fallback para Railway em desenvolvimento
-      'https://backend-painel-universal-production.up.railway.app',
+      'https://paineluniversal-backend-production.up.railway.app/api',
+      'https://backend-paineluniversal-production.up.railway.app/api',
     ]
   };
   
@@ -319,29 +328,40 @@ const performHealthCheck = async (): Promise<void> => {
   const allBackends = [currentConfig.baseURL, ...currentConfig.fallbackURLs];
   
   for (let i = 0; i < allBackends.length; i++) {
-    try {
-      const testResponse = await fetch(`${allBackends[i]}/healthz`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (testResponse.ok) {
-        console.log(`✅ [Health Check] Backend ${i} is healthy:`, allBackends[i]);
+    const backend = allBackends[i];
+    const endpoints = ['/health', '/healthz', '/ping', '/status', '/api/health', '/api/healthz', ''];
+    
+    for (const endpoint of endpoints) {
+      try {
+        const testUrl = `${backend}${endpoint}`;
+        console.log(`🔍 [Health Check] Testing: ${testUrl}`);
         
-        // Se encontramos um backend saudável que não é o atual, mudar para ele
-        if (i !== currentBackendIndex) {
-          console.log(`🔄 [Health Check] Switching to healthier backend ${i}`);
-          currentBackendIndex = i;
-          API_BASE_URL = allBackends[i];
-          api.defaults.baseURL = allBackends[i];
-          publicApi.defaults.baseURL = allBackends[i];
+        const testResponse = await fetch(testUrl, {
+          method: 'GET',
+          mode: 'cors',
+          signal: AbortSignal.timeout(8000)
+        });
+        
+        if (testResponse.ok) {
+          console.log(`✅ [Health Check] Backend ${i} is healthy:`, backend, `(endpoint: ${endpoint})`);
+          
+          // Se encontramos um backend saudável que não é o atual, mudar para ele
+          if (i !== currentBackendIndex) {
+            console.log(`🔄 [Health Check] Switching to healthier backend ${i}`);
+            currentBackendIndex = i;
+            API_BASE_URL = backend;
+            api.defaults.baseURL = backend;
+            publicApi.defaults.baseURL = backend;
+          }
+          return; // Encontrou um saudável, parar de procurar
         }
-        break; // Encontrou um saudável, parar de procurar
+      } catch (error) {
+        console.warn(`❌ [Health Check] Backend ${i} endpoint ${endpoint} failed:`, backend, error.message);
       }
-    } catch (error) {
-      console.warn(`❌ [Health Check] Backend ${i} failed:`, allBackends[i], error);
     }
   }
+  
+  console.error('🚨 [Health Check] All backends failed health check');
 };
 
 const startHealthCheck = () => {
@@ -393,29 +413,71 @@ export const testApiConnection = async (): Promise<{
     currentBackend?: number;
     totalBackends?: number;
     fallbacksAvailable?: boolean;
+    workingEndpoint?: string;
   };
 }> => {
   try {
-    // Testar backend atual primeiro
-    const response = await publicApi.get('/api/cors-test', { timeout: 10000 });
-    const currentConfig = getApiConfiguration();
-    return { 
-      success: true, 
-      data: response.data,
-      details: {
-        baseURL: API_BASE_URL,
-        currentBackend: currentBackendIndex,
-        totalBackends: [currentConfig.baseURL, ...currentConfig.fallbackURLs].length,
-        fallbacksAvailable: currentConfig.fallbackURLs.length > 0
+    // Testar múltiplos endpoints para encontrar o correto
+    const endpoints = ['/health', '/healthz', '/ping', '/status', '/api/health', '/api/healthz', '/cors-test', '/'];
+    let lastError = null;
+    
+    console.log('🧪 [Test Connection] Starting comprehensive test...');
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`🧪 [Test Connection] Testing endpoint: ${API_BASE_URL}${endpoint}`);
+        const response = await publicApi.get(endpoint, { timeout: 10000 });
+        
+        const currentConfig = getApiConfiguration();
+        console.log(`✅ [Test Connection] Success with endpoint: ${endpoint}`);
+        
+        return { 
+          success: true, 
+          data: response.data,
+          details: {
+            baseURL: API_BASE_URL,
+            currentBackend: currentBackendIndex,
+            totalBackends: [currentConfig.baseURL, ...currentConfig.fallbackURLs].length,
+            fallbacksAvailable: currentConfig.fallbackURLs.length > 0,
+            workingEndpoint: endpoint
+          }
+        };
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`❌ [Test Connection] Endpoint ${endpoint} failed:`, error.message);
       }
-    };
+    }
+    
+    // Se todos os endpoints falharam, tentar health check automático
+    const currentConfig = getApiConfiguration();
+    if (currentConfig.isProduction) {
+      console.log('🔍 [Test Connection] All endpoints failed, performing health check...');
+      await performHealthCheck();
+      
+      // Tentar novamente após health check
+      try {
+        const response = await publicApi.get('/health', { timeout: 10000 });
+        return { 
+          success: true, 
+          data: response.data,
+          details: {
+            baseURL: API_BASE_URL,
+            currentBackend: currentBackendIndex,
+            totalBackends: [currentConfig.baseURL, ...currentConfig.fallbackURLs].length,
+            fallbacksAvailable: currentConfig.fallbackURLs.length > 0,
+            workingEndpoint: '/health (after health check)'
+          }
+        };
+      } catch (retryError) {
+        lastError = retryError;
+      }
+    }
+    
+    throw lastError || new Error('All connection attempts failed');
+    
   } catch (error: any) {
     const currentConfig = getApiConfiguration();
-    // Em caso de erro, tentar health check para encontrar backend funcionando
-    if (currentConfig.isProduction) {
-      console.log('🔍 Testing connection failed, performing health check...');
-      await performHealthCheck();
-    }
+    console.error('🚨 [Test Connection] Complete failure:', error.message);
     
     return { 
       success: false, 
