@@ -198,7 +198,7 @@ export class ConnectivityDiagnostic {
       auth_status: this.checkLocalStorageAuth(),
       token_validation: await this.validateToken(),
       api_endpoints: {
-        dashboard: await this.testApiEndpoint('/api/dashboard/resumo', 'Dashboard'),
+        dashboard: await this.testApiEndpoint('/api/dashboard/avancado', 'Dashboard'),
         eventos: await this.testApiEndpoint('/api/eventos/', 'Eventos'),
         usuarios: await this.testApiEndpoint('/api/usuarios/', 'Usuários')
       },

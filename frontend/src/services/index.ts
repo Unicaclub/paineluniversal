@@ -399,18 +399,18 @@ export const listaService = {
 // Serviços de Dashboard
 export const dashboardService = {
   async getResumo(): Promise<DashboardResumo> {
-    const response = await api.get('/api/dashboard/resumo');
+    const response = await api.get('/api/dashboard/avancado');
     return response.data;
   },
 
   async getMetricas(eventoId?: number): Promise<any> {
     const params = eventoId ? { evento_id: eventoId } : {};
-    const response = await api.get('/api/dashboard/metricas', { params });
+    const response = await api.get('/api/dashboard/avancado', { params });
     return response.data;
   },
 
   async getAnalytics(periodo: string = '30d'): Promise<any> {
-    const response = await api.get('/api/dashboard/analytics', { 
+    const response = await api.get('/api/dashboard/avancado', { 
       params: { periodo } 
     });
     return response.data;
