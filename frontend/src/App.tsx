@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { EventoProvider } from './contexts/EventoContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import LoginForm from './components/auth/LoginForm';
@@ -32,18 +33,19 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="universal-eventos-theme">
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/register" element={<PublicRegisterPage />} />
-            <Route path="/diagnostic" element={<DiagnosticPage />} />
-            <Route
-              path="/app/*"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Routes>
+        <EventoProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/register" element={<PublicRegisterPage />} />
+              <Route path="/diagnostic" element={<DiagnosticPage />} />
+              <Route
+                path="/app/*"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Routes>
                       <Route path="dashboard" element={<Dashboard />} />
                       <Route path="/" element={<Navigate to="dashboard" replace />} />
                       <Route path="eventos" element={
@@ -182,8 +184,9 @@ function App() {
             />
           </Routes>
         </Router>
-      </AuthProvider>
-    </ThemeProvider>
+      </EventoProvider>
+    </AuthProvider>
+  </ThemeProvider>
   );
 }
 

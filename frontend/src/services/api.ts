@@ -399,7 +399,7 @@ export const eventoService = {
 // Serviços de dashboard
 export const dashboardService = {
   async getStats(): Promise<any> {
-    const response = await api.get('/api/dashboard/resumo');
+    const response = await api.get('/api/dashboard/avancado');
     return response.data;
   },
 
