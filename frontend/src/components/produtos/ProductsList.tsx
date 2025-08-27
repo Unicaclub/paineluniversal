@@ -22,7 +22,8 @@ import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
-import { produtoService, ProdutoCreate } from '../../services/api';
+import { produtoService } from '../../services/api';
+import { ProdutoCreate } from '../../types/database';
 import { useEvento } from '../../contexts/EventoContext';
 import EventoAutoConfig from '../desenvolvimento/EventoAutoConfig';
 
@@ -176,28 +177,23 @@ const ProductsList: React.FC = () => {
 
   const handleSaveProduct = async (data: any, imageFile?: File) => {
     try {
-      if (!eventoId) {
-        toast({
-          title: "Erro",
-          description: "ID do evento não encontrado. Selecione um evento primeiro.",
-          variant: "destructive"
-        });
-        return;
-      }
+      console.log('💾 Dados recebidos do formulário:', data);
 
       // Converter os dados do formulário para o formato esperado pela API
       const produtoData: ProdutoCreate = {
         nome: data.nome,
         descricao: data.descricao || '',
         tipo: data.tipo,
-        preco: data.valor, // Frontend usa 'valor', API usa 'preco'
-        evento_id: eventoId,
-        categoria_id: data.categoria_id ? parseInt(data.categoria_id) : undefined,
-        codigo_interno: data.codigo || undefined, // Frontend usa 'codigo', API usa 'codigo_interno'
-        estoque_atual: 0, // Valor padrão
-        destaque: data.destaque || false,
-        promocional: data.promocional || false,
-        // Campos adicionais
+        preco: data.preco, // ✅ Corrigido: campo correto
+        categoria: data.categoria, // ✅ Corrigido: categoria como string, não ID
+        codigo_interno: data.codigo_interno || undefined, // ✅ Corrigido: campo correto
+        estoque_atual: data.estoque_atual || 0,
+        estoque_minimo: data.estoque_minimo || 0,
+        estoque_maximo: data.estoque_maximo || 1000,
+        controla_estoque: data.controla_estoque !== false,
+        status: data.status || 'ATIVO',
+        imagem_url: data.imagem_url || undefined,
+        // Campos adicionais opcionais
         marca: data.marca || undefined,
         fornecedor: data.fornecedor || undefined,
         preco_custo: data.preco_custo || undefined,
