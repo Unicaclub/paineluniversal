@@ -19,8 +19,147 @@ class AutoMigration:
         if not self.database_url:
             raise ValueError("DATABASE_URL não encontrada nas variáveis de ambiente")
         
+        # Converter postgres:// para postgresql:// se necessário
+        if self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql://", 1)
+        
         self.engine = create_engine(self.database_url, pool_pre_ping=True, pool_recycle=300)
     
+    def check_tipousuario_enum(self):
+        """Verifica se o enum tipousuario tem todos os valores necessários"""
+        try:
+            with self.engine.connect() as conn:
+                # Verificar se o enum tipousuario existe
+                result = conn.execute(text("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM pg_type WHERE typname = 'tipousuario'
+                    )
+                """))
+                
+                if not result.scalar():
+                    logger.info("⚠️ Enum tipousuario não existe, será criado")
+                    return False
+                
+                # Verificar valores existentes no enum
+                result = conn.execute(text("""
+                    SELECT enumlabel 
+                    FROM pg_enum 
+                    WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'tipousuario')
+                    ORDER BY enumsortorder
+                """))
+                
+                existing_values = [row[0] for row in result.fetchall()]
+                required_values = ['admin', 'promoter', 'cliente']
+                
+                logger.info(f"🔍 Valores atuais do enum: {existing_values}")
+                logger.info(f"🎯 Valores necessários: {required_values}")
+                
+                missing_values = [v for v in required_values if v not in existing_values]
+                
+                if missing_values:
+                    logger.info(f"⚠️ Valores faltando no enum: {missing_values}")
+                    return False
+                else:
+                    logger.info("✅ Enum tipousuario está completo")
+                    return True
+                    
+        except Exception as e:
+            logger.error(f"Erro ao verificar enum tipousuario: {e}")
+            return False
+    
+    def fix_tipousuario_enum(self):
+        """Corrige o enum tipousuario adicionando valores faltantes"""
+        try:
+            with self.engine.connect() as conn:
+                trans = conn.begin()
+                
+                try:
+                    logger.info("🔧 Corrigindo enum tipousuario...")
+                    
+                    # Criar enum se não existir
+                    conn.execute(text("""
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipousuario') THEN
+                                CREATE TYPE tipousuario AS ENUM ('admin', 'promoter', 'cliente');
+                                RAISE NOTICE 'Enum tipousuario criado com valores: admin, promoter, cliente';
+                            END IF;
+                        END $$;
+                    """))
+                    
+                    # Adicionar valores que podem estar faltando
+                    enum_values = ['admin', 'promoter', 'cliente']
+                    
+                    for value in enum_values:
+                        try:
+                            # Verificar se valor já existe
+                            result = conn.execute(text("""
+                                SELECT EXISTS(
+                                    SELECT 1 FROM pg_enum 
+                                    WHERE enumlabel = :value 
+                                    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'tipousuario')
+                                )
+                            """), {"value": value})
+                            
+                            if not result.scalar():
+                                # Valor não existe, adicionar
+                                conn.execute(text(f"ALTER TYPE tipousuario ADD VALUE '{value}'"))
+                                logger.info(f"✅ Valor '{value}' adicionado ao enum tipousuario")
+                            else:
+                                logger.info(f"✓ Valor '{value}' já existe no enum")
+                                
+                        except Exception as e:
+                            logger.warning(f"Aviso ao adicionar '{value}': {e}")
+                    
+                    trans.commit()
+                    logger.info("✅ Enum tipousuario corrigido com sucesso")
+                    
+                except Exception as e:
+                    trans.rollback()
+                    logger.error(f"Erro na correção do enum, rollback executado: {e}")
+                    raise
+                    
+        except Exception as e:
+            logger.error(f"Erro na correção do enum tipousuario: {e}")
+            raise
+    
+    def validate_tipousuario_enum(self):
+        """Valida se o enum tipousuario está funcionando corretamente"""
+        try:
+            with self.engine.connect() as conn:
+                # Verificar valores finais do enum
+                result = conn.execute(text("""
+                    SELECT enumlabel 
+                    FROM pg_enum 
+                    WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'tipousuario')
+                    ORDER BY enumsortorder
+                """))
+                
+                values = [row[0] for row in result.fetchall()]
+                required_values = ['admin', 'promoter', 'cliente']
+                
+                # Verificar se todos os valores necessários estão presentes
+                missing = [v for v in required_values if v not in values]
+                if missing:
+                    logger.error(f"❌ Valores ainda faltando: {missing}")
+                    return False
+                
+                # Testar cada valor
+                for value in required_values:
+                    try:
+                        conn.execute(text(f"SELECT '{value}'::tipousuario"))
+                        logger.info(f"✅ Valor '{value}' testado com sucesso")
+                    except Exception as e:
+                        logger.error(f"❌ Erro ao testar valor '{value}': {e}")
+                        return False
+                
+                logger.info(f"✅ Enum tipousuario validado: {values}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Erro na validação do enum: {e}")
+            return False
+
     def check_evento_id_exists(self):
         """Verifica se a coluna evento_id ainda existe na tabela produtos"""
         try:
@@ -203,37 +342,55 @@ class AutoMigration:
         start_time = time.time()
         
         try:
-            logger.info("🔍 Verificando se migração é necessária...")
+            logger.info("🔍 Verificando migrações necessárias...")
             
-            if not self.check_evento_id_exists():
-                logger.info("✅ Coluna evento_id já foi removida, migração não necessária")
-                return True
-            
-            logger.info("⚠️ Coluna evento_id encontrada, iniciando migração...")
-            
-            # 1. Backup
-            logger.info("📦 Criando backup...")
-            self.backup_produtos_table()
-            
-            # 2. Migração
-            logger.info("🔄 Executando migração...")
-            self.remove_evento_id_column()
-            
-            # 3. Validação
-            logger.info("🧪 Validando migração...")
-            if self.validate_migration():
-                # 4. Limpeza (opcional)
-                self.cleanup_old_tables()
+            # 1. MIGRAÇÃO DO ENUM TIPOUSUARIO (PRIORITÁRIA)
+            logger.info("🔧 Verificando enum tipousuario...")
+            if not self.check_tipousuario_enum():
+                logger.info("⚠️ Enum tipousuario precisa ser corrigido...")
+                self.fix_tipousuario_enum()
                 
-                duration = time.time() - start_time
-                logger.info(f"🎉 Migração concluída com sucesso em {duration:.2f}s")
-                return True
+                if not self.validate_tipousuario_enum():
+                    raise Exception("Validação do enum tipousuario falhou")
+                    
+                logger.info("✅ Enum tipousuario corrigido com sucesso")
             else:
-                raise Exception("Validação da migração falhou")
+                logger.info("✅ Enum tipousuario já está correto")
+            
+            # 2. MIGRAÇÃO DA TABELA PRODUTOS (EXISTENTE)
+            logger.info("🔍 Verificando tabela produtos...")
+            if not self.check_evento_id_exists():
+                logger.info("✅ Coluna evento_id já foi removida, migração da tabela não necessária")
+                produtos_migration_needed = False
+            else:
+                logger.info("⚠️ Coluna evento_id encontrada, iniciando migração da tabela...")
+                produtos_migration_needed = True
+            
+            if produtos_migration_needed:
+                # Backup
+                logger.info("📦 Criando backup da tabela produtos...")
+                self.backup_produtos_table()
+                
+                # Migração
+                logger.info("🔄 Executando migração da tabela produtos...")
+                self.remove_evento_id_column()
+                
+                # Validação
+                logger.info("🧪 Validando migração da tabela produtos...")
+                if self.validate_migration():
+                    # Limpeza (opcional)
+                    self.cleanup_old_tables()
+                    logger.info("✅ Migração da tabela produtos concluída")
+                else:
+                    raise Exception("Validação da migração da tabela produtos falhou")
+            
+            duration = time.time() - start_time
+            logger.info(f"🎉 Todas as migrações concluídas com sucesso em {duration:.2f}s")
+            return True
                 
         except Exception as e:
             duration = time.time() - start_time
-            logger.error(f"❌ Falha na migração após {duration:.2f}s: {e}")
+            logger.error(f"❌ Falha nas migrações após {duration:.2f}s: {e}")
             return False
 
 def run_auto_migration():

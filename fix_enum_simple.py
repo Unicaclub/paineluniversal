@@ -19,7 +19,7 @@ try:
     print("🔍 Verificando enum tipousuario no PostgreSQL...")
     
     # Conectar diretamente com psycopg2
-    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:fVjXLCuAPuwsBwvgJMOqYgKMRTkQNBdV@centerbeam.proxy.rlwy.net:31175/railway")
+    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:CeGUGoTyinOaBRILNgPCApbJpcfcVETf@hopper.proxy.rlwy.net:57200/railway")
     
     # Remover qualquer prefixo sqlalchemy
     if database_url.startswith("postgresql+"):
