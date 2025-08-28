@@ -369,6 +369,49 @@ class MovimentoEstoque(Base):
     venda = relationship("VendaPDV")
     usuario = relationship("Usuario")
 
+# Enums para Formas de Pagamento
+class TipoFormaPagamento(enum.Enum):
+    DINHEIRO = "DINHEIRO"
+    PIX = "PIX"
+    CARTAO_CREDITO = "CARTAO_CREDITO"
+    CARTAO_DEBITO = "CARTAO_DEBITO"
+    TRANSFERENCIA = "TRANSFERENCIA"
+    BOLETO = "BOLETO"
+    VOUCHER = "VOUCHER"
+    CREDITO_LOJA = "CREDITO_LOJA"
+
+class StatusFormaPagamento(enum.Enum):
+    ATIVO = "ATIVO"
+    INATIVO = "INATIVO"
+    MANUTENCAO = "MANUTENCAO"
+
+# Modelo de Formas de Pagamento
+class FormaPagamento(Base):
+    __tablename__ = "formas_pagamento"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(100), nullable=False, unique=True)
+    codigo = Column(String(50), nullable=False, unique=True)
+    tipo = Column(Enum(TipoFormaPagamento), nullable=False)
+    status = Column(Enum(StatusFormaPagamento), default=StatusFormaPagamento.ATIVO)
+    descricao = Column(Text)
+    taxa_percentual = Column(Numeric(5,2), default=0.00)  # Taxa em percentual (ex: 2.50 para 2.5%)
+    taxa_fixa = Column(Numeric(10,2), default=0.00)  # Taxa fixa em reais
+    tempo_compensacao = Column(Integer, default=0)  # Tempo em horas para compensação
+    limite_minimo = Column(Numeric(10,2), default=0.00)  # Valor mínimo aceito
+    limite_maximo = Column(Numeric(10,2))  # Valor máximo aceito (NULL = ilimitado)
+    icone = Column(String(100))  # Nome do ícone ou URL da imagem
+    cor_hex = Column(String(7))  # Cor hexadecimal (ex: #1E40AF)
+    configuracoes_extras = Column(Text)  # JSON com configurações específicas
+    ordem_exibicao = Column(Integer, default=1)  # Ordem na listagem
+    ativo = Column(Boolean, default=True)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em = Column(DateTime(timezone=True), onupdate=func.now())
+    criado_por = Column(Integer, ForeignKey("usuarios.id"))
+    
+    # Relacionamentos
+    criador = relationship("Usuario", foreign_keys=[criado_por])
+
 # Enums para Import/Export
 class StatusImportacao(enum.Enum):
     PENDENTE = "PENDENTE"

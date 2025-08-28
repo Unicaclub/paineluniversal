@@ -1,315 +1,185 @@
-/**
- * Serviço de API para Formas de Pagamento
- * 
- * Este serviço gerencia todas as operações relacionadas às formas de pagamento do sistema,
- * incluindo validações, taxas e controle de parcelamento.
- */
-
-import { api } from './api';
+// Serviço para gerenciamento de formas de pagamento
+import api from './api';
 
 class FormasPagamentoService {
-  constructor() {
-    this.baseURL = '/api/formas-pagamento';
-  }
-
   /**
-   * Busca todas as formas de pagamento
+   * Lista todas as formas de pagamento com filtros e paginação
+   * @param {Object} params - Parâmetros de busca
+   * @returns {Promise<Object>} Lista paginada de formas de pagamento
    */
-  async getAll(params = {}) {
+  async listar(params = {}) {
     try {
-      const response = await api.get(this.baseURL, { params });
-      
-      // Transformar dados para o formato esperado pelo frontend
-      const data = response.data.map(forma => ({
-        id: forma.id,
-        codigo: forma.codigo,
-        descricao: forma.descricao,
-        tipo_pagamento: forma.tipo_pagamento,
-        taxa_percentual: forma.taxa_percentual || 0,
-        taxa_fixa: forma.taxa_fixa || 0,
-        aceita_parcelamento: forma.aceita_parcelamento || false,
-        max_parcelas: forma.max_parcelas || 1,
-        ativo: forma.ativo !== undefined ? forma.ativo : true,
-        status: forma.ativo ? 'Ativo' : 'Inativo',
-        observacoes: forma.observacoes || '',
-        created_at: forma.created_at,
-        updated_at: forma.updated_at
-      }));
-
-      return {
-        data,
-        total: data.length,
-        page: params.page || 1,
-        per_page: params.per_page || 25
-      };
+      const response = await api.get('/formas-pagamento', { params });
+      return response.data;
     } catch (error) {
-      console.error('Erro ao buscar formas de pagamento:', error);
-      throw new Error('Falha ao carregar formas de pagamento');
+      console.error('Erro ao listar formas de pagamento:', error);
+      throw error;
     }
   }
 
   /**
-   * Busca forma de pagamento por ID
+   * Busca uma forma de pagamento por ID
+   * @param {number} id - ID da forma de pagamento
+   * @returns {Promise<Object>} Dados da forma de pagamento
    */
-  async getById(id) {
+  async buscarPorId(id) {
     try {
-      const response = await api.get(`${this.baseURL}/${id}`);
+      const response = await api.get(`/formas-pagamento/${id}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar forma de pagamento:', error);
-      throw new Error('Forma de pagamento não encontrada');
+      throw error;
     }
   }
 
   /**
-   * Cria nova forma de pagamento
+   * Cria uma nova forma de pagamento
+   * @param {Object} dados - Dados da forma de pagamento
+   * @returns {Promise<Object>} Forma de pagamento criada
    */
-  async create(formaPagamentoData) {
+  async criar(dados) {
     try {
-      const data = {
-        ...formaPagamentoData,
-        codigo: parseInt(formaPagamentoData.codigo),
-        taxa_percentual: parseFloat(formaPagamentoData.taxa_percentual || 0),
-        taxa_fixa: parseFloat(formaPagamentoData.taxa_fixa || 0),
-        aceita_parcelamento: formaPagamentoData.aceita_parcelamento !== undefined ? formaPagamentoData.aceita_parcelamento : false,
-        max_parcelas: parseInt(formaPagamentoData.max_parcelas || 1),
-        ativo: formaPagamentoData.ativo !== undefined ? formaPagamentoData.ativo : true
-      };
+      // Validar configurações extras se for JSON
+      if (dados.configuracoes_extras && typeof dados.configuracoes_extras === 'string') {
+        try {
+          JSON.parse(dados.configuracoes_extras);
+        } catch (e) {
+          throw new Error('Configurações extras devem estar em formato JSON válido');
+        }
+      }
 
-      const response = await api.post(this.baseURL, data);
+      const response = await api.post('/formas-pagamento', dados);
       return response.data;
     } catch (error) {
       console.error('Erro ao criar forma de pagamento:', error);
-      
-      if (error.response?.status === 400) {
-        const message = error.response.data?.detail || 'Dados inválidos';
-        throw new Error(message);
-      }
-      
-      throw new Error('Falha ao criar forma de pagamento');
+      throw error;
     }
   }
 
   /**
-   * Atualiza forma de pagamento existente
+   * Atualiza uma forma de pagamento existente
+   * @param {number} id - ID da forma de pagamento
+   * @param {Object} dados - Dados atualizados
+   * @returns {Promise<Object>} Forma de pagamento atualizada
    */
-  async update(id, formaPagamentoData) {
+  async atualizar(id, dados) {
     try {
-      const data = {
-        ...formaPagamentoData,
-        codigo: parseInt(formaPagamentoData.codigo),
-        taxa_percentual: parseFloat(formaPagamentoData.taxa_percentual || 0),
-        taxa_fixa: parseFloat(formaPagamentoData.taxa_fixa || 0),
-        aceita_parcelamento: formaPagamentoData.aceita_parcelamento !== undefined ? formaPagamentoData.aceita_parcelamento : false,
-        max_parcelas: parseInt(formaPagamentoData.max_parcelas || 1)
-      };
+      // Validar configurações extras se for JSON
+      if (dados.configuracoes_extras && typeof dados.configuracoes_extras === 'string') {
+        try {
+          JSON.parse(dados.configuracoes_extras);
+        } catch (e) {
+          throw new Error('Configurações extras devem estar em formato JSON válido');
+        }
+      }
 
-      const response = await api.put(`${this.baseURL}/${id}`, data);
+      const response = await api.put(`/formas-pagamento/${id}`, dados);
       return response.data;
     } catch (error) {
       console.error('Erro ao atualizar forma de pagamento:', error);
-      
-      if (error.response?.status === 404) {
-        throw new Error('Forma de pagamento não encontrada');
-      }
-      
-      if (error.response?.status === 400) {
-        const message = error.response.data?.detail || 'Dados inválidos';
-        throw new Error(message);
-      }
-      
-      throw new Error('Falha ao atualizar forma de pagamento');
+      throw error;
     }
   }
 
   /**
-   * Remove forma de pagamento
+   * Remove uma forma de pagamento
+   * @param {number} id - ID da forma de pagamento
+   * @returns {Promise<void>}
    */
-  async delete(id) {
+  async remover(id) {
     try {
-      await api.delete(`${this.baseURL}/${id}`);
-      return { success: true };
+      await api.delete(`/formas-pagamento/${id}`);
     } catch (error) {
-      console.error('Erro ao deletar forma de pagamento:', error);
-      
-      if (error.response?.status === 404) {
-        throw new Error('Forma de pagamento não encontrada');
-      }
-      
-      throw new Error('Falha ao deletar forma de pagamento');
+      console.error('Erro ao remover forma de pagamento:', error);
+      throw error;
     }
   }
 
   /**
-   * Busca forma de pagamento por código
+   * Alterna o status ativo/inativo de uma forma de pagamento
+   * @param {number} id - ID da forma de pagamento
+   * @returns {Promise<Object>} Forma de pagamento atualizada
    */
-  async getByCodigo(codigo) {
+  async alternarStatus(id) {
     try {
-      const response = await api.get(`${this.baseURL}`, {
-        params: { codigo }
+      const response = await api.patch(`/formas-pagamento/${id}/toggle-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao alternar status da forma de pagamento:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca formas de pagamento ativas para uso em outros módulos
+   * @returns {Promise<Array>} Lista de formas de pagamento ativas
+   */
+  async buscarAtivas() {
+    try {
+      const response = await api.get('/formas-pagamento', { 
+        params: { 
+          ativo: true, 
+          status: 'ATIVO',
+          limit: 1000  // Buscar todas as ativas
+        }
       });
-      
-      return response.data.length > 0 ? response.data[0] : null;
-    } catch (error) {
-      console.error('Erro ao buscar forma de pagamento por código:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Busca forma de pagamento por descrição
-   */
-  async getByDescricao(descricao) {
-    try {
-      const response = await api.get(`${this.baseURL}`, {
-        params: { descricao }
-      });
-      
-      return response.data.length > 0 ? response.data[0] : null;
-    } catch (error) {
-      console.error('Erro ao buscar forma de pagamento por descrição:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Valida se um campo é único
-   */
-  async validateUnique(field, value, excludeId = null) {
-    try {
-      let formaPagamento = null;
-      
-      if (field === 'codigo') {
-        formaPagamento = await this.getByCodigo(value);
-      } else if (field === 'descricao') {
-        formaPagamento = await this.getByDescricao(value);
-      }
-      
-      // Se encontrou uma forma de pagamento e não é a mesma que está sendo editada
-      if (formaPagamento && formaPagamento.id != excludeId) {
-        return { valid: false, message: `${field.toUpperCase()} já cadastrado` };
-      }
-      
-      return { valid: true };
-    } catch (error) {
-      console.error('Erro ao validar unicidade:', error);
-      return { valid: true }; // Em caso de erro, permite a validação
-    }
-  }
-
-  /**
-   * Busca formas de pagamento ativas
-   */
-  async getAtivas() {
-    try {
-      const response = await this.getAll({ ativo: true });
-      return response.data.filter(forma => forma.ativo);
+      return response.data.items || response.data;
     } catch (error) {
       console.error('Erro ao buscar formas de pagamento ativas:', error);
-      throw new Error('Falha ao carregar formas de pagamento ativas');
-    }
-  }
-
-  /**
-   * Busca formas de pagamento que aceitam parcelamento
-   */
-  async getComParcelamento() {
-    try {
-      const response = await this.getAll({ aceita_parcelamento: true });
-      return response.data.filter(forma => forma.aceita_parcelamento);
-    } catch (error) {
-      console.error('Erro ao buscar formas com parcelamento:', error);
-      throw new Error('Falha ao carregar formas com parcelamento');
-    }
-  }
-
-  /**
-   * Exporta formas de pagamento para CSV
-   */
-  async exportToCSV() {
-    try {
-      const response = await this.getAll();
-      const formasPagamento = response.data;
-      
-      const headers = ['ID', 'Código', 'Descrição', 'Tipo', 'Taxa %', 'Taxa Fixa', 'Parcelamento', 'Max Parcelas', 'Status', 'Observações'];
-      const csvContent = [
-        headers.join(','),
-        ...formasPagamento.map(forma => [
-          forma.id,
-          forma.codigo,
-          `"${forma.descricao}"`,
-          forma.tipo_pagamento,
-          forma.taxa_percentual,
-          forma.taxa_fixa,
-          forma.aceita_parcelamento ? 'Sim' : 'Não',
-          forma.max_parcelas,
-          forma.ativo ? 'Ativo' : 'Inativo',
-          `"${forma.observacoes || ''}"`
-        ].join(','))
-      ].join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `formas_pagamento_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Erro ao exportar formas de pagamento:', error);
-      throw new Error('Falha ao exportar dados');
-    }
-  }
-
-  /**
-   * Busca formas de pagamento com filtros
-   */
-  async search(query, filters = {}) {
-    try {
-      const params = {
-        ...filters
-      };
-      
-      if (query) {
-        params.search = query;
-      }
-      
-      return await this.getAll(params);
-    } catch (error) {
-      console.error('Erro ao buscar formas de pagamento:', error);
-      throw new Error('Falha na busca');
+      throw error;
     }
   }
 
   /**
    * Calcula taxa total (percentual + fixa) para um valor
+   * @param {Object} formaPagamento - Dados da forma de pagamento
+   * @param {number} valor - Valor para calcular a taxa
+   * @returns {Object} Cálculo detalhado das taxas
    */
-  calcularTaxa(valor, taxa_percentual, taxa_fixa) {
-    const taxaPerc = (valor * taxa_percentual) / 100;
-    return taxaPerc + taxa_fixa;
+  calcularTaxa(formaPagamento, valor) {
+    const taxaPercentual = (formaPagamento.taxa_percentual || 0) / 100;
+    const taxaFixa = formaPagamento.taxa_fixa || 0;
+    
+    const valorTaxaPercentual = valor * taxaPercentual;
+    const taxaTotal = valorTaxaPercentual + taxaFixa;
+    const valorLiquido = valor - taxaTotal;
+    
+    return {
+      valorOriginal: valor,
+      taxaPercentual: formaPagamento.taxa_percentual || 0,
+      valorTaxaPercentual,
+      taxaFixa,
+      taxaTotal,
+      valorLiquido,
+      percentualTotal: (taxaTotal / valor) * 100
+    };
   }
 
   /**
-   * Verifica se forma de pagamento aceita determinado número de parcelas
+   * Valida se um valor está dentro dos limites da forma de pagamento
+   * @param {Object} formaPagamento - Dados da forma de pagamento
+   * @param {number} valor - Valor a ser validado
+   * @returns {Object} Resultado da validação
    */
-  validarParcelas(formaPagamento, numeroParcelas) {
-    if (!formaPagamento.aceita_parcelamento && numeroParcelas > 1) {
-      return { valid: false, message: 'Esta forma de pagamento não aceita parcelamento' };
+  validarLimites(formaPagamento, valor) {
+    const erros = [];
+    
+    if (formaPagamento.limite_minimo && valor < formaPagamento.limite_minimo) {
+      erros.push(`Valor mínimo: R$ ${formaPagamento.limite_minimo.toFixed(2)}`);
     }
     
-    if (numeroParcelas > formaPagamento.max_parcelas) {
-      return { valid: false, message: `Máximo de ${formaPagamento.max_parcelas} parcelas para esta forma` };
+    if (formaPagamento.limite_maximo && valor > formaPagamento.limite_maximo) {
+      erros.push(`Valor máximo: R$ ${formaPagamento.limite_maximo.toFixed(2)}`);
     }
     
-    return { valid: true };
+    return {
+      valido: erros.length === 0,
+      erros
+    };
   }
 }
 
-export const formasPagamentoService = new FormasPagamentoService();
+// Instância singleton do serviço
+const formasPagamentoService = new FormasPagamentoService();
+
 export default formasPagamentoService;

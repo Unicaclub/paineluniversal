@@ -4,7 +4,7 @@ from typing import Optional, List
 from decimal import Decimal
 # Import absoluto para compatibilidade tanto em desenvolvimento quanto produção
 try:
-    from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
+    from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, TipoFormaPagamento, StatusFormaPagamento
 except ImportError:
     # Fallback para execução direta ou testes
     from backend.app.models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
@@ -648,6 +648,72 @@ class FiltrosDashboard(BaseModel):
 class RankingPromoterAvancado(BaseModel):
     promoter_id: int
     nome_promoter: str
+    total_vendas: int
+    receita_total: Decimal
+    conversao: float
+
+# ===== SCHEMAS FORMAS DE PAGAMENTO =====
+
+class FormaPagamentoBase(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=100, description="Nome da forma de pagamento")
+    codigo: str = Field(..., min_length=1, max_length=50, description="Código único da forma de pagamento")
+    tipo: TipoFormaPagamento = Field(..., description="Tipo da forma de pagamento")
+    status: StatusFormaPagamento = Field(default=StatusFormaPagamento.ATIVO, description="Status da forma de pagamento")
+    descricao: Optional[str] = Field(None, description="Descrição da forma de pagamento")
+    taxa_percentual: Optional[Decimal] = Field(default=Decimal('0.00'), ge=0, le=100, description="Taxa percentual (0-100)")
+    taxa_fixa: Optional[Decimal] = Field(default=Decimal('0.00'), ge=0, description="Taxa fixa em reais")
+    tempo_compensacao: Optional[int] = Field(default=0, ge=0, description="Tempo de compensação em horas")
+    limite_minimo: Optional[Decimal] = Field(default=Decimal('0.00'), ge=0, description="Valor mínimo aceito")
+    limite_maximo: Optional[Decimal] = Field(None, ge=0, description="Valor máximo aceito")
+    icone: Optional[str] = Field(None, max_length=100, description="Ícone ou imagem")
+    cor_hex: Optional[str] = Field(None, regex=r'^#[0-9A-Fa-f]{6}$', description="Cor hexadecimal (ex: #1E40AF)")
+    configuracoes_extras: Optional[str] = Field(None, description="Configurações específicas (JSON)")
+    ordem_exibicao: Optional[int] = Field(default=1, ge=1, description="Ordem na listagem")
+    ativo: Optional[bool] = Field(default=True, description="Forma de pagamento ativa")
+
+class FormaPagamentoCreate(FormaPagamentoBase):
+    """Schema para criação de forma de pagamento"""
+    pass
+
+class FormaPagamentoUpdate(BaseModel):
+    """Schema para atualização de forma de pagamento"""
+    nome: Optional[str] = Field(None, min_length=1, max_length=100)
+    codigo: Optional[str] = Field(None, min_length=1, max_length=50)
+    tipo: Optional[TipoFormaPagamento] = None
+    status: Optional[StatusFormaPagamento] = None
+    descricao: Optional[str] = None
+    taxa_percentual: Optional[Decimal] = Field(None, ge=0, le=100)
+    taxa_fixa: Optional[Decimal] = Field(None, ge=0)
+    tempo_compensacao: Optional[int] = Field(None, ge=0)
+    limite_minimo: Optional[Decimal] = Field(None, ge=0)
+    limite_maximo: Optional[Decimal] = Field(None, ge=0)
+    icone: Optional[str] = Field(None, max_length=100)
+    cor_hex: Optional[str] = Field(None, regex=r'^#[0-9A-Fa-f]{6}$')
+    configuracoes_extras: Optional[str] = None
+    ordem_exibicao: Optional[int] = Field(None, ge=1)
+    ativo: Optional[bool] = None
+
+class FormaPagamento(FormaPagamentoBase):
+    """Schema de resposta da forma de pagamento"""
+    id: int
+    criado_em: datetime
+    atualizado_em: Optional[datetime] = None
+    criado_por: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class FormaPagamentoDetalhada(FormaPagamento):
+    """Schema detalhado com informações do criador"""
+    criador: Optional[Usuario] = None
+
+# Schema para listagem paginada
+class FormaPagamentoList(BaseModel):
+    items: List[FormaPagamento]
+    total: int
+    page: int
+    per_page: int
+    pages: int
     total_vendas: int
     receita_gerada: Decimal
     total_checkins: int

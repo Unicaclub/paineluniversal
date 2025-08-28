@@ -15,7 +15,7 @@ import time
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # meep temporariamente comentado devido a erros de importação
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, formas_pagamento  # meep temporariamente comentado devido a erros de importação
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -239,6 +239,7 @@ app.include_router(pdv.router, prefix="/api")
 # app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(produtos.router, prefix="/api")
+app.include_router(formas_pagamento.router, prefix="/api/formas-pagamento", tags=["Formas de Pagamento"])
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
 # app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])  # Temporariamente comentado
 
