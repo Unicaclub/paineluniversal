@@ -35,7 +35,7 @@ def test_user_registration():
             "email": f"teste_validacao_{test_time}@exemplo.com",
             "cpf": f"111{test_time}"[-11:],
             "telefone": "11999999999",
-            "password": "123456",
+            "senha": "123456",
             "tipo": "cliente"
         }
         

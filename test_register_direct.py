@@ -32,7 +32,7 @@ async def test_register_function_direct():
             email=f"direto{test_time}@teste.com",
             cpf=f"111{test_time}"[-11:],
             telefone="11999999999",
-            password="123456",  # UsuarioRegister usa password realmente
+            senha="123456",  # Agora usando senha corretamente
             tipo="CLIENTE"
         )
         

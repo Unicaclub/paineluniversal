@@ -84,14 +84,14 @@ except ImportError as e:
         email: str
         
     class UsuarioCreate(UsuarioBase):
-        password: str
+        senha: str  # Corrigido de password para senha
         
     class UsuarioRegister(BaseModel):
         nome: str
         email: str
         cpf: str
         telefone: Optional[str] = None
-        password: str
+        senha: str  # Corrigido de password para senha
         tipo: Optional[str] = "cliente"  # Default para cliente
         
     class Usuario(UsuarioBase):

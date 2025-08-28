@@ -198,7 +198,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 detail="Email inválido"
             )
             
-        if not usuario_data.password or len(usuario_data.password) < 4:
+        if not usuario_data.senha or len(usuario_data.senha) < 4:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Senha deve ter pelo menos 4 caracteres"
@@ -242,7 +242,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         print(f"🔐 Gerando hash da senha em thread separada...")
         try:
             with ThreadPoolExecutor() as executor:
-                hash_future = executor.submit(gerar_hash_senha, usuario_data.password)
+                hash_future = executor.submit(gerar_hash_senha, usuario_data.senha)
                 # Timeout de 15 segundos para hash da senha
                 senha_hash = hash_future.result(timeout=15)
                 

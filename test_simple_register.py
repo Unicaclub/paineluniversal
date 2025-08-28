@@ -14,7 +14,7 @@ def test_simple():
         "nome": f"Teste API {test_time}",
         "email": f"api{test_time}@teste.com", 
         "cpf": f"111{test_time}"[-11:],
-        "password": "123456",  # Usando password
+        "senha": "123456",  # Corrigido para senha
         "tipo": "CLIENTE"
     }
     
