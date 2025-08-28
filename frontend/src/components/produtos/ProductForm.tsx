@@ -136,6 +136,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
         status: 'ATIVO',
         imagem_url: produto.imagem_url || produto.imagem || ''
       });
+    } else {
+      // Reset para valores padrão quando não há produto (novo cadastro)
+      form.reset({
+        nome: '',
+        codigo_interno: '',
+        categoria: '',
+        tipo: 'BEBIDA',
+        preco: 0,
+        descricao: '',
+        estoque_atual: 0,
+        estoque_minimo: 0,
+        estoque_maximo: 1000,
+        controla_estoque: true,
+        status: 'ATIVO',
+        imagem_url: ''
+      });
     }
   }, [produto, form]);
 

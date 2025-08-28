@@ -40,6 +40,8 @@ const ProductsList: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<Produto[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produto | undefined>(undefined);
+  const [productToDelete, setProductToDelete] = useState<Produto | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     loadProdutos();
@@ -139,8 +141,31 @@ const ProductsList: React.FC = () => {
   };
 
   const handleDelete = (produto: Produto) => {
-    console.log('Excluindo produto:', produto);
-    // TODO: Implementar exclusão com confirmação
+    setProductToDelete(produto);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+    
+    try {
+      await produtoService.delete(productToDelete.id);
+      toast({
+        title: "Produto excluído",
+        description: `${productToDelete.nome} foi excluído com sucesso.`,
+      });
+      loadProdutos(); // Recarrega a lista
+    } catch (error) {
+      console.error('Erro ao excluir produto:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Ocorreu um erro ao excluir o produto. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setShowDeleteConfirm(false);
+      setProductToDelete(null);
+    }
   };
 
   const handleImport = () => {
@@ -319,10 +344,24 @@ const ProductsList: React.FC = () => {
       ),
     },
     {
-      accessorKey: 'categoria.nome',
+      accessorKey: 'categoria',
       header: 'Categoria',
       cell: ({ row }) => (
-        <Badge variant="outline">{row.original.categoria?.nome || 'Sem categoria'}</Badge>
+        <Badge variant="outline">{row.original.categoria || 'Sem categoria'}</Badge>
+      ),
+    },
+    {
+      accessorKey: 'tipo',
+      header: 'Tipo',
+      cell: ({ getValue }) => getValue() || '-',
+    },
+    {
+      accessorKey: 'estoque_atual',
+      header: 'Estoque',
+      cell: ({ getValue }) => (
+        <span className="font-mono text-sm">
+          {getValue() || 0}
+        </span>
       ),
     },
     {
@@ -341,7 +380,7 @@ const ProductsList: React.FC = () => {
       cell: ({ getValue }) => getValue() || '-',
     },
     {
-      accessorKey: 'valor',
+      accessorKey: 'preco',
       header: 'Valor',
       cell: ({ getValue }) => (
         <span className="font-semibold">
@@ -465,11 +504,43 @@ const ProductsList: React.FC = () => {
 
       {/* Modal de criação/edição */}
       <ProductForm
-        produto={editingProduct}
+        produto={showCreateModal ? undefined : editingProduct}
         open={showCreateModal || !!editingProduct}
         onClose={handleCloseModal}
         onSave={handleSaveProduct}
       />
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteConfirm && productToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Confirmar exclusão
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Tem certeza que deseja excluir o produto <strong>{productToDelete.nome}</strong>? 
+              Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setProductToDelete(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmDelete}
+              >
+                Excluir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
