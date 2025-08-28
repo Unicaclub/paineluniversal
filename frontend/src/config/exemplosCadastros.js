@@ -796,6 +796,105 @@ export const exemploOperadores = {
 }
 
 /**
+ * Exemplo de Configuração Completa - Comandas
+ */
+export const exemploComandas = {
+  name: 'comandas',
+  title: 'Comandas',
+  itemName: 'Comanda',
+  apiEndpoint: 'comandas',
+  description: 'Gestão completa de comandas do sistema',
+  
+  allowBulkActions: true,
+  showExportImport: true,
+  generateBackend: false,
+  
+  columns: [
+    { key: 'numero', label: 'NÚMERO', type: 'text', sortable: true },
+    { key: 'cardapio_digital', label: 'CARDÁPIO DIGITAL', type: 'boolean', sortable: true },
+    { key: 'status', label: 'STATUS', type: 'status', sortable: true },
+    { key: 'ativo', label: 'ATIVO', type: 'status', sortable: true }
+  ],
+  
+  formFields: [
+    {
+      key: 'numero',
+      label: 'Número da Comanda',
+      type: 'text',
+      required: true,
+      placeholder: 'Digite o número da comanda',
+      validation: {
+        minLength: 1,
+        maxLength: 10,
+        pattern: '^[0-9A-Za-z]+$',
+        message: 'Número deve conter apenas letras e números'
+      }
+    },
+    {
+      key: 'cardapio_digital',
+      label: 'Cardápio Digital',
+      type: 'select',
+      required: true,
+      defaultValue: true,
+      options: [
+        { value: true, label: 'Habilitado' },
+        { value: false, label: 'Desabilitado' }
+      ]
+    },
+    {
+      key: 'ativo',
+      label: 'Status',
+      type: 'select',
+      required: true,
+      defaultValue: true,
+      options: [
+        { value: true, label: 'Ativo' },
+        { value: false, label: 'Inativo' }
+      ]
+    }
+  ],
+  
+  filters: [
+    {
+      key: 'numero',
+      label: 'Número',
+      type: 'text',
+      placeholder: 'Filtrar por número'
+    },
+    {
+      key: 'cardapio_digital',
+      label: 'Cardápio Digital',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todos' },
+        { value: 'true', label: 'Habilitado' },
+        { value: 'false', label: 'Desabilitado' }
+      ]
+    }
+  ],
+  
+  actions: {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+    export: true,
+    import: true
+  },
+  
+  validation: {
+    uniqueFields: ['numero']
+  },
+  
+  permissions: {
+    roles: ['admin', 'promoter'],
+    create: ['admin', 'promoter'],
+    update: ['admin', 'promoter'],
+    delete: ['admin']
+  }
+}
+
+/**
  * Exemplo de Configuração Simples - Categorias
  */
 export const exemploCategorias = {
