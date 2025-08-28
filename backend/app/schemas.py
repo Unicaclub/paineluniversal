@@ -2,7 +2,12 @@ from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime, date, timezone
 from typing import Optional, List
 from decimal import Decimal
-from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
+# Import absoluto para compatibilidade tanto em desenvolvimento quanto produção
+try:
+    from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
+except ImportError:
+    # Fallback para execução direta ou testes
+    from backend.app.models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
 import re
 
 
@@ -150,6 +155,22 @@ class UsuarioRegister(BaseModel):
         if len(cpf) != 11:
             raise ValueError('CPF deve ter 11 dígitos')
         return cpf  # Manter apenas os números para o registro público
+    
+    @field_validator('nome')
+    @classmethod
+    def validar_nome(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Nome é obrigatório e não pode estar vazio')
+        if len(v.strip()) < 2:
+            raise ValueError('Nome deve ter pelo menos 2 caracteres')
+        return v.strip()
+    
+    @field_validator('senha')
+    @classmethod 
+    def validar_senha(cls, v):
+        if not v or len(v) < 3:
+            raise ValueError('Senha deve ter pelo menos 3 caracteres')
+        return v
 
 class Usuario(BaseModel):
     # Campos básicos do usuário
