@@ -210,5 +210,3 @@ export const operadoresConfig = {
     }
   }
 }
-
-export default operadoresConfig;

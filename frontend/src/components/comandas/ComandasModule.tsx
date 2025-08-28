@@ -7,10 +7,8 @@
 
 import React from 'react';
 import CadastroModule from '../common/CadastroModule';
-
-// Importações dinâmicas para evitar problemas de tipos
-const comandasConfig = require('../../config/modules/comandasConfig').default;
-const comandasService = require('../../services/comandasService').default;
+import { comandasConfig } from '../../config/modules/comandasConfig';
+import { comandasService } from '../../services/comandasService';
 
 interface ComandasModuleProps {}
 

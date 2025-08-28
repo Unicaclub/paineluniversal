@@ -35,6 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import clientesService from '../../services/clientesService';
 
 const CadastroModule = ({ config, title, description, apiService = null }) => {
   const [items, setItems] = useState([]);
@@ -51,7 +52,7 @@ const CadastroModule = ({ config, title, description, apiService = null }) => {
   const itemsPerPage = config.ui?.itemsPerPage || 25;
 
   // Usar apiService se fornecido, senão usar clientesService como fallback
-  const service = apiService || require('../../services/clientesService').default;
+  const service = apiService || clientesService;
 
   // Carregar dados
   const loadData = async () => {

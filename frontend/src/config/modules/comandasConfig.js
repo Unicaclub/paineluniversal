@@ -191,4 +191,4 @@ export const comandasConfig = {
   }
 }
 
-export default comandasConfig;
+// Removido export default para usar named export

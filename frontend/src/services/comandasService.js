@@ -5,7 +5,7 @@
  * incluindo geração de QR codes e funcionalidades específicas.
  */
 
-import { api } from '../api';
+import { api } from './api';
 
 class ComandasService {
   constructor() {

@@ -7,10 +7,8 @@
 
 import React from 'react';
 import CadastroModule from '../common/CadastroModule';
-
-// Importações dinâmicas para evitar problemas de tipos
-const operadoresConfig = require('../../config/modules/operadoresConfig').default;
-const operadoresService = require('../../services/operadoresService').default;
+import { operadoresConfig } from '../../config/modules/operadoresConfig';
+import { operadoresService } from '../../services/operadoresService';
 
 interface OperadoresModuleProps {}
 

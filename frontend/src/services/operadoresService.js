@@ -5,7 +5,7 @@
  * utilizando o endpoint de usuários com filtro para o tipo 'promoter'.
  */
 
-import { api } from '../api';
+import { api } from './api';
 
 class OperadoresService {
   constructor() {
