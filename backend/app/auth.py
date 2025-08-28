@@ -15,7 +15,7 @@ import time
 
 # 🔧 OTIMIZAÇÃO: bcrypt configurado para produção (rounds reduzidos para performance)
 is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production"
-bcrypt_rounds = 10 if is_production else 12  # Produção usa menos rounds para evitar timeout
+bcrypt_rounds = 8 if is_production else 10  # Produção usa menos rounds para evitar timeout
 
 pwd_context = CryptContext(
     schemes=["bcrypt"], 

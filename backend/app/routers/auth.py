@@ -258,7 +258,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         print(f"👤 Criando usuário no banco...")
         
         # Converter tipo para enum correto
-        tipo_usuario = usuario_data.tipo.upper() if usuario_data.tipo else "CLIENTE"
+        tipo_usuario = usuario_data.tipo  # Já é um enum TipoUsuario, não precisa de conversão
         print(f"📋 Tipo de usuário: {tipo_usuario}")
         
         # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
@@ -269,7 +269,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 email=usuario_data.email.lower().strip(),
                 telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
                 senha_hash=senha_hash,
-                tipo=tipo_usuario,  # Usar tipo convertido
+                tipo=tipo_usuario,  # Usar tipo enum diretamente
                 ativo=True  # Usuários registrados publicamente ficam ativos por padrão
             )
             
