@@ -364,7 +364,6 @@ async def processar_venda(
         if produto:
             await notify_stock_update(
                 produto.id, 
-                venda.evento_id, 
                 produto.estoque_atual,
                 produto.nome
             )

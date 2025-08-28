@@ -38,14 +38,20 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-async def notify_stock_update(produto_id: int, evento_id: int, estoque_atual: int, produto_nome: str):
-    await manager.broadcast_to_event(evento_id, {
-        "type": "stock_update",
-        "produto_id": produto_id,
-        "estoque_atual": estoque_atual,
-        "produto_nome": produto_nome,
-        "timestamp": datetime.now().isoformat()
-    })
+async def notify_stock_update(produto_id: int, estoque_atual: int, produto_nome: str):
+    """
+    Notifica atualização de estoque para todos os eventos conectados
+    Produtos são globais, então a notificação vai para todos os eventos
+    """
+    # Notificar todos os eventos conectados já que produtos são globais
+    for evento_id in manager.active_connections.keys():
+        await manager.broadcast_to_event(evento_id, {
+            "type": "stock_update",
+            "produto_id": produto_id,
+            "estoque_atual": estoque_atual,
+            "produto_nome": produto_nome,
+            "timestamp": datetime.now().isoformat()
+        })
 
 async def notify_new_sale(evento_id: int, venda_data: dict):
     await manager.broadcast_to_event(evento_id, {

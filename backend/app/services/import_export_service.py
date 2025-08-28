@@ -78,7 +78,7 @@ class ImportExportService:
 
     # ==================== MÉTODOS DE IMPORTAÇÃO ====================
     
-    async def upload_file(self, file: UploadFile, user_id: int, evento_id: int) -> Dict[str, Any]:
+    async def upload_file(self, file: UploadFile, user_id: int) -> Dict[str, Any]:
         """Upload e análise inicial do arquivo"""
         # Validar tipo de arquivo
         formato = self._get_file_format(file.filename)
@@ -95,7 +95,7 @@ class ImportExportService:
             formato_arquivo=formato,
             tamanho_arquivo=len(content),
             usuario_id=user_id,
-            evento_id=evento_id,
+            evento_id=None,  # Produtos são globais, não atrelados a eventos
             status=StatusImportacao.PENDENTE
         )
         
@@ -406,11 +406,11 @@ class ImportExportService:
 
     # ==================== MÉTODOS DE EXPORTAÇÃO ====================
     
-    async def preview_export(self, config: ConfiguracaoExportacao, evento_id: int) -> PreviewExportacao:
+    async def preview_export(self, config: ConfiguracaoExportacao) -> PreviewExportacao:
         """Gerar preview da exportação"""
-        # Construir query base - incluir produtos específicos do evento E produtos globais
+        # Query produtos globais (todos os produtos são globais agora)
         query = self.db.query(Produto).filter(
-            or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
+            Produto.status.in_([StatusProduto.ATIVO, StatusProduto.INATIVO])
         )
         
         # Aplicar filtros
@@ -509,7 +509,7 @@ class ImportExportService:
         else:
             return f"{total_bytes / (1024 * 1024):.1f} MB"
 
-    async def execute_export(self, config: ConfiguracaoExportacao, evento_id: int, user_id: int) -> StreamingResponse:
+    async def execute_export(self, config: ConfiguracaoExportacao, user_id: int) -> StreamingResponse:
         """Executar exportação"""
         # Criar registro da operação
         operacao = OperacaoImportExport(
@@ -517,7 +517,7 @@ class ImportExportService:
             nome_arquivo=f"export_{config.tipo_exportacao}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{config.formato}",
             formato_arquivo=config.formato,
             usuario_id=user_id,
-            evento_id=evento_id,
+            evento_id=None,  # Produtos são globais
             status=StatusImportacao.PROCESSANDO,
             filtros_aplicados=json.dumps(config.filtros.dict() if config.filtros else {}),
             campos_personalizados=json.dumps(config.campos_personalizados or [])
@@ -527,9 +527,9 @@ class ImportExportService:
         self.db.commit()
         
         try:
-            # Buscar dados - incluir produtos específicos do evento E produtos globais
+            # Buscar dados - todos os produtos são globais agora
             query = self.db.query(Produto).filter(
-                or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None))
+                Produto.status.in_([StatusProduto.ATIVO, StatusProduto.INATIVO])
             )
             
             if config.filtros:
@@ -682,41 +682,34 @@ class ImportExportService:
 
     # ==================== MÉTODOS DE RELATÓRIOS ====================
     
-    def get_dashboard_stats(self, evento_id: int) -> Dict[str, Any]:
+    def get_dashboard_stats(self) -> Dict[str, Any]:
         """Obter estatísticas do dashboard"""
         today = datetime.utcnow().date()
         
-        # Operações hoje
+        # Operações hoje (globais, não por evento)
         importacoes_hoje = self.db.query(OperacaoImportExport).filter(
             and_(
-                OperacaoImportExport.evento_id == evento_id,
                 func.date(OperacaoImportExport.criado_em) == today,
                 OperacaoImportExport.tipo_operacao == TipoOperacao.IMPORTACAO
             )
         ).count()
         
-        # Produtos atualizados hoje - incluir produtos específicos do evento E produtos globais
+        # Produtos atualizados hoje (globais)
         produtos_atualizados = self.db.query(Produto).filter(
-            and_(
-                or_(Produto.evento_id == evento_id, Produto.evento_id.is_(None)),
-                func.date(Produto.atualizado_em) == today
-            )
+            func.date(Produto.atualizado_em) == today
         ).count()
         
-        # Último import com erros
+        # Último import com erros (global)
         ultimo_import = self.db.query(OperacaoImportExport).filter(
-            and_(
-                OperacaoImportExport.evento_id == evento_id,
-                OperacaoImportExport.tipo_operacao == TipoOperacao.IMPORTACAO
+            OperacaoImportExport.tipo_operacao == TipoOperacao.IMPORTACAO
             )
         ).order_by(OperacaoImportExport.criado_em.desc()).first()
         
         ultimo_import_erros = ultimo_import.registros_erro if ultimo_import else 0
         
-        # Tempo médio de processamento
+        # Tempo médio de processamento (global)
         operacoes_recentes = self.db.query(OperacaoImportExport).filter(
             and_(
-                OperacaoImportExport.evento_id == evento_id,
                 OperacaoImportExport.status == StatusImportacao.CONCLUIDA,
                 OperacaoImportExport.inicio_processamento.isnot(None),
                 OperacaoImportExport.fim_processamento.isnot(None)
@@ -738,11 +731,11 @@ class ImportExportService:
             'tempo_medio_processo': tempo_medio
         }
 
-    def get_recent_operations(self, evento_id: int, limit: int = 10) -> List[Dict[str, Any]]:
-        """Obter operações recentes"""
-        operacoes = self.db.query(OperacaoImportExport).filter(
-            OperacaoImportExport.evento_id == evento_id
-        ).order_by(OperacaoImportExport.criado_em.desc()).limit(limit).all()
+    def get_recent_operations(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Obter operações recentes (globais)"""
+        operacoes = self.db.query(OperacaoImportExport).order_by(
+            OperacaoImportExport.criado_em.desc()
+        ).limit(limit).all()
         
         return [
             {

@@ -421,8 +421,7 @@ const ProductsList: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">PRODUTOS</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie todos os produtos do estabelecimento
-            {eventoId && <span className="ml-2 text-blue-600">• Evento ID: {eventoId}</span>}
+            Gerencie todos os produtos do estabelecimento - Catálogo Global
           </p>
         </div>
         
