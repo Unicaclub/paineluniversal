@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime, date, timezone
 from typing import Optional, List
 from decimal import Decimal
@@ -101,7 +101,8 @@ class EmpresaBase(BaseModel):
     endereco: Optional[str] = None
 
 class EmpresaCreate(EmpresaBase):
-    @validator('cnpj')
+    @field_validator('cnpj')
+    @classmethod
     def validar_cnpj(cls, v):
         cnpj = re.sub(r'\D', '', v)
         if len(cnpj) != 14:
@@ -126,7 +127,8 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     senha: str
     
-    @validator('cpf')
+    @field_validator('cpf')
+    @classmethod
     def validar_cpf(cls, v):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
@@ -141,7 +143,8 @@ class UsuarioRegister(BaseModel):
     senha: str
     tipo: TipoUsuario = TipoUsuario.CLIENTE
     
-    @validator('cpf')
+    @field_validator('cpf')
+    @classmethod
     def validar_cpf(cls, v):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
@@ -173,7 +176,8 @@ class EventoBase(BaseModel):
     limite_idade: int = 18
     capacidade_maxima: Optional[int] = None
 
-    @validator('data_evento')
+    @field_validator('data_evento')
+    @classmethod
     def validar_data_evento(cls, v):
         if isinstance(v, str):
             try:
@@ -296,7 +300,8 @@ class TransacaoCreate(TransacaoBase):
     evento_id: int
     lista_id: int
     
-    @validator('cpf_comprador')
+    @field_validator('cpf_comprador')
+    @classmethod
     def validar_cpf_comprador(cls, v):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
@@ -324,14 +329,16 @@ class CheckinBase(BaseModel):
 class CheckinCreate(CheckinBase):
     evento_id: int
     
-    @validator('cpf')
+    @field_validator('cpf')
+    @classmethod
     def validar_cpf(cls, v):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
             raise ValueError('CPF deve ter 11 dígitos')
         return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
     
-    @validator('validacao_cpf')
+    @field_validator('validacao_cpf')
+    @classmethod
     def validar_tres_digitos(cls, v):
         if len(v) != 3 or not v.isdigit():
             raise ValueError('Validação deve ter exatamente 3 dígitos')
@@ -639,7 +646,8 @@ class ConvidadoBase(BaseModel):
     email: Optional[EmailStr] = None
     telefone: Optional[str] = None
     
-    @validator('cpf')
+    @field_validator('cpf')
+    @classmethod
     def validar_cpf(cls, v):
         cpf = re.sub(r'\D', '', v)
         if len(cpf) != 11:
@@ -796,7 +804,7 @@ class ClienteEventoBase(BaseModel):
     email: Optional[str] = None
     status: str = "ativo"
 
-    @validator('cpf')
+    @field_validator('cpf')
     def validate_cpf(cls, v):
         # Remove caracteres não numéricos
         cpf = re.sub(r'[^0-9]', '', v)
@@ -861,7 +869,7 @@ class EquipamentoEventoBase(BaseModel):
     responsavel_id: Optional[int] = None
     heartbeat_interval: int = 30
 
-    @validator('tipo')
+    @field_validator('tipo')
     def validate_tipo(cls, v):
         tipos_validos = ['tablet', 'qr_reader', 'printer', 'pos', 'camera', 'sensor']
         if v not in tipos_validos:
@@ -962,7 +970,7 @@ class LogSegurancaMEEPBase(BaseModel):
     usuario_id: Optional[int] = None
     resolvido: bool = False
 
-    @validator('gravidade')
+    @field_validator('gravidade')
     def validate_gravidade(cls, v):
         gravidades_validas = ['info', 'warning', 'error', 'critical']
         if v not in gravidades_validas:
