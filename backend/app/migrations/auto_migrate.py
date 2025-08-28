@@ -140,7 +140,8 @@ class AutoMigration:
                             result = conn.execute(text(query))
                             updated_count = result.rowcount
                             if updated_count > 0:
-                                logger.info(f"✅ {updated_count} usuário(s) atualizado(s): {query.split('=')[1].strip().replace("'", '')}")
+                                tipo_atualizado = query.split('=')[1].strip().replace("'", "")
+                                logger.info(f"✅ {updated_count} usuário(s) atualizado(s): {tipo_atualizado}")
                     else:
                         logger.info("✓ Nenhum usuário com valores em UPPERCASE encontrado")
                     
