@@ -48,20 +48,13 @@ const ProductsList: React.FC = () => {
   const loadProdutos = async () => {
     setLoading(true);
     try {
-      if (!eventoId) {
-        toast({
-          title: "Aviso",
-          description: "Nenhum evento selecionado. Selecione um evento primeiro.",
-          variant: "default"
-        });
-        setProdutos([]);
-        return;
-      }
-
-      const produtos = await produtoService.getAll(eventoId);
+      // ✅ Produtos são globais - não precisamos mais do eventoId
+      console.log('🔄 Carregando produtos globais...');
+      const produtos = await produtoService.getAll();
+      console.log('✅ Produtos carregados:', produtos.length);
       setProdutos(produtos);
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+      console.error('❌ Erro ao carregar produtos:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar produtos. Verifique sua conexão.",

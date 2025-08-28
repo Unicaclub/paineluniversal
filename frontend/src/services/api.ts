@@ -761,11 +761,19 @@ export const categoriaService = {
 // Serviços de produtos
 export const produtoService = {
   async getAll(eventoId?: number): Promise<Produto[]> {
-    const params = eventoId ? { evento_id: eventoId } : {};
-    const response = await api.get('/api/produtos/', { params });
+    // ✅ Produtos são globais - não enviamos evento_id como parâmetro
+    // Se precisar de produtos específicos de um evento no futuro, implementar endpoint separado
+    const response = await api.get('/api/produtos/');
     
-    // A API retorna { produtos: [], total: 0, ... } mas precisa retornar Produto[]
+    console.log('🔍 Resposta da API produtos:', response.data);
+    
+    // A API retorna { produtos: [], total: 0, ... } 
     const produtosApi = response.data.produtos || response.data;
+    
+    if (!Array.isArray(produtosApi)) {
+      console.error('❌ API não retornou array de produtos:', produtosApi);
+      return [];
+    }
     
     // Transformar dados da API para o formato frontend
     return produtosApi.map((produto: any) => ({
@@ -776,11 +784,15 @@ export const produtoService = {
       codigo_interno: produto.codigo_interno || produto.codigo,
       codigo_barras: produto.codigo_barras,
       categoria_id: produto.categoria_id,
-      categoria: produto.categoria_produto,
+      categoria: produto.categoria || produto.categoria_produto,
       descricao: produto.descricao,
-      estoque_atual: produto.estoque_atual,
+      estoque_atual: produto.estoque_atual || produto.estoque || 0,
+      estoque_minimo: produto.estoque_minimo || 0,
+      estoque_maximo: produto.estoque_maximo || 1000,
+      controla_estoque: produto.controla_estoque !== false,
       destaque: produto.destaque || false,
       habilitado: produto.status === 'ATIVO',
+      status: produto.status || 'ATIVO',
       promocional: produto.promocional || false,
       ativo: produto.ativo !== false,
       marca: produto.marca,
@@ -800,7 +812,8 @@ export const produtoService = {
       observacoes: produto.observacoes,
       imagem_url: produto.imagem_url,
       criado_em: produto.criado_em,
-      atualizado_em: produto.atualizado_em
+      atualizado_em: produto.atualizado_em,
+      empresa_id: produto.empresa_id
     }));
   },
 

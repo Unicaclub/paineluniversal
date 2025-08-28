@@ -417,13 +417,14 @@ class ProdutoBase(BaseModel):
     imagem_url: Optional[str] = None
 
 class ProdutoCreate(ProdutoBase):
-    evento_id: int
+    # evento_id removido - produtos são globais, não atrelados a eventos específicos
+    pass
 
 class Produto(ProdutoBase):
     id: int
     status: StatusProduto
-    evento_id: int
-    empresa_id: int
+    # evento_id removido - produtos são globais, não atrelados a eventos específicos
+    empresa_id: Optional[int] = None
     criado_em: datetime
     atualizado_em: Optional[datetime] = None
     
