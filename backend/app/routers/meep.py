@@ -6,18 +6,18 @@ from typing import List, Optional
 from datetime import datetime, timedelta, date
 import json
 
-from app.database import get_db
-from app.models import (
+from ..database import get_db
+from ..models import (
     ClienteEvento, ValidacaoAcesso, EquipamentoEvento, 
     SessaoOperador, PrevisaoIA, AnalyticsMEEP, LogSegurancaMEEP,
     Evento, Usuario
 )
-from app.schemas import (
+from ..schemas import (
     ClienteEventoResponse, ValidacaoAcessoResponse, EquipamentoEventoResponse,
     PrevisaoIAResponse, AnalyticsMEEPResponse, LogSegurancaMEEPResponse,
     ClienteEventoCreate, EquipamentoEventoCreate
 )
-from app.auth import obter_usuario_atual
+from ..auth import obter_usuario_atual
 
 router = APIRouter()
 security = HTTPBearer()

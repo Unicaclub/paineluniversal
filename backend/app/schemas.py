@@ -159,6 +159,7 @@ class Usuario(BaseModel):
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
+    atualizado_em: Optional[datetime] = None  # Campo que estava faltando
     
     class Config:
         from_attributes = True

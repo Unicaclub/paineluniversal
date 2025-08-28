@@ -15,7 +15,7 @@ import time
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, meep  # financeiro e import_export temporariamente comentados
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos  # meep temporariamente comentado devido a erros de importação
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
@@ -240,7 +240,7 @@ app.include_router(pdv.router, prefix="/api")
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(produtos.router, prefix="/api")
 # app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
-app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
+# app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])  # Temporariamente comentado
 
 # 🔌 WEBSOCKETS COM CORS
 @app.websocket("/api/pdv/ws/{evento_id}")
