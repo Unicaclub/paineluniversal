@@ -22,6 +22,7 @@ import ActionButton from '../shared/ActionButton';
 import ProductFilters from './ProductFilters';
 import BulkActions from './BulkActions';
 import ProductForm from './ProductForm';
+import ProductImportModal from './ProductImportModal';
 import { produtoService } from '../../services/api';
 import { ProdutoCreate } from '../../types/database';
 import { useEvento } from '../../contexts/EventoContext';
@@ -42,6 +43,7 @@ const ProductsList: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Produto | undefined>(undefined);
   const [productToDelete, setProductToDelete] = useState<Produto | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     loadProdutos();
@@ -169,8 +171,11 @@ const ProductsList: React.FC = () => {
   };
 
   const handleImport = () => {
-    console.log('Importando produtos');
-    // TODO: Implementar modal de importação
+    setShowImportModal(true);
+  };
+
+  const handleImportSuccess = () => {
+    loadProdutos(); // Recarregar lista após importação
   };
 
   const handleExport = () => {
@@ -508,6 +513,13 @@ const ProductsList: React.FC = () => {
         open={showCreateModal || !!editingProduct}
         onClose={handleCloseModal}
         onSave={handleSaveProduct}
+      />
+
+      {/* Modal de importação */}
+      <ProductImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={handleImportSuccess}
       />
 
       {/* Modal de confirmação de exclusão */}

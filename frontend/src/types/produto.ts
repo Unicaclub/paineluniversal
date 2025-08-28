@@ -26,6 +26,23 @@ export interface Produto {
   updated_at?: Date;
 }
 
+export interface ImportResult {
+  total_linhas: number;
+  produtos_criados: number;
+  produtos_com_erro: number;
+  detalhes_criados: Array<{
+    linha: number;
+    nome: string;
+    id: number;
+  }>;
+  detalhes_erros: Array<{
+    linha: number;
+    erro: string;
+  }>;
+  campos_detectados: string[];
+  campos_mapeados: Record<string, string>;
+}
+
 export interface Categoria {
   id: string;
   nome: string;

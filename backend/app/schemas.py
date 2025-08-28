@@ -407,7 +407,6 @@ class ProdutoBase(BaseModel):
     descricao: Optional[str] = None
     tipo: TipoProduto
     preco: Decimal
-    codigo_barras: Optional[str] = None
     codigo_interno: Optional[str] = None
     estoque_atual: int = 0
     estoque_minimo: int = 0

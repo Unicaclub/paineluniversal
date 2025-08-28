@@ -884,6 +884,24 @@ export const produtoService = {
   async getByCodigo(codigo: string): Promise<Produto> {
     const response = await api.get(`/api/produtos/codigo/${codigo}`);
     return response.data;
+  },
+
+  async import(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/api/produtos/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data;
+  },
+
+  async downloadTemplate(): Promise<string> {
+    const response = await api.get('/api/produtos/import/template');
+    return response.data.content;
   }
 };
 
