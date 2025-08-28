@@ -82,18 +82,23 @@ npm start           # Alias for preview
   - Financial reporting
   - Gamification/ranking system
   - Landing page for public access
+  - Inventory/Stock management system
 - **State Management**: Context API for authentication and theming
 - **Build Optimization**: Manual chunk splitting (vendor, radix, charts, router, forms, ui)
-- **Development Proxy**: Configured to proxy `/api` requests to Railway production backend
-- **Testing**: Jest with React Testing Library setup
+- **Development Proxy**: Configured to proxy `/api` requests to Railway production backend (`https://backend-painel-universal-production.up.railway.app`)
+- **Testing**: Ready for Jest with React Testing Library (dependencies installed but no test script configured)
 
 ### Database Schema
 - **User System**: Independent user accounts based on CPF (Brazilian tax ID) for security
 - **Multi-tenant Support**: `Empresa` (Company) entity exists but users are NOT required to have company association
 - **Event Management**: Different list types (VIP, FREE, PAGANTE, PROMOTER, etc.) with flexible pricing
 - **Transaction Tracking**: Complete financial flow with status management
+- **PDV System**: Complete point-of-sale with products, comandas, sales, and inventory management
+- **Inventory Management**: Stock control with movements, locations, categories, and automated tracking
 - **Gamification System**: Achievements, rankings, and badges for promoters
 - **Real-time Data**: WebSocket support for live updates in PDV and check-in systems
+- **MEEP Integration**: Advanced analytics, equipment monitoring, and AI predictions
+- **Import/Export**: Bulk operations with validation, templates, and detailed logging
 
 ### Key Business Logic
 - **CPF-based Security**: All operations use CPF for user identification
@@ -112,13 +117,14 @@ npm start           # Alias for preview
 ## Development Notes
 - **Environment**: Uses SQLite for development, PostgreSQL for production (configured via DATABASE_URL)
 - **Frontend Proxy**: Proxies API calls to Railway production backend in development (`https://backend-painel-universal-production.up.railway.app`)
-- **CORS**: Ultra-robust CORS implementation with custom middleware for maximum compatibility
+- **CORS**: Ultra-robust CORS implementation with custom `UltimateCORSMiddleware` for maximum compatibility
 - **Database Setup**: Migrations handled via direct model metadata creation and dedicated migration scripts
 - **Testing**: Backend uses pytest with async support and coverage reporting
 - **TypeScript**: Strict configuration with comprehensive type checking
-- **PWA**: Progressive Web App capabilities with service worker caching
+- **PWA**: Progressive Web App capabilities with service worker caching and offline support
 - **Authentication**: JWT-based with CPF validation and role-based access control
-- **Error Handling**: Global exception handlers with CORS-aware responses
+- **Error Handling**: Global exception handlers with CORS-aware responses and detailed logging
+- **Build Process**: Manual chunk splitting and optimized bundle generation for better performance
 
 ## Recent Architecture Changes
 - **User Independence**: Users can be created without company association (empresa_id removed from required fields)
