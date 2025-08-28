@@ -42,8 +42,8 @@ npm run lint         # Run ESLint
 npm run preview      # Preview production build (port 4173)
 npm start           # Alias for preview
 
-# Testing (Jest + React Testing Library)
-npm test            # Run tests with Jest and React Testing Library
+# Testing - NOTE: No test script currently configured
+# npm test would need to be added to package.json
 ```
 
 ### Full Stack Deployment
