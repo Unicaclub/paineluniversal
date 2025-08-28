@@ -68,7 +68,7 @@ class AutoMigration:
             return False
     
     def fix_tipousuario_enum(self):
-        """Corrige o enum tipousuario adicionando valores faltantes"""
+        """Corrige o enum tipousuario adicionando valores faltantes e corrigindo case mismatch"""
         try:
             with self.engine.connect() as conn:
                 trans = conn.begin()
@@ -87,32 +87,65 @@ class AutoMigration:
                         END $$;
                     """))
                     
-                    # Adicionar valores que podem estar faltando
-                    enum_values = ['admin', 'promoter', 'cliente']
+                    # Adicionar valores em lowercase (corrigindo case mismatch)
+                    enum_corrections = [
+                        ('admin', 'ADMIN'),
+                        ('promoter', 'PROMOTER'), 
+                        ('cliente', 'CLIENTE')
+                    ]
                     
-                    for value in enum_values:
+                    for lowercase_val, uppercase_val in enum_corrections:
                         try:
-                            # Verificar se valor já existe
+                            # Verificar se valor lowercase já existe
                             result = conn.execute(text("""
                                 SELECT EXISTS(
                                     SELECT 1 FROM pg_enum 
                                     WHERE enumlabel = :value 
                                     AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'tipousuario')
                                 )
-                            """), {"value": value})
+                            """), {"value": lowercase_val})
                             
                             if not result.scalar():
-                                # Valor não existe, adicionar
-                                conn.execute(text(f"ALTER TYPE tipousuario ADD VALUE '{value}'"))
-                                logger.info(f"✅ Valor '{value}' adicionado ao enum tipousuario")
+                                # Valor lowercase não existe, adicionar
+                                conn.execute(text(f"ALTER TYPE tipousuario ADD VALUE '{lowercase_val}'"))
+                                logger.info(f"✅ Valor '{lowercase_val}' adicionado ao enum tipousuario")
                             else:
-                                logger.info(f"✓ Valor '{value}' já existe no enum")
+                                logger.info(f"✓ Valor '{lowercase_val}' já existe no enum")
                                 
                         except Exception as e:
-                            logger.warning(f"Aviso ao adicionar '{value}': {e}")
+                            logger.warning(f"Aviso ao adicionar '{lowercase_val}': {e}")
+                    
+                    # Corrigir usuários existentes que podem ter valores em UPPERCASE
+                    logger.info("🔄 Corrigindo case de usuários existentes...")
+                    
+                    # Verificar se existem usuários com valores em UPPERCASE
+                    result = conn.execute(text("""
+                        SELECT COUNT(*) FROM usuarios 
+                        WHERE tipo IN ('ADMIN', 'PROMOTER', 'CLIENTE')
+                    """))
+                    
+                    uppercase_count = result.scalar()
+                    
+                    if uppercase_count > 0:
+                        logger.info(f"📋 Encontrados {uppercase_count} usuários com valores em UPPERCASE")
+                        
+                        # Atualizar para lowercase
+                        update_queries = [
+                            "UPDATE usuarios SET tipo = 'admin' WHERE tipo = 'ADMIN'",
+                            "UPDATE usuarios SET tipo = 'promoter' WHERE tipo = 'PROMOTER'",
+                            "UPDATE usuarios SET tipo = 'cliente' WHERE tipo = 'CLIENTE'"
+                        ]
+                        
+                        for query in update_queries:
+                            result = conn.execute(text(query))
+                            updated_count = result.rowcount
+                            if updated_count > 0:
+                                logger.info(f"✅ {updated_count} usuário(s) atualizado(s): {query.split('=')[1].strip().replace("'", '')}")
+                    else:
+                        logger.info("✓ Nenhum usuário com valores em UPPERCASE encontrado")
                     
                     trans.commit()
-                    logger.info("✅ Enum tipousuario corrigido com sucesso")
+                    logger.info("✅ Enum tipousuario corrigido com sucesso (incluindo case mismatch)")
                     
                 except Exception as e:
                     trans.rollback()
