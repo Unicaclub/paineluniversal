@@ -182,4 +182,5 @@ class FormasPagamentoService {
 // Instância singleton do serviço
 const formasPagamentoService = new FormasPagamentoService();
 
+export { formasPagamentoService };
 export default formasPagamentoService;

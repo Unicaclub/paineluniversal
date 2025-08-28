@@ -29,7 +29,7 @@ import { MEEPDashboard, MEEPAnalytics, MEEPValidacaoCPF, MEEPEquipamentos } from
 import ClientesModule from './components/clientes/ClientesModule';
 import OperadoresModule from './components/operadores/OperadoresModule';
 import ComandasModule from './components/comandas/ComandasModule';
-import FormasPagamentoModule from './pages/formas-pagamento/FormasPagamentoModule';
+import CadastroFormasPagamento from './components/cadastros/CadastroFormasPagamento';
 import DiagnosticPage from './pages/DiagnosticPage';
 import './App.css';
 
@@ -198,7 +198,7 @@ function App() {
                       } />
                       <Route path="cadastros/formas-pagamento" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
-                          <FormasPagamentoModule />
+                          <CadastroFormasPagamento />
                         </ProtectedRoute>
                       } />
                       <Route path="cadastros/*" element={
