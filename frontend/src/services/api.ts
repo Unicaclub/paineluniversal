@@ -627,11 +627,11 @@ export const publicService = {
     email: string;
     telefone?: string;
     senha: string;
-    tipo?: 'admin' | 'promoter' | 'cliente';
+    tipo?: 'ADMIN' | 'PROMOTER' | 'CLIENTE';
   }): Promise<Usuario> {
     const userData = {
       ...data,
-      tipo: data.tipo || 'cliente'
+      tipo: data.tipo || 'CLIENTE'
     };
     
     const response = await publicApi.post('/api/auth/register', userData);

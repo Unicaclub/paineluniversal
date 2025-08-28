@@ -122,7 +122,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onToggleMode }) 
         email: formData.email,
         telefone: formData.telefone.replace(/\D/g, ''),
         senha: formData.senha,
-        tipo: formData.tipo
+        tipo: formData.tipo as 'admin' | 'promoter' | 'cliente'
       };
       
       await authService.register(userData);
