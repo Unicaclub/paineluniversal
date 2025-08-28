@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from ..database import get_db
 from ..models import Produto, Empresa, TipoProduto, StatusProduto
-from ..schemas.produtos import (
+from ..schemas import (
     ProdutoCreate, ProdutoUpdate, ProdutoResponse, ProdutoList, ProdutoFilter
 )
 

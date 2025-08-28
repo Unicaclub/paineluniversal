@@ -1,68 +1,19 @@
 # Schemas package
 
-# Import direto dos schemas principais, evitando circular import
-# Usando import absoluto para evitar conflito com o arquivo schemas.py
-
 try:
-    # Tentar importar do módulo principal
+    # Usar import direto do arquivo schemas.py (sem circular import)
     import sys
     import os
     
-    # Adicionar o diretório app ao path se necessário
-    app_dir = os.path.dirname(os.path.dirname(__file__))
-    if app_dir not in sys.path:
-        sys.path.insert(0, app_dir)
+    # Adicionar path absoluto para o módulo schemas.py
+    current_dir = os.path.dirname(__file__)
+    parent_dir = os.path.dirname(current_dir)
+    schemas_path = os.path.join(parent_dir, 'schemas.py')
     
-    # Import dos schemas do arquivo schemas.py
-    from app.schemas import (
-        # Auth schemas
-        Token,
-        TokenData, 
-        LoginRequest,
-        
-        # Usuario schemas
-        UsuarioBase,
-        UsuarioCreate,
-        UsuarioRegister,
-        Usuario,
-        
-        # Evento schemas
-        EventoBase,
-        EventoCreate,
-        Evento,
-        EventoDetalhado,
-        EventoFiltros,
-        PromoterEventoCreate,
-        PromoterEventoResponse,
-        
-        # Outros schemas necessários
-        Empresa,
-        EmpresaCreate,
-        EmpresaUpdate,
-        Lista,
-        ListaCreate,
-        ListaUpdate,
-        ListaDetalhada,
-        DashboardListas,
-        Convidado,
-        ConvidadoCreate,
-        ConvidadoUpdate,
-        ConvidadoImport,
-        Transacao,
-        TransacaoCreate,
-        TransacaoUpdate,
-        Checkin,
-        CheckinCreate,
-        CheckinUpdate,
-        Cupom,
-        CupomCreate,
-        CupomUpdate,
-    )
+    # Executar o arquivo schemas.py como módulo
+    exec(open(schemas_path).read(), globals())
     
-    # Import adicionais dos models
-    from app.models import TipoUsuario, StatusTransacao, StatusEvento
-    
-except ImportError as e:
+except Exception as e:
     # Fallback: definir schemas básicos necessários
     from pydantic import BaseModel
     from typing import Optional
