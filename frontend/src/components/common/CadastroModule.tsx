@@ -35,9 +35,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import clientesService from '../../services/clientesService';
 
-const CadastroModule = ({ config, title, description }) => {
+const CadastroModule = ({ config, title, description, apiService = null }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,6 +50,9 @@ const CadastroModule = ({ config, title, description }) => {
 
   const itemsPerPage = config.ui?.itemsPerPage || 25;
 
+  // Usar apiService se fornecido, senão usar clientesService como fallback
+  const service = apiService || require('../../services/clientesService').default;
+
   // Carregar dados
   const loadData = async () => {
     setLoading(true);
@@ -62,7 +64,7 @@ const CadastroModule = ({ config, title, description }) => {
         ...(searchTerm && { nome: searchTerm })
       };
 
-      const data = await clientesService.getAll(params);
+      const data = await service.getAll(params);
       setItems(Array.isArray(data) ? data : []);
       setTotalPages(Math.ceil((data.length || 0) / itemsPerPage));
     } catch (error) {
@@ -142,7 +144,7 @@ const CadastroModule = ({ config, title, description }) => {
   const handleDelete = async (id) => {
     if (window.confirm(`Confirma a exclusão deste ${config.itemName.toLowerCase()}?`)) {
       try {
-        await clientesService.delete(id);
+        await service.delete(id);
         toast({
           title: "Sucesso",
           description: `${config.itemName} excluído com sucesso`,

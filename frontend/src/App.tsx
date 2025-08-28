@@ -27,6 +27,7 @@ import AgendamentosList from './components/produtos/AgendamentosList';
 import ImportExportModule from './components/produtos/ImportExportModule';
 import { MEEPDashboard, MEEPAnalytics, MEEPValidacaoCPF, MEEPEquipamentos } from './components/meep';
 import ClientesModule from './components/clientes/ClientesModule';
+import OperadoresModule from './components/operadores/OperadoresModule';
 import DiagnosticPage from './pages/DiagnosticPage';
 import './App.css';
 
@@ -181,6 +182,11 @@ function App() {
                       <Route path="cadastros/clientes" element={
                         <ProtectedRoute requiredRoles={['admin', 'promoter']}>
                           <ClientesModule />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="cadastros/operadores" element={
+                        <ProtectedRoute requiredRoles={['admin']}>
+                          <OperadoresModule />
                         </ProtectedRoute>
                       } />
                       <Route path="cadastros/*" element={
