@@ -233,6 +233,61 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       description: 'Relatórios e análises'
     },
     { 
+      icon: Database, 
+      label: 'Cadastros', 
+      path: '/app/cadastros', 
+      roles: ['admin', 'promoter'],
+      description: 'Gestão de cadastros',
+      hasSubmenu: true,
+      submenu: [
+        { 
+          path: '/app/cadastros/clientes', 
+          label: 'Clientes', 
+          description: 'Gestão de clientes' 
+        },
+        { 
+          path: '/app/cadastros/operadores', 
+          label: 'Operadores', 
+          description: 'Gestão de operadores' 
+        },
+        { 
+          path: '/app/cadastros/promocoes', 
+          label: 'Promoções', 
+          description: 'Gestão de promoções' 
+        },
+        { 
+          path: '/app/cadastros/planos', 
+          label: 'Planos', 
+          description: 'Gestão de planos' 
+        },
+        { 
+          path: '/app/cadastros/comandas', 
+          label: 'Comandas', 
+          description: 'Gestão de comandas' 
+        },
+        { 
+          path: '/app/cadastros/impressoras', 
+          label: 'Impressoras', 
+          description: 'Gestão de impressoras' 
+        },
+        { 
+          path: '/app/cadastros/formas-pagamento', 
+          label: 'Formas de Pagamento', 
+          description: 'Gestão de formas de pagamento' 
+        },
+        { 
+          path: '/app/cadastros/lojas', 
+          label: 'Lojas', 
+          description: 'Gestão de lojas' 
+        },
+        { 
+          path: '/app/cadastros/link-pagamento', 
+          label: 'Link de Pagamento', 
+          description: 'Gestão de links de pagamento' 
+        }
+      ]
+    },
+    { 
       icon: Settings, 
       label: 'Configurações', 
       path: '/app/configuracoes', 

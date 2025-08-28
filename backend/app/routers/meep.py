@@ -415,6 +415,33 @@ async def get_stats_evento(
         "timestamp": datetime.now().isoformat()
     }
 
+@router.get("/clientes", response_model=List[ClienteEventoResponse])
+async def listar_clientes(
+    skip: int = 0,
+    limit: int = 100,
+    nome: Optional[str] = None,
+    cpf: Optional[str] = None,
+    email: Optional[str] = None,
+    status: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(obter_usuario_atual)
+):
+    """Listar clientes com filtros opcionais"""
+    
+    query = db.query(ClienteEvento)
+    
+    if nome:
+        query = query.filter(ClienteEvento.nome_completo.ilike(f"%{nome}%"))
+    if cpf:
+        query = query.filter(ClienteEvento.cpf.ilike(f"%{cpf}%"))
+    if email:
+        query = query.filter(ClienteEvento.email.ilike(f"%{email}%"))
+    if status:
+        query = query.filter(ClienteEvento.status == status)
+    
+    clientes = query.offset(skip).limit(limit).all()
+    return clientes
+
 @router.get("/clientes/{cpf}")
 async def get_cliente_by_cpf(
     cpf: str,
