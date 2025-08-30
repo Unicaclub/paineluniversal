@@ -98,6 +98,7 @@ const LoginForm: React.FC = () => {
       
       console.log('📋 LoginForm: Resultado recebido:', result);
 
+      // 🔧 COMPATIBILIDADE: Detectar se result tem access_token (resposta do backend)
       if (result.success) {
         console.log('✅ LoginForm: Login bem-sucedido, redirecionando...');
         toast({
@@ -106,6 +107,15 @@ const LoginForm: React.FC = () => {
           duration: 2000,
         });
         // Redirecionar imediatamente em vez de usar setTimeout
+        navigate('/app/dashboard', { replace: true });
+      } else if (result.access_token && result.usuario) {
+        // 🔧 FALLBACK: Se recebeu resposta direta do backend sem success flag
+        console.log('✅ LoginForm: Login bem-sucedido (fallback), redirecionando...');
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard...",
+          duration: 2000,
+        });
         navigate('/app/dashboard', { replace: true });
       } else if (result.needsVerification) {
         console.log('📱 LoginForm: Verificação necessária');
@@ -133,6 +143,11 @@ const LoginForm: React.FC = () => {
         });
       } else {
         console.error('❌ LoginForm: Resultado inesperado:', result);
+        console.error('🔍 LoginForm: Tipo do resultado:', typeof result);
+        console.error('🔍 LoginForm: Keys do resultado:', Object.keys(result || {}));
+        console.error('🔍 LoginForm: result.success:', result.success);
+        console.error('🔍 LoginForm: result.needsVerification:', result.needsVerification);
+        console.error('🔍 LoginForm: result.error:', result.error);
         setError('Erro inesperado no login');
       }
     } catch (error: any) {
