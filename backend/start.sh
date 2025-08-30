@@ -25,6 +25,10 @@ ls -la /app/
 echo "⏳ Aguardando inicialização..."
 sleep 2
 
+# Executar migração crítica tipo_usuario
+echo "🔧 Executando migração crítica tipo_usuario..."
+python auto_migrate_railway.py || echo "⚠️ Migração tipo_usuario falhou, continuando..."
+
 # Executar migrações se necessário (opcional)
 # python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)" || echo "⚠️ Falha nas migrações, continuando..."
 
