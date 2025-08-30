@@ -30,7 +30,7 @@ def test_user_creation():
             email=email_unico,
             telefone="11999999999",
             senha_hash=gerar_hash_senha("cliente123"),
-            tipo_usuario="cliente",
+            tipo="cliente",
             ativo=True
         )
         
@@ -50,7 +50,7 @@ def test_user_creation():
             email=email_promoter,
             telefone="11888888888",
             senha_hash=gerar_hash_senha("promoter123"),
-            tipo_usuario="promoter",
+            tipo="promoter",
             ativo=True
         )
         
@@ -152,7 +152,7 @@ def test_admin_permissions():
     
     try:
         # Buscar usuário admin
-        admin = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").first()
+        admin = db.query(Usuario).filter(Usuario.tipo == "admin").first()
         
         if admin:
             print(f"OK Admin encontrado: {admin.nome}")
@@ -201,9 +201,9 @@ def test_database_state():
         print(f"Total de eventos: {total_eventos}")
         
         # Verificar usuários por tipo
-        admins = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").count()
-        promoters = db.query(Usuario).filter(Usuario.tipo_usuario== "promoter").count()
-        clientes = db.query(Usuario).filter(Usuario.tipo_usuario== "cliente").count()
+        admins = db.query(Usuario).filter(Usuario.tipo == "admin").count()
+        promoters = db.query(Usuario).filter(Usuario.tipo == "promoter").count()
+        clientes = db.query(Usuario).filter(Usuario.tipo == "cliente").count()
         
         print(f"  - Admins: {admins}")
         print(f"  - Promoters: {promoters}")

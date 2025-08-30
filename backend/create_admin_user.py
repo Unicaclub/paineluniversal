@@ -21,7 +21,7 @@ def create_admin_user():
     
     try:
         # Verificar se já existe admin
-        admin_exists = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").first()
+        admin_exists = db.query(Usuario).filter(Usuario.tipo == "admin").first()
         if admin_exists:
             print(f"AVISO: Usuario admin ja existe: {admin_exists.nome} ({admin_exists.cpf})")
             return
@@ -33,7 +33,7 @@ def create_admin_user():
             email="admin@paineluniversal.com",
             telefone="(11) 99999-9999",
             senha_hash=gerar_hash_senha("admin123"),
-            tipo_usuario="admin",
+            tipo="admin",
             ativo=True
         )
         

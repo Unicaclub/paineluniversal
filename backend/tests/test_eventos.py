@@ -60,7 +60,7 @@ def usuario_admin(db_session, empresa_teste):
         email="admin@teste.com",
         cpf="12345678901",
         telefone="11999999999",
-        tipo_usuario="admin",
+        tipo="admin",
         senha_hash="$2b$12$test",
         ativo=True
     )
@@ -76,7 +76,7 @@ def usuario_promoter(db_session, empresa_teste):
         email="promoter@teste.com",
         cpf="98765432109",
         telefone="11888888888",
-        tipo_usuario="promoter",
+        tipo="promoter",
         senha_hash="$2b$12$test",
         ativo=True
     )

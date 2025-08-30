@@ -27,7 +27,7 @@ def update_user_id_1():
             print(f"   Tipo atual: {usuario.tipo}")
             
             # Atualizar para ADMIN
-            usuario.tipo_usuario="admin"
+            usuario.tipo="admin"
             
             # Se não tem CPF correto, atualizar também
             if usuario.cpf != "06601206156":

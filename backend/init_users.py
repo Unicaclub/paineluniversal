@@ -60,7 +60,7 @@ try:
                 email="admin@paineluniversal.com",
                 telefone="(11) 99999-0000",
                 senha_hash=senha_hash,
-                tipo_usuario="admin",
+                tipo="admin",
                 ativo=True
             )
             db.add(admin)
@@ -86,7 +86,7 @@ try:
                 email="promoter@paineluniversal.com",
                 telefone="(11) 99999-1111",
                 senha_hash=senha_hash,
-                tipo_usuario="promoter",
+                tipo="promoter",
                 ativo=True
             )
             db.add(promoter)
