@@ -326,23 +326,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     // CORREÇÃO: Garantir detecção robusta do tipo de usuário
     const userType = (() => {
       // Primeiro, tentar campo 'tipo'
-      if (usuario.tipo) return usuario.tipo;
+      if (usuario?.tipo) return usuario.tipo.toLowerCase().trim();
       // Fallback para 'tipo_usuario'
-      if (usuario.tipo_usuario) return usuario.tipo_usuario;
+      if (usuario?.tipo_usuario) return usuario.tipo_usuario.toLowerCase().trim();
       // Fallback final baseado em outras propriedades do usuário
-      if (usuario.email?.includes('admin')) return 'admin';
-      // Fallback padrão
-      return 'promoter';
+      if (usuario?.email?.includes('admin')) return 'admin';
+      // 🔧 CORREÇÃO CRÍTICA: Fallback mais inteligente para usuários autenticados
+      console.log('⚠️ Layout: Tipo de usuário não detectado, usando fallback cliente para usuário autenticado');
+      return 'cliente';
     })();
     
     console.log('🔍 Layout: Tipo de usuário detectado:', userType, {
-      tipo: usuario.tipo,
-      tipo_usuario: usuario.tipo_usuario,
+      tipo: usuario?.tipo,
+      tipo_usuario: usuario?.tipo_usuario,
       usuario: usuario,
-      fallbackUsed: !usuario.tipo && !usuario.tipo_usuario
+      fallbackUsed: !usuario?.tipo && !usuario?.tipo_usuario
     });
     
-    const filtered = menuItems.filter(item => item.roles.includes(userType));
+    // 🔧 CORREÇÃO CRÍTICA: Garantir que pelo menos items básicos sejam mostrados
+    const filtered = menuItems.filter(item => {
+      if (!item.roles || item.roles.length === 0) return true; // Items sem restrição de role
+      return item.roles.includes(userType);
+    });
+    
     console.log('🔍 Layout: UserType Detection Detalhado:', { 
       usuario, 
       userType, 
@@ -350,6 +356,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       totalMenuItems: menuItems.length,
       menuItemsWithRoles: menuItems.map(item => ({ label: item.label, roles: item.roles }))
     });
+    
+    // 🔧 SEGURANÇA: Se a filtragem falhou completamente, mostrar pelo menos items básicos
+    if (filtered.length === 0) {
+      console.log('⚠️ Layout: Filtragem resultou em 0 items, forçando items básicos para usuário autenticado');
+      const basicItemsForAuth = ['Dashboard', 'Eventos', 'Vendas', 'Check-in Inteligente', 'Check-in Mobile', 'PDV', 'Listas & Convidados'];
+      return menuItems.filter(item => basicItemsForAuth.includes(item.label));
+    }
     
     return filtered;
   })();
@@ -430,262 +443,128 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <div className="space-y-2">
-            {filteredMenuItems.length === 0 ? (
-              // MELHORIA: Fallback mais inteligente
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500 mb-2 px-3">
-                  {loading ? '⏳ Carregando menu...' : '⚠️ Usando fallback menu'}
-                </div>
-                {menuItems.map((item) => {
-                  // Se não há filtro válido, mostrar itens básicos apenas
-                  const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'Check-in Inteligente', 'PDV'];
-                  if (!basicItems.includes(item.label)) return null;
-                  
-                  const isActive = item.hasSubmenu 
-                    ? location.pathname.startsWith(item.path)
-                    : location.pathname === item.path;
-                  const isExpanded = expandedMenus[item.label];
-                  
-                  return (
-                    <div key={item.path}>
-                      <motion.div
-                        whileHover={{ x: 2 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Link
-                          to={item.hasSubmenu ? '#' : item.path}
-                          className={`
-                            group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
-                            ${isActive 
-                              ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
-                              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                            }
-                          `}
-                          onClick={(e) => {
-                            if (item.hasSubmenu) {
-                              e.preventDefault();
-                              toggleSubmenu(item.label);
-                              if (!isExpanded) {
-                                // Apenas expande o menu
-                              } else {
-                                // Se já está expandido, navega para a página principal
-                                navigate(item.path);
-                              }
-                            }
-                            setSidebarOpen(false);
-                          }}
-                          title={sidebarCollapsed ? item.label : undefined}
-                        >
-                          {isActive && (
-                            <motion.div
-                              className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
-                              layoutId="activeTab"
-                              initial={false}
-                              transition={{
-                                type: "spring",
-                                stiffness: 500,
-                                damping: 30
-                              }}
-                            />
-                          )}
-                          
-                          <div className="relative z-10 flex items-center flex-1">
-                            <item.icon className={`
-                              ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
-                              ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
-                            `} />
-                            
-                            {!sidebarCollapsed && (
-                              <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex-1 min-w-0"
-                              >
-                                <div className="truncate">{item.label}</div>
-                                {!isActive && (
-                                  <div className="text-xs opacity-60 truncate mt-0.5">
-                                    {item.description}
-                                  </div>
-                                )}
-                              </motion.div>
-                            )}
-                          </div>
-                          
-                          {item.hasSubmenu && !sidebarCollapsed && (
-                            <motion.div
-                              animate={{ rotate: isExpanded ? 180 : 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="relative z-10"
-                            >
-                              <ChevronDown className={`h-4 w-4 transition-colors ${
-                                isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60'
-                              }`} />
-                            </motion.div>
-                          )}
-                        </Link>
-                      </motion.div>
-                      
-                      {/* Submenu */}
-                      {item.hasSubmenu && isExpanded && !sidebarCollapsed && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="ml-4 mt-1 space-y-1 bg-sidebar-accent/30 rounded-lg p-2"
-                        >
-                          {item.submenu?.map((subItem) => {
-                            const isSubActive = location.pathname === subItem.path;
-                            return (
-                              <Link
-                                key={subItem.path}
-                                to={subItem.path}
-                                className={`
-                                  block py-2 px-3 text-sm rounded-md transition-colors
-                                  ${isSubActive
-                                    ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
-                                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
-                                  }
-                                `}
-                                onClick={() => setSidebarOpen(false)}
-                              >
-                                <div className="truncate">{subItem.label}</div>
-                                <div className="text-xs opacity-60 truncate mt-0.5">
-                                  {subItem.description}
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              filteredMenuItems.map((item) => {
-                const isActive = item.hasSubmenu 
-                  ? location.pathname.startsWith(item.path)
-                  : location.pathname === item.path;
-                const isExpanded = expandedMenus[item.label];
-                
-                return (
-                  <div key={item.path}>
-                    <motion.div
-                      whileHover={{ x: 2 }}
-                      whileTap={{ scale: 0.98 }}
+            {/* 🔧 CORREÇÃO: Usar filteredMenuItems sempre, sem fallback limitado */}
+            {filteredMenuItems.map((item) => {
+              const isActive = item.hasSubmenu 
+                ? location.pathname.startsWith(item.path)
+                : location.pathname === item.path;
+              const isExpanded = expandedMenus[item.label];
+              
+              return (
+                <div key={item.path}>
+                  <motion.div
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Link
+                      to={item.hasSubmenu ? '#' : item.path}
+                      className={`
+                        group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
+                        ${isActive 
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                        }
+                      `}
+                      onClick={(e) => {
+                        if (item.hasSubmenu) {
+                          e.preventDefault();
+                          toggleSubmenu(item.label);
+                          if (!isExpanded) {
+                            // Apenas expande o menu
+                          } else {
+                            // Se já está expandido, navega para a página principal
+                            navigate(item.path);
+                          }
+                        }
+                        setSidebarOpen(false);
+                      }}
+                      title={sidebarCollapsed ? item.label : undefined}
                     >
-                      <Link
-                        to={item.hasSubmenu ? '#' : item.path}
-                        className={`
-                          group flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 relative overflow-hidden
-                          ${isActive 
-                            ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-premium-md' 
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                          }
-                        `}
-                        onClick={(e) => {
-                          if (item.hasSubmenu) {
-                            e.preventDefault();
-                            toggleSubmenu(item.label);
-                            // Se ainda não está expandido, expande. Se já está expandido, navega para a página principal
-                            if (!isExpanded) {
-                              // Apenas expande o menu
-                            } else {
-                              // Se já está expandido, navega para a página principal
-                              navigate(item.path);
-                            }
-                          }
-                          setSidebarOpen(false);
-                        }}
-                        title={sidebarCollapsed ? item.label : undefined}
-                      >
-                        {isActive && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
-                            layoutId="activeTab"
-                            initial={false}
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 30
-                            }}
-                          />
-                        )}
+                      {isActive && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
+                          layoutId="activeTab"
+                          initial={false}
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30
+                          }}
+                        />
+                      )}
+                      
+                      <div className="relative z-10 flex items-center flex-1">
+                        <item.icon className={`
+                          ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
+                          ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
+                        `} />
                         
-                        <div className="relative z-10 flex items-center flex-1">
-                          <item.icon className={`
-                            ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors
-                            ${isActive ? 'text-sidebar-primary-foreground' : 'group-hover:text-primary'}
-                          `} />
-                          
-                          {!sidebarCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="flex-1 min-w-0"
-                            >
-                              <div className="truncate">{item.label}</div>
-                              {!isActive && (
-                                <div className="text-xs opacity-60 truncate mt-0.5">
-                                  {item.description}
-                                </div>
-                              )}
-                            </motion.div>
-                          )}
-                        </div>
-                        
-                        {item.hasSubmenu && !sidebarCollapsed && (
+                        {!sidebarCollapsed && (
                           <motion.div
-                            animate={{ rotate: isExpanded ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="relative z-10"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex-1 min-w-0"
                           >
-                            <ChevronDown className={`h-4 w-4 transition-colors ${
-                              isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60'
-                            }`} />
+                            <div className="truncate">{item.label}</div>
+                            {!isActive && (
+                              <div className="text-xs opacity-60 truncate mt-0.5">
+                                {item.description}
+                              </div>
+                            )}
                           </motion.div>
                         )}
-                      </Link>
+                      </div>
+                      
+                      {item.hasSubmenu && !sidebarCollapsed && (
+                        <motion.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="relative z-10"
+                        >
+                          <ChevronDown className={`h-4 w-4 transition-colors ${
+                            isActive ? 'text-sidebar-primary-foreground' : 'text-sidebar-foreground/60'
+                          }`} />
+                        </motion.div>
+                      )}
+                    </Link>
+                  </motion.div>
+                  
+                  {/* Submenu */}
+                  {item.hasSubmenu && isExpanded && !sidebarCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="ml-4 mt-1 space-y-1 bg-sidebar-accent/30 rounded-lg p-2"
+                    >
+                      {item.submenu?.map((subItem) => {
+                        const isSubActive = location.pathname === subItem.path;
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={`
+                              block py-2 px-3 text-sm rounded-md transition-colors
+                              ${isSubActive
+                                ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
+                                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                              }
+                            `}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <div className="truncate">{subItem.label}</div>
+                            <div className="text-xs opacity-60 truncate mt-0.5">
+                              {subItem.description}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </motion.div>
-                    
-                    {/* Submenu */}
-                    {item.hasSubmenu && isExpanded && !sidebarCollapsed && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="ml-4 mt-1 space-y-1 bg-sidebar-accent/30 rounded-lg p-2"
-                      >
-                        {item.submenu?.map((subItem) => {
-                          const isSubActive = location.pathname === subItem.path;
-                          return (
-                            <Link
-                              key={subItem.path}
-                              to={subItem.path}
-                              className={`
-                                block py-2 px-3 text-sm rounded-md transition-colors
-                                ${isSubActive
-                                  ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium'
-                                  : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground'
-                                }
-                              `}
-                              onClick={() => setSidebarOpen(false)}
-                            >
-                              <div className="truncate">{subItem.label}</div>
-                              <div className="text-xs opacity-60 truncate mt-0.5">
-                                {subItem.description}
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </motion.div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                  )}
+                </div>
+              );
+            })}
           </div>
         </nav>
 
