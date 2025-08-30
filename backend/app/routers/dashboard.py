@@ -7,7 +7,7 @@ from decimal import Decimal
 from ..database import get_db
 from ..models import Evento, Transacao, Checkin, Usuario, Lista, PromoterEvento, StatusTransacao
 from ..schemas import DashboardResumo, RankingPromoter, DashboardAvancado, FiltrosDashboard, RankingPromoterAvancado, DadosGrafico
-from ..auth import obter_usuario_atual
+from ..auth_functions import obter_usuario_atual
 
 router = APIRouter()
 

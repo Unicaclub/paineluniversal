@@ -17,7 +17,7 @@ from ..schemas import (
     PrevisaoIAResponse, AnalyticsMEEPResponse, LogSegurancaMEEPResponse,
     ClienteEventoCreate, EquipamentoEventoCreate
 )
-from ..auth import obter_usuario_atual
+from ..auth_functions import obter_usuario_atual
 
 router = APIRouter()
 security = HTTPBearer()

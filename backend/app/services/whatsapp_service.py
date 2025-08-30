@@ -9,7 +9,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Evento, Usuario, Transacao, Checkin, Lista
-from ..auth import validar_cpf_basico
+from ..auth_functions import validar_cpf_basico
 import aiohttp
 import websockets
 

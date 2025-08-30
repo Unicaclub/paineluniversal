@@ -5,7 +5,7 @@ from datetime import datetime, date
 from ..database import get_db
 from ..models import Evento, Transacao, Checkin, Usuario, Lista
 from ..schemas import RelatorioVendas
-from ..auth import obter_usuario_atual, verificar_permissao_admin
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin
 import csv
 import io
 import json

@@ -17,7 +17,7 @@ from ..schemas import (
     VendaPDVCreate, VendaPDV as VendaPDVSchema, RecargaComandaCreate, RecargaComanda as RecargaComandaSchema,
     CaixaPDVCreate, CaixaPDV as CaixaPDVSchema, RelatorioVendasPDV, DashboardPDV
 )
-from ..auth import obter_usuario_atual, verificar_permissao_admin
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin
 from ..websocket import notify_stock_update, notify_new_sale, notify_cash_register_update
 
 router = APIRouter(prefix="/pdv", tags=["PDV"])

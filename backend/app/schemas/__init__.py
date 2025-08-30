@@ -486,6 +486,71 @@ except Exception as e:
     class FormaPagamentoList(BaseModel):
         items: list = []
         total: int = 0
+        
+    # Schemas Financeiros (necessários para o módulo financeiro)
+    class MovimentacaoFinanceiraBase(BaseModel):
+        tipo: str  # "entrada" ou "saida"
+        categoria: str
+        descricao: str
+        valor: float
+        data_movimentacao: Optional[datetime] = None
+        
+    class MovimentacaoFinanceiraCreate(MovimentacaoFinanceiraBase):
+        evento_id: int
+        
+    class MovimentacaoFinanceiraUpdate(BaseModel):
+        tipo: Optional[str] = None
+        categoria: Optional[str] = None
+        descricao: Optional[str] = None
+        valor: Optional[float] = None
+        data_movimentacao: Optional[datetime] = None
+        
+    class MovimentacaoFinanceira(MovimentacaoFinanceiraBase):
+        id: int
+        evento_id: int
+        usuario_responsavel_id: Optional[int] = None
+        status: str = "pendente"
+        criado_em: Optional[datetime] = None
+        
+        class Config:
+            from_attributes = True
+            
+    class CaixaEventoBase(BaseModel):
+        valor_inicial: float = 0.0
+        observacoes_abertura: Optional[str] = None
+        
+    class CaixaEventoCreate(CaixaEventoBase):
+        evento_id: int
+        
+    class CaixaEvento(CaixaEventoBase):
+        id: int
+        evento_id: int
+        operador_abertura_id: Optional[int] = None
+        operador_fechamento_id: Optional[int] = None
+        data_abertura: Optional[datetime] = None
+        data_fechamento: Optional[datetime] = None
+        valor_final: Optional[float] = None
+        observacoes_fechamento: Optional[str] = None
+        status: str = "aberto"
+        
+        class Config:
+            from_attributes = True
+            
+    class DashboardFinanceiro(BaseModel):
+        total_entradas: float = 0.0
+        total_saidas: float = 0.0
+        saldo_atual: float = 0.0
+        movimentacoes_hoje: int = 0
+        movimentacoes_mes: int = 0
+        receita_hoje: float = 0.0
+        receita_mes: float = 0.0
+        gastos_hoje: float = 0.0
+        gastos_mes: float = 0.0
+        caixas_abertos: int = 0
+        ultima_movimentacao: Optional[datetime] = None
+        categorias_entrada: list = []
+        categorias_saida: list = []
+        evolucao_mensal: list = []
             
     class ValidacaoAcessoBase(BaseModel):
         evento_id: int
@@ -674,6 +739,15 @@ __all__ = [
     "FormaPagamento",
     "FormaPagamentoDetalhada",
     "FormaPagamentoList",
+    # Schemas Financeiros
+    "MovimentacaoFinanceiraBase",
+    "MovimentacaoFinanceiraCreate",
+    "MovimentacaoFinanceiraUpdate",
+    "MovimentacaoFinanceira",
+    "CaixaEventoBase",
+    "CaixaEventoCreate",
+    "CaixaEvento",
+    "DashboardFinanceiro",
     # MEEP Schemas
     "ClienteEventoBase",
     "ClienteEventoCreate",

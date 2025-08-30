@@ -5,7 +5,7 @@ from datetime import datetime
 from ..database import get_db
 from ..models import Lista, Evento
 from ..schemas import CupomCreate, CupomResponse
-from ..auth import verificar_permissao_promoter
+from ..auth_functions import verificar_permissao_promoter
 
 router = APIRouter(prefix="/cupons", tags=["Cupons"])
 

@@ -7,7 +7,7 @@ import aiohttp
 import logging
 from ..database import get_db
 from ..models import Evento, Transacao, Usuario, LogAuditoria, ClienteEvento
-from ..auth import verificar_permissao_admin
+from ..auth_functions import verificar_permissao_admin
 
 # Configurar logger
 logger = logging.getLogger(__name__)

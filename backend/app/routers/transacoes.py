@@ -4,7 +4,7 @@ from typing import List, Optional
 from ..database import get_db
 from ..models import Transacao, Lista, Evento, Usuario
 from ..schemas import Transacao as TransacaoSchema, TransacaoCreate
-from ..auth import obter_usuario_atual, validar_cpf_basico
+from ..auth_functions import obter_usuario_atual, validar_cpf_basico
 import uuid
 
 router = APIRouter()

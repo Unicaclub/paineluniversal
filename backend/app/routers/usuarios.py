@@ -4,7 +4,7 @@ from typing import List, Optional
 from ..database import get_db
 from ..models import Usuario, Empresa
 from ..schemas import Usuario as UsuarioSchema, UsuarioCreate
-from ..auth import obter_usuario_atual, verificar_permissao_admin, gerar_hash_senha, validar_cpf_basico
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin, gerar_hash_senha, validar_cpf_basico
 
 router = APIRouter()
 

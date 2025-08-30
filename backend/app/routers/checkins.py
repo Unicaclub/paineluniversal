@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from ..database import get_db
 from ..models import Checkin, Transacao, Evento, Usuario, Comanda
 from ..schemas import Checkin as CheckinSchema, CheckinCreate
-from ..auth import obter_usuario_atual, validar_cpf_basico
+from ..auth_functions import obter_usuario_atual, validar_cpf_basico
 from ..websocket import manager
 from ..services.whatsapp_service import whatsapp_service
 

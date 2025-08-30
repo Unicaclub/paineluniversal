@@ -5,7 +5,7 @@ from datetime import timedelta
 from ..database import get_db, settings
 from ..models import Usuario, Empresa
 from ..schemas import Token, LoginRequest, Usuario as UsuarioSchema, UsuarioRegister
-from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
+from ..auth_functions import autenticar_usuario, criar_access_token, obter_usuario_atual, gerar_hash_senha, validar_cpf_basico
 
 router = APIRouter()
 security = HTTPBearer()
@@ -65,7 +65,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         print(f"Usuario ID: {usuario.id}")
         
         # CORREÇÃO CRÍTICA: Usar função helper para obter tipo correto
-        from ..auth import get_user_tipo
+        from ..auth_functions import get_user_tipo
         tipo_final = get_user_tipo(usuario)
         print(f"Tipo final determinado: {tipo_final}")
         
@@ -288,8 +288,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         print(f"👤 Criando usuário no banco...")
         
         # Converter tipo para string correto
-        tipo_user = usuario_data.tipo  # Usar campo 'tipo' como principal
-        print(f"📋 Tipo de usuário: {tipo_user}")
+        tipo_usuario = usuario_data.tipo  # Usar campo 'tipo' como principal
+        print(f"📋 Tipo de usuário: {tipo_usuario}")
         
         # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
         try:
@@ -356,7 +356,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
 @router.get("/me", response_model=UsuarioSchema)
 async def obter_perfil(usuario_atual: Usuario = Depends(obter_usuario_atual)):
     """Obter dados do usuário logado"""
-    from ..auth import get_user_tipo
+    from ..auth_functions import get_user_tipo
     
     # Garantir que o tipo correto seja retornado
     tipo_correto = get_user_tipo(usuario_atual)

@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, 
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.auth import get_current_user, require_permission
-from app.services.import_export_service import ImportExportService
-from app.schemas_import_export import (
+from ..database import get_db
+from ..auth_functions import obter_usuario_atual
+from ..services.import_export_service import ImportExportService
+from ..schemas_import_export import (
     OperacaoImportacaoCreate, OperacaoImportacaoResponse,
     ConfiguracaoImportacao, ConfiguracaoExportacao,
     PreviewImportacao, PreviewExportacao, ResultadoValidacao,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/estoque", tags=["import-export"])
 def get_import_export_service(db: Session = Depends(get_db)) -> ImportExportService:
     return ImportExportService(db)
 
-def get_evento_id(current_user = Depends(get_current_user)) -> int:
+def get_evento_id(current_user = Depends(obter_usuario_atual)) -> int:
     # Por simplicidade, vamos usar um evento padrão
     # Em produção, isso viria do contexto do usuário ou parâmetro
     return 1  # Ou extrair do current_user
@@ -36,7 +36,7 @@ def get_evento_id(current_user = Depends(get_current_user)) -> int:
 @router.get("/import/options", response_model=OpcoesImportacao)
 async def get_import_options(
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Obter opções disponíveis para importação"""
     
@@ -147,7 +147,7 @@ async def upload_import_file(
     file: UploadFile = File(...),
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:write"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Upload arquivo para importação"""
     
@@ -175,7 +175,7 @@ async def validate_import_data(
     operacao_id: int,
     mapeamento: Dict[str, str],
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:write"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Validar dados antes da importação"""
     
@@ -188,7 +188,7 @@ async def execute_import(
     operacao_id: int,
     mapeamento: Dict[str, str],
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:write"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Executar importação dos dados"""
     
@@ -200,7 +200,7 @@ async def execute_import(
 async def get_import_status(
     operacao_id: int,
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Obter status da importação"""
     
@@ -238,7 +238,7 @@ async def preview_export(
     config: ConfiguracaoExportacao,
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Gerar preview da exportação"""
     
@@ -251,7 +251,7 @@ async def export_data(
     config: ConfiguracaoExportacao,
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Executar exportação de dados"""
     
@@ -328,7 +328,7 @@ async def get_export_formats():
 @router.get("/templates", response_model=List[TemplateImportacaoResponse])
 async def get_import_templates(
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Obter templates de importação disponíveis"""
     
@@ -345,7 +345,7 @@ async def get_import_templates(
 async def create_import_template(
     template_data: TemplateImportacaoCreate,
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:write"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Criar novo template de importação"""
     
@@ -372,7 +372,7 @@ async def create_import_template(
 @router.get("/templates/{format}/download")
 async def download_template(
     format: FormatoArquivo,
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Download template vazio para importação"""
     
@@ -443,7 +443,7 @@ async def download_template(
 async def get_dashboard_stats(
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Obter estatísticas do dashboard de import/export"""
     
@@ -462,7 +462,7 @@ async def get_import_export_jobs(
     status_filter: Optional[str] = Query(None),
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Listar jobs de import/export"""
     
@@ -502,7 +502,7 @@ async def get_import_export_jobs(
 async def cancel_job(
     job_id: int,
     service: ImportExportService = Depends(get_import_export_service),
-    current_user = Depends(require_permission("inventory:write"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Cancelar job de import/export"""
     
@@ -532,7 +532,7 @@ async def relatorio_giro_estoque(
     periodo: int = Query(30, ge=1, le=365, description="Período em dias"),
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Relatório de giro de estoque"""
     
@@ -564,7 +564,7 @@ async def relatorio_giro_estoque(
 async def relatorio_analise_abc(
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Análise ABC de produtos"""
     
@@ -601,7 +601,7 @@ async def relatorio_perdas(
     periodo: int = Query(30, ge=1, le=365, description="Período em dias"),
     service: ImportExportService = Depends(get_import_export_service),
     evento_id: int = Depends(get_evento_id),
-    current_user = Depends(require_permission("inventory:read"))
+    current_user = Depends(obter_usuario_atual)
 ):
     """Relatório de perdas"""
     

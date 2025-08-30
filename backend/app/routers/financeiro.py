@@ -25,7 +25,7 @@ from ..schemas import (
     CaixaEventoCreate, CaixaEvento as CaixaEventoSchema,
     DashboardFinanceiro
 )
-from ..auth import obter_usuario_atual, verificar_permissao_admin, verificar_permissao_promoter
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin, verificar_permissao_promoter
 
 router = APIRouter(prefix="/financeiro", tags=["Financeiro"])
 

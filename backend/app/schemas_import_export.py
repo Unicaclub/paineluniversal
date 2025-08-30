@@ -65,7 +65,7 @@ class ProdutoImportacao(BaseModel):
     validade_dias: Optional[int] = Field(None, gt=0, description="Dias até vencer")
     
     # Fiscal
-    ncm: Optional[str] = Field(None, regex=r"^\d{8}$", description="Código NCM (8 dígitos)")
+    ncm: Optional[str] = Field(None, pattern=r"^\d{8}$", description="Código NCM (8 dígitos)")
     icms: Optional[float] = Field(None, ge=0, le=100, description="% ICMS")
     ipi: Optional[float] = Field(None, ge=0, le=100, description="% IPI")
     

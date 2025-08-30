@@ -15,9 +15,9 @@ import time
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, formas_pagamento  # meep, import_export, financeiro temporariamente comentados devido a erros de importação
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, formas_pagamento, meep, import_export, financeiro
 from .middleware import LoggingMiddleware
-from .auth import verificar_permissao_admin
+from .auth_functions import verificar_permissao_admin
 from .scheduler import start_scheduler
 from .websocket import manager
 from .migrations.auto_migrate import run_auto_migration, deploy_monitor
@@ -274,12 +274,13 @@ app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(cupons.router, prefix="/api/cupons", tags=["Cupons"])
 app.include_router(n8n.router, prefix="/api/n8n", tags=["N8N"])
 app.include_router(pdv.router, prefix="/api")
-# app.include_router(financeiro.router, prefix="/api")  # Temporariamente comentado devido a problemas com numpy/openpyxl
+# app.include_router(financeiro.router, prefix="/api/financeiro", tags=["Financeiro"])
 app.include_router(gamificacao.router, prefix="/api")
 app.include_router(produtos.router, prefix="/api")
 app.include_router(formas_pagamento.router, prefix="/api/formas-pagamento", tags=["Formas de Pagamento"])
-# app.include_router(import_export.router, tags=["Import-Export"])  # Temporariamente comentado devido a problemas com Pydantic
-# app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])  # Temporariamente comentado
+app.include_router(import_export.router, tags=["Import-Export"])
+app.include_router(meep.router, prefix="/api/meep", tags=["MEEP Integration"])
+app.include_router(financeiro.router, prefix="/api/financeiro", tags=["Financeiro"])
 
 # 🔌 WEBSOCKETS COM CORS
 @app.websocket("/api/pdv/ws/{evento_id}")

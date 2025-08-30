@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from pydantic import BaseModel
 from ..database import get_db
-from ..auth import obter_usuario_atual, verificar_permissao_promoter
+from ..auth_functions import obter_usuario_atual, verificar_permissao_promoter
 from ..models import Usuario, Evento, Lista
 from ..services.whatsapp_service import whatsapp_service
 import logging

@@ -4,7 +4,7 @@ from typing import List
 from ..database import get_db
 from ..models import Empresa, Usuario
 from ..schemas import Empresa as EmpresaSchema, EmpresaCreate
-from ..auth import obter_usuario_atual, verificar_permissao_admin
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin
 
 router = APIRouter()
 

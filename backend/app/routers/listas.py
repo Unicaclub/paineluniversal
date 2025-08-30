@@ -8,7 +8,7 @@ from ..schemas import (
     Lista as ListaSchema, ListaCreate, ListaDetalhada, 
     DashboardListas, ConvidadoCreate, ConvidadoImport
 )
-from ..auth import obter_usuario_atual
+from ..auth_functions import obter_usuario_atual
 import uuid
 import re
 import csv

@@ -13,7 +13,7 @@ from ..schemas import (
     FormaPagamentoDetalhada,
     FormaPagamentoList
 )
-from ..auth import obter_usuario_atual, verificar_permissao_admin
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin
 
 router = APIRouter()
 

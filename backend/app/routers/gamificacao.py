@@ -23,7 +23,7 @@ from ..schemas import (
     MetricaPromoterResponse, RankingGamificado, DashboardGamificacao,
     FiltrosRanking, PromoterConquistaResponse
 )
-from ..auth import obter_usuario_atual, verificar_permissao_admin, verificar_permissao_promoter
+from ..auth_functions import obter_usuario_atual, verificar_permissao_admin, verificar_permissao_promoter
 from ..services.whatsapp_service import whatsapp_service
 
 router = APIRouter(prefix="/gamificacao", tags=["Gamificação"])
