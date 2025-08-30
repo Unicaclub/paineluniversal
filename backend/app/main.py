@@ -15,12 +15,16 @@ import time
 
 from .database import engine, get_db
 from .models import Base
-from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, formas_pagamento  # meep temporariamente comentado devido a erros de importação
+from .routers import auth, eventos, usuarios, empresas, listas, transacoes, checkins, dashboard, relatorios, whatsapp, cupons, n8n, pdv, gamificacao, produtos, formas_pagamento  # meep, import_export, financeiro temporariamente comentados devido a erros de importação
 from .middleware import LoggingMiddleware
 from .auth import verificar_permissao_admin
 from .scheduler import start_scheduler
 from .websocket import manager
 from .migrations.auto_migrate import run_auto_migration, deploy_monitor
+
+# Configurar logging ANTES de qualquer função que use logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 🚀 MIGRAÇÃO AUTOMÁTICA NO STARTUP (Railway Deploy)
 def run_startup_migrations():
@@ -61,10 +65,6 @@ def run_startup_migrations():
 run_startup_migrations()
 
 Base.metadata.create_all(bind=engine)
-
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Sistema de Gestão de Eventos",

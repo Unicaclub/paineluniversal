@@ -702,7 +702,6 @@ class ImportExportService:
         # Último import com erros (global)
         ultimo_import = self.db.query(OperacaoImportExport).filter(
             OperacaoImportExport.tipo_operacao == TipoOperacao.IMPORTACAO
-            )
         ).order_by(OperacaoImportExport.criado_em.desc()).first()
         
         ultimo_import_erros = ultimo_import.registros_erro if ultimo_import else 0
