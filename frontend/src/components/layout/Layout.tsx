@@ -297,8 +297,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const filteredMenuItems = (() => {
-    // Se o usuário não está carregado ou não há token, mostrar mais itens para melhor experiência
-    if (!usuario || !localStorage.getItem('token')) {
+    // MELHORIA: Adicionar verificação de estado mais robusta
+    if (!usuario && loading) {
+      console.log('⏳ Layout: Aguardando carregamento do usuário...');
+      return []; // Mostra loading enquanto carrega
+    }
+    
+    if (!usuario && !loading && !localStorage.getItem('token')) {
+      console.log('👤 Layout: Usuário não autenticado, mostrando itens públicos');
       // Mostrar funcionalidades básicas + MEEP para demonstração
       const publicItems = [
         'Dashboard', 
@@ -335,7 +341,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       usuario: usuario,
       fallbackUsed: !usuario.tipo && !usuario.tipo_usuario
     });
-    return menuItems.filter(item => item.roles.includes(userType));
+    
+    const filtered = menuItems.filter(item => item.roles.includes(userType));
+    console.log('🔍 Layout: UserType Detection Detalhado:', { 
+      usuario, 
+      userType, 
+      filteredCount: filtered.length,
+      totalMenuItems: menuItems.length,
+      menuItemsWithRoles: menuItems.map(item => ({ label: item.label, roles: item.roles }))
+    });
+    
+    return filtered;
   })();
 
   const getInitials = (name: string) => {
@@ -415,9 +431,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <div className="space-y-2">
             {filteredMenuItems.length === 0 ? (
-              // Fallback: mostrar todos os itens se não há filtros válidos
+              // MELHORIA: Fallback mais inteligente
               <div className="space-y-2">
+                <div className="text-xs text-gray-500 mb-2 px-3">
+                  {loading ? '⏳ Carregando menu...' : '⚠️ Usando fallback menu'}
+                </div>
                 {menuItems.map((item) => {
+                  // Se não há filtro válido, mostrar itens básicos apenas
+                  const basicItems = ['Dashboard', 'Eventos', 'Vendas', 'Check-in Inteligente', 'PDV'];
+                  if (!basicItems.includes(item.label)) return null;
+                  
                   const isActive = item.hasSubmenu 
                     ? location.pathname.startsWith(item.path)
                     : location.pathname === item.path;

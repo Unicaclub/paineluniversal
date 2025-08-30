@@ -87,6 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   userData.tipo = 'promoter'; // Fallback seguro
                   console.warn('⚠️ AuthContext: Tipo de usuário inválido, usando fallback: promoter');
                 }
+                // CORREÇÃO ADICIONAL: Garantir mapeamento tipo = tipo_usuario
+                if (userData.tipo_usuario && !userData.tipo) {
+                  userData.tipo = userData.tipo_usuario;
+                }
                 
                 setUsuario(userData);
                 localStorage.setItem('usuario', JSON.stringify(userData));
@@ -94,7 +98,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   id: userData.id,
                   nome: userData.nome,
                   tipo: userData.tipo,
-                  tipo_usuario: userData.tipo_usuario
+                  tipo_usuario: userData.tipo_usuario,
+                  compatibilityApplied: !userData.tipo && userData.tipo_usuario
                 });
               }
             } catch (error) {
