@@ -111,12 +111,12 @@ def require_permission(permission: str):
             action = "read"
         
         # Admin has all permissions
-        if usuario_atual.tipo.value == "admin":
+        if usuario_atual.tipo_usuario == "admin":
             return usuario_atual
         
         # For inventory module, allow promoters to read/write
         if resource == "inventory":
-            if usuario_atual.tipo.value in ["promoter"] and action in ["read", "write"]:
+            if usuario_atual.tipo_usuario in ["promoter"] and action in ["read", "write"]:
                 return usuario_atual
             elif action == "admin":
                 # Only admin can do admin actions
@@ -126,7 +126,7 @@ def require_permission(permission: str):
                 )
         
         # Default permission check for promoters
-        if usuario_atual.tipo.value in ["promoter"] and action in ["read", "write"]:
+        if usuario_atual.tipo_usuario in ["promoter"] and action in ["read", "write"]:
             return usuario_atual
         
         raise HTTPException(
@@ -137,7 +137,7 @@ def require_permission(permission: str):
     return permission_checker
 
 def verificar_permissao_admin(usuario_atual: Usuario = Depends(obter_usuario_atual)):
-    if usuario_atual.tipo.value != "admin":
+    if usuario_atual.tipo_usuario != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: permissões de administrador necessárias"
@@ -145,7 +145,7 @@ def verificar_permissao_admin(usuario_atual: Usuario = Depends(obter_usuario_atu
     return usuario_atual
 
 def verificar_permissao_promoter(usuario_atual: Usuario = Depends(obter_usuario_atual)):
-    if usuario_atual.tipo.value not in ["admin", "promoter"]:
+    if usuario_atual.tipo_usuario not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: permissões de promoter necessárias"
@@ -190,7 +190,7 @@ def verificar_permissao_empresa(usuario_atual: Usuario, empresa_id: Optional[int
     - Admins têm acesso a todas as empresas
     - Promoters e clientes agora têm acesso baseado em suas permissões específicas
     """
-    if usuario_atual.tipo.value == "admin":
+    if usuario_atual.tipo_usuario == "admin":
         return True
     
     # Promoters têm acesso baseado nos eventos que gerenciam
@@ -215,7 +215,7 @@ def verificar_permissao(usuario_atual: Usuario, permissao: str) -> bool:
         )
     
     # Admins têm todas as permissões
-    if usuario_atual.tipo.value == "admin":
+    if usuario_atual.tipo_usuario == "admin":
         return True
     
     # Mapear permissões por tipo de usuário
@@ -238,17 +238,17 @@ def verificar_permissao(usuario_atual: Usuario, permissao: str) -> bool:
     }
     
     # Verificar permissão específica
-    if usuario_atual.tipo.value == "promoter":
+    if usuario_atual.tipo_usuario == "promoter":
         if permissao in permissoes_promoter:
             return True
-    elif usuario_atual.tipo.value == "cliente":
+    elif usuario_atual.tipo_usuario == "cliente":
         if permissao in permissoes_cliente:
             return True
     
     # Se chegou até aqui, não tem permissão
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"Usuário {usuario_atual.tipo.value} não tem permissão: {permissao}"
+        detail=f"Usuário {usuario_atual.tipo_usuario} não tem permissão: {permissao}"
     )
 
 async def validar_cpf_receita_ws(cpf: str) -> dict:

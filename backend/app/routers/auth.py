@@ -63,8 +63,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         # Debug detalhado
         print(f"Usuario ID: {usuario.id}")
-        print(f"Usuario tipo: {usuario.tipo}")
-        print(f"Usuario tipo value: {getattr(usuario.tipo, 'value', str(usuario.tipo))}")
+        print(f"Usuario tipo: {usuario.tipo_usuario}")
+        print(f"Usuario tipo value: {usuario.tipo_usuario}")
         
         # Criar resposta manualmente para garantir compatibilidade
         try:
@@ -74,7 +74,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
                 "nome": usuario.nome,
                 "email": usuario.email,
                 "telefone": usuario.telefone,
-                "tipo": str(usuario.tipo.value) if hasattr(usuario.tipo, 'value') else str(usuario.tipo),
+                "tipo": usuario.tipo_usuario,
                 "ativo": usuario.ativo,
                 "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
                 "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
@@ -128,7 +128,7 @@ async def obter_usuario_atual_endpoint(
             "nome": current_user.nome,
             "email": current_user.email,
             "telefone": current_user.telefone,
-            "tipo": current_user.tipo.value if current_user.tipo else None,
+            "tipo": current_user.tipo_usuario,
             "ativo": current_user.ativo,
             "ultimo_login": current_user.ultimo_login,
             "criado_em": current_user.criado_em
@@ -151,7 +151,7 @@ async def obter_usuario_debug(
             "nome": current_user.nome,
             "email": current_user.email,
             "telefone": current_user.telefone,
-            "tipo": current_user.tipo.value if current_user.tipo else None,
+            "tipo": current_user.tipo_usuario,
             "ativo": current_user.ativo,
             "ultimo_login": current_user.ultimo_login.isoformat() if current_user.ultimo_login else None,
             "criado_em": current_user.criado_em.isoformat() if current_user.criado_em else None
