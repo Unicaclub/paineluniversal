@@ -330,23 +330,51 @@ except Exception as e:
         tipo_ranking: Optional[str] = "geral"
         limit: int = 20
         
-    # PDV schemas
-    class ProdutoBase(BaseModel):
-        nome: str
-        descricao: Optional[str] = None
-        preco: float = 0.0
-        codigo_barras: Optional[str] = None
-        estoque_atual: int = 0
-        
-    class ProdutoCreate(ProdutoBase):
-        evento_id: int
-        
-    class Produto(ProdutoBase):
-        id: int
-        evento_id: int = 0
-        
-        class Config:
-            from_attributes = True
+    # Importar schemas de produtos do arquivo separado
+    try:
+        from .produtos import (
+            ProdutoBase, ProdutoCreate, ProdutoUpdate, ProdutoResponse,
+            ProdutoDetalhado, ProdutoImport, ProdutoExport, ProdutoFiltros,
+            ProdutoFilter, ProdutoList, RelatorioProdutos
+        )
+        # Alias para compatibilidade
+        Produto = ProdutoResponse
+    except ImportError:
+        # Fallback PDV schemas básicos
+        class ProdutoBase(BaseModel):
+            nome: str
+            descricao: Optional[str] = None
+            preco: float = 0.0
+            codigo_barras: Optional[str] = None
+            estoque_atual: int = 0
+            
+        class ProdutoCreate(ProdutoBase):
+            evento_id: int
+            
+        class ProdutoUpdate(BaseModel):
+            nome: Optional[str] = None
+            descricao: Optional[str] = None
+            preco: Optional[float] = None
+            codigo_barras: Optional[str] = None
+            estoque_atual: Optional[int] = None
+            
+        class ProdutoList(BaseModel):
+            produtos: list = []
+            total: int = 0
+            
+        class ProdutoFilter(BaseModel):
+            nome: Optional[str] = None
+            
+        class Produto(ProdutoBase):
+            id: int
+            evento_id: int = 0
+            
+            class Config:
+                from_attributes = True
+                
+        # Aliases
+        ProdutoResponse = Produto
+        ProdutoDetalhado = Produto
             
     class ComandaBase(BaseModel):
         numero_comanda: str
@@ -433,6 +461,31 @@ except Exception as e:
         
         class Config:
             from_attributes = True
+
+    # FormaPagamento schemas básicos para compatibilidade
+    class FormaPagamentoBase(BaseModel):
+        nome: str
+        descricao: Optional[str] = None
+        
+    class FormaPagamentoCreate(FormaPagamentoBase):
+        pass
+        
+    class FormaPagamentoUpdate(BaseModel):
+        nome: Optional[str] = None
+        descricao: Optional[str] = None
+        
+    class FormaPagamento(FormaPagamentoBase):
+        id: int
+        
+        class Config:
+            from_attributes = True
+            
+    class FormaPagamentoDetalhada(FormaPagamento):
+        pass
+        
+    class FormaPagamentoList(BaseModel):
+        items: list = []
+        total: int = 0
             
     class ValidacaoAcessoBase(BaseModel):
         evento_id: int
@@ -582,6 +635,15 @@ __all__ = [
     "RelatorioVendas",
     "ProdutoBase",
     "ProdutoCreate", 
+    "ProdutoUpdate",  # Agora incluído!
+    "ProdutoResponse",
+    "ProdutoDetalhado",
+    "ProdutoImport",
+    "ProdutoExport",
+    "ProdutoFiltros",
+    "ProdutoFilter",
+    "ProdutoList",
+    "RelatorioProdutos",
     "Produto",
     "ComandaBase",
     "ComandaCreate",
@@ -605,6 +667,13 @@ __all__ = [
     "RankingGamificado",
     "DashboardGamificacao",
     "FiltrosRanking",
+    # FormaPagamento schemas
+    "FormaPagamentoBase",
+    "FormaPagamentoCreate",
+    "FormaPagamentoUpdate",
+    "FormaPagamento",
+    "FormaPagamentoDetalhada",
+    "FormaPagamentoList",
     # MEEP Schemas
     "ClienteEventoBase",
     "ClienteEventoCreate",

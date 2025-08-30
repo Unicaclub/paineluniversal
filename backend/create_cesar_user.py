@@ -8,7 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from werkzeug.security import generate_password_hash
 from sqlalchemy.orm import Session
 
@@ -34,7 +34,7 @@ def create_cesar_user():
             email="rosemberg@gmail.com",
             telefone=None,
             senha_hash=senha_hash,
-            tipo=TipoUsuario.ADMIN,  # Fazer como ADMIN para ter acesso total
+            tipo_usuario="admin",  # Fazer como ADMIN para ter acesso total
             ativo=True
         )
         

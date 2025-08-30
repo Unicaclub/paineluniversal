@@ -387,7 +387,7 @@ async def options_catch_all(request: Request, full_path: str):
 # 🏗️ SETUP INICIAL
 @app.post("/setup-inicial")
 async def setup_inicial_temp(db: Session = Depends(get_db)):
-    from .models import Empresa, Usuario, TipoUsuario
+    from .models import Empresa, Usuario
     from .auth import gerar_hash_senha
     
     try:
@@ -418,7 +418,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
             senha_hash=gerar_hash_senha("admin123"),
-            tipo=TipoUsuario.ADMIN
+            tipo_usuario="admin"
         )
         db.add(admin)
         
@@ -429,7 +429,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             email="promoter@paineluniversal.com",
             telefone="(11) 99999-1111",
             senha_hash=gerar_hash_senha("promoter123"),
-            tipo=TipoUsuario.PROMOTER
+            tipo_usuario="promoter"
         )
         db.add(promoter)
         

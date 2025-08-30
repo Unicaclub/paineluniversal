@@ -10,8 +10,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.models import TipoUsuario
-
 print('🔍 Testando criação direta do schema...')
 
 # Definir schema simples para teste
@@ -21,7 +19,7 @@ class UsuarioTest(BaseModel):
     nome: str
     email: str
     telefone: Optional[str] = None
-    tipo: TipoUsuario
+    tipo: str
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
@@ -36,7 +34,7 @@ dados_teste = {
     'nome': 'César',
     'email': 'rosemberg@gmail.com',
     'telefone': None,
-    'tipo': TipoUsuario.ADMIN,
+    'tipo': "admin",
     'ativo': True,
     'ultimo_login': None,
     'criado_em': datetime.now()

@@ -26,7 +26,7 @@ def seed_financeiro_data():
             print("❌ Nenhum evento encontrado. Execute setup_test_events.py primeiro.")
             return
         
-        usuario = db.query(Usuario).filter(Usuario.tipo == "admin").first()
+        usuario = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").first()
         if not usuario:
             print("❌ Nenhum usuário admin encontrado. Execute setup_test_users.py primeiro.")
             return

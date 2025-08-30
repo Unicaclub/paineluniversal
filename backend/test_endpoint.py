@@ -6,7 +6,7 @@ Endpoint temporário para testar schema corrigido
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime

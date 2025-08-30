@@ -8,7 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from sqlalchemy.orm import Session
 
 def update_user_id_1():
@@ -27,7 +27,7 @@ def update_user_id_1():
             print(f"   Tipo atual: {usuario.tipo}")
             
             # Atualizar para ADMIN
-            usuario.tipo = TipoUsuario.ADMIN
+            usuario.tipo_usuario="admin"
             
             # Se não tem CPF correto, atualizar também
             if usuario.cpf != "06601206156":

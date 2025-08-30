@@ -7,7 +7,7 @@ import json
 
 from app.main import app
 from app.database import get_db, Base
-from app.models import Usuario, Empresa, Evento, PromoterEvento, Lista, Transacao, TipoUsuario, StatusEvento
+from app.models import Usuario, Empresa, Evento, PromoterEvento, Lista, Transacao, StatusEvento
 from app.auth import criar_access_token
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -60,7 +60,7 @@ def usuario_admin(db_session, empresa_teste):
         email="admin@teste.com",
         cpf="12345678901",
         telefone="11999999999",
-        tipo=TipoUsuario.ADMIN,
+        tipo_usuario="admin",
         senha_hash="$2b$12$test",
         ativo=True
     )
@@ -76,7 +76,7 @@ def usuario_promoter(db_session, empresa_teste):
         email="promoter@teste.com",
         cpf="98765432109",
         telefone="11888888888",
-        tipo=TipoUsuario.PROMOTER,
+        tipo_usuario="promoter",
         senha_hash="$2b$12$test",
         ativo=True
     )
@@ -360,7 +360,7 @@ class TestEventosPermissoes:
 
     def test_promoter_nao_pode_acessar_evento_outra_empresa(self, client, db_session):
         """Teste que promoter não pode acessar evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="11.111.111/0001-11", email="emp1@test.com")
@@ -373,7 +373,7 @@ class TestEventosPermissoes:
             nome="Promoter Teste",
             email="promoter3@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -429,7 +429,7 @@ class TestEventosPermissoes:
 
     def test_promoter_nao_pode_atualizar_evento_outra_empresa(self, client, db_session):
         """Teste que promoter não pode atualizar evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="33.333.333/0001-33", email="emp1@test.com")
@@ -442,7 +442,7 @@ class TestEventosPermissoes:
             nome="Promoter Teste",
             email="promoter4@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -473,7 +473,7 @@ class TestEventosPermissoes:
     
     def test_usuario_cliente_nao_pode_criar_evento(self, client, db_session):
         """Teste que usuário tipo cliente não pode criar eventos"""
-        from app.models import Usuario, TipoUsuario
+        from app.models import Usuario
         from app.auth import gerar_hash_senha, criar_access_token
         
         cliente = Usuario(
@@ -481,7 +481,7 @@ class TestEventosPermissoes:
             nome="Cliente Teste",
             email="cliente@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.CLIENTE,
+            tipo_usuario="cliente",
             empresa_id=1
         )
         db_session.add(cliente)
@@ -503,7 +503,7 @@ class TestEventosPermissoes:
     
     def test_promoter_nao_pode_criar_evento_outra_empresa(self, client, db_session):
         """Teste que promoter não pode criar evento para outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa
+        from app.models import Usuario, Empresa
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa2 = Empresa(
@@ -527,7 +527,7 @@ class TestEventosPermissoes:
             nome="Promoter Teste",
             email="promoter2@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -571,7 +571,7 @@ class TestEventosDetalhesErros:
 
     def test_obter_evento_detalhado_promoter_outra_empresa(self, client, db_session):
         """Teste que promoter não pode ver detalhes de evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="99.999.999/0001-99", email="emp1@test.com")
@@ -584,7 +584,7 @@ class TestEventosDetalhesErros:
             nome="Promoter Teste",
             email="promoter7@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -618,7 +618,7 @@ class TestEventosVinculacaoErros:
 
     def test_vincular_promoter_sem_permissao(self, client, db_session):
         """Teste que promoter não pode vincular promoter a evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="11.222.333/0001-11", email="emp1@test.com")
@@ -631,7 +631,7 @@ class TestEventosVinculacaoErros:
             nome="Promoter Teste",
             email="promoter8@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -682,7 +682,7 @@ class TestEventosVinculacaoErros:
 
     def test_desvincular_promoter_sem_permissao(self, client, db_session):
         """Teste que promoter não pode desvincular promoter de evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="55.666.777/0001-55", email="emp1@test.com")
@@ -695,7 +695,7 @@ class TestEventosVinculacaoErros:
             nome="Promoter Teste",
             email="promoter9@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -735,7 +735,7 @@ class TestEventosFinanceiroErros:
 
     def test_obter_status_financeiro_sem_permissao(self, client, db_session):
         """Teste que promoter não pode ver status financeiro de evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="77.888.999/0001-77", email="emp1@test.com")
@@ -748,7 +748,7 @@ class TestEventosFinanceiroErros:
             nome="Promoter Teste",
             email="promoter10@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -781,7 +781,7 @@ class TestEventosExportacaoErros:
 
     def test_exportar_csv_sem_permissao(self, client, db_session):
         """Teste que promoter não pode exportar CSV de evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="99.000.111/0001-99", email="emp1@test.com")
@@ -794,7 +794,7 @@ class TestEventosExportacaoErros:
             nome="Promoter Teste",
             email="promoter11@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -825,7 +825,7 @@ class TestEventosExportacaoErros:
 
     def test_exportar_pdf_sem_permissao(self, client, db_session):
         """Teste que promoter não pode exportar PDF de evento de outra empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="11.222.333/0001-11", email="emp1@test.com")
@@ -838,7 +838,7 @@ class TestEventosExportacaoErros:
             nome="Promoter Teste",
             email="promoter12@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -864,7 +864,7 @@ class TestEventosListagemFiltros:
     
     def test_listar_eventos_promoter_filtro_empresa(self, client, db_session):
         """Teste que promoter só vê eventos da sua empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="55.555.555/0001-55", email="emp1@test.com")
@@ -877,7 +877,7 @@ class TestEventosListagemFiltros:
             nome="Promoter Teste",
             email="promoter5@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)
@@ -912,7 +912,7 @@ class TestEventosListagemFiltros:
 
     def test_buscar_eventos_promoter_filtro_empresa(self, client, db_session):
         """Teste que promoter só busca eventos da sua empresa"""
-        from app.models import Usuario, TipoUsuario, Empresa, Evento
+        from app.models import Usuario, Empresa, Evento
         from app.auth import gerar_hash_senha, criar_access_token
         
         empresa1 = Empresa(nome="Empresa 1", cnpj="77.777.777/0001-77", email="emp1@test.com")
@@ -925,7 +925,7 @@ class TestEventosListagemFiltros:
             nome="Promoter Teste",
             email="promoter6@test.com",
             senha_hash=gerar_hash_senha("senha123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             empresa_id=empresa1.id
         )
         db_session.add(promoter)

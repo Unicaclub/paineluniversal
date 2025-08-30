@@ -37,7 +37,7 @@ async def listar_produtos(
         if nome:
             query = query.filter(Produto.nome.ilike(f"%{nome}%"))
         if tipo:
-            query = query.filter(Produto.tipo == tipo)
+            query = query.filter(Produto.tipo_usuario== tipo)
         if categoria:
             query = query.filter(Produto.categoria.ilike(f"%{categoria}%"))
         if status:
@@ -383,13 +383,13 @@ async def importar_produtos(
                         status = StatusProduto.ATIVO
                 
                 # Tipo - padrão BEBIDA se não especificado
-                tipo = TipoProduto.BEBIDA
+                tipo_usuario=TipoProduto.BEBIDA
                 
                 # Criar produto
                 produto_data = ProdutoCreate(
                     nome=nome,
                     descricao=descricao,
-                    tipo=tipo,
+                    tipo_usuario=tipo,
                     preco=preco,
                     codigo_interno=codigo_interno,
                     estoque_atual=estoque_atual,
@@ -419,7 +419,7 @@ async def importar_produtos(
                 db_produto = Produto(
                     nome=produto_data.nome,
                     descricao=produto_data.descricao,
-                    tipo=produto_data.tipo,
+                    tipo_usuario=produto_data.tipo,
                     preco=produto_data.preco,
                     codigo_interno=produto_data.codigo_interno,
                     estoque_atual=produto_data.estoque_atual,

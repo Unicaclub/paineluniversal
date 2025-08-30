@@ -34,7 +34,7 @@ async def listar_produtos(
         if nome:
             query = query.filter(Produto.nome.ilike(f"%{nome}%"))
         if tipo:
-            query = query.filter(Produto.tipo == tipo)
+            query = query.filter(Produto.tipo_usuario== tipo)
         if categoria:
             query = query.filter(Produto.categoria.ilike(f"%{categoria}%"))
         if status:

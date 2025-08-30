@@ -45,7 +45,7 @@ async def listar_formas_pagamento(
         )
     
     if tipo:
-        query = query.filter(FormaPagamento.tipo == tipo.upper())
+        query = query.filter(FormaPagamento.tipo_usuario== tipo.upper())
     
     if status:
         query = query.filter(FormaPagamento.status == status.upper())

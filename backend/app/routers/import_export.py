@@ -44,7 +44,7 @@ async def get_import_options(
     campos_disponiveis = [
         CampoDisponivel(
             nome="codigo",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=True,
             descricao="Código/SKU único do produto",
             aliases=["codigo", "code", "sku", "cod", "id"],
@@ -52,7 +52,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="nome",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=True,
             descricao="Nome do produto",
             aliases=["nome", "name", "produto", "product", "title"],
@@ -60,7 +60,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="categoria",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=True,
             descricao="Categoria do produto",
             aliases=["categoria", "category", "cat", "tipo"],
@@ -68,7 +68,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="preco_venda",
-            tipo="number",
+            tipo_usuario="number",
             obrigatorio=True,
             descricao="Preço de venda",
             aliases=["preco", "price", "valor", "preco_venda"],
@@ -76,7 +76,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="codigo_barras",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=False,
             descricao="Código de barras EAN",
             aliases=["barras", "barcode", "ean", "gtin"],
@@ -84,7 +84,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="marca",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=False,
             descricao="Marca do produto",
             aliases=["marca", "brand"],
@@ -92,7 +92,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="fornecedor",
-            tipo="string",
+            tipo_usuario="string",
             obrigatorio=False,
             descricao="Fornecedor do produto",
             aliases=["fornecedor", "supplier", "vendor"],
@@ -100,7 +100,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="preco_custo",
-            tipo="number",
+            tipo_usuario="number",
             obrigatorio=False,
             descricao="Preço de custo",
             aliases=["custo", "cost", "preco_custo"],
@@ -108,7 +108,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="estoque_atual",
-            tipo="integer",
+            tipo_usuario="integer",
             obrigatorio=False,
             descricao="Quantidade em estoque",
             aliases=["estoque", "stock", "quantidade", "qty"],
@@ -116,7 +116,7 @@ async def get_import_options(
         ),
         CampoDisponivel(
             nome="estoque_minimo",
-            tipo="integer",
+            tipo_usuario="integer",
             obrigatorio=False,
             descricao="Estoque mínimo para alerta",
             aliases=["estoque_min", "min_stock"],

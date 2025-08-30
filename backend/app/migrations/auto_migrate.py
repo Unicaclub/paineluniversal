@@ -131,9 +131,9 @@ class AutoMigration:
                         
                         # Atualizar para lowercase
                         update_queries = [
-                            "UPDATE usuarios SET tipo = 'admin' WHERE tipo = 'ADMIN'",
-                            "UPDATE usuarios SET tipo = 'promoter' WHERE tipo = 'PROMOTER'",
-                            "UPDATE usuarios SET tipo = 'cliente' WHERE tipo = 'CLIENTE'"
+                            "UPDATE usuarios SET tipo_usuario='admin' WHERE tipo_usuario='ADMIN'",
+                            "UPDATE usuarios SET tipo_usuario='promoter' WHERE tipo_usuario='PROMOTER'",
+                            "UPDATE usuarios SET tipo_usuario='cliente' WHERE tipo_usuario='CLIENTE'"
                         ]
                         
                         for query in update_queries:

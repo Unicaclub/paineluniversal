@@ -8,7 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from app.schemas import Usuario as UsuarioSchema
 from sqlalchemy.orm import Session
 import json

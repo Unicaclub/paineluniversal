@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from app.database import engine
-    from app.models import Base, Empresa, Usuario, TipoUsuario
+    from app.models import Base, Empresa, Usuario
     from app.auth import gerar_hash_senha  # Usar função existente
     
     # Configuração de senha
@@ -60,7 +60,7 @@ try:
                 email="admin@paineluniversal.com",
                 telefone="(11) 99999-0000",
                 senha_hash=senha_hash,
-                tipo=TipoUsuario.ADMIN,
+                tipo_usuario="admin",
                 ativo=True
             )
             db.add(admin)
@@ -86,7 +86,7 @@ try:
                 email="promoter@paineluniversal.com",
                 telefone="(11) 99999-1111",
                 senha_hash=senha_hash,
-                tipo=TipoUsuario.PROMOTER,
+                tipo_usuario="promoter",
                 ativo=True
             )
             db.add(promoter)

@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, Empresa, Evento, TipoUsuario
+from app.models import Usuario, Empresa, Evento
 from app.auth import gerar_hash_senha
 from app.schemas import UsuarioCreate, EventoCreate
 import uuid
@@ -30,7 +30,7 @@ def test_user_creation():
             email=email_unico,
             telefone="11999999999",
             senha_hash=gerar_hash_senha("cliente123"),
-            tipo=TipoUsuario.CLIENTE,
+            tipo_usuario="cliente",
             ativo=True
         )
         
@@ -50,7 +50,7 @@ def test_user_creation():
             email=email_promoter,
             telefone="11888888888",
             senha_hash=gerar_hash_senha("promoter123"),
-            tipo=TipoUsuario.PROMOTER,
+            tipo_usuario="promoter",
             ativo=True
         )
         
@@ -96,7 +96,7 @@ def test_event_creation():
     
     try:
         # Buscar um usuário admin/promoter existente para usar como criador
-        criador = db.query(Usuario).filter(Usuario.tipo.in_([TipoUsuario.ADMIN, TipoUsuario.PROMOTER])).first()
+        criador = db.query(Usuario).filter(Usuario.tipo.in_(["admin".PROMOTER])).first()
         
         if not criador:
             print("✗ Nenhum usuário admin/promoter encontrado para teste")
@@ -152,7 +152,7 @@ def test_admin_permissions():
     
     try:
         # Buscar usuário admin
-        admin = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.ADMIN).first()
+        admin = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").first()
         
         if admin:
             print(f"OK Admin encontrado: {admin.nome}")
@@ -201,9 +201,9 @@ def test_database_state():
         print(f"Total de eventos: {total_eventos}")
         
         # Verificar usuários por tipo
-        admins = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.ADMIN).count()
-        promoters = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.PROMOTER).count()
-        clientes = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.CLIENTE).count()
+        admins = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").count()
+        promoters = db.query(Usuario).filter(Usuario.tipo_usuario== "promoter").count()
+        clientes = db.query(Usuario).filter(Usuario.tipo_usuario== "cliente").count()
         
         print(f"  - Admins: {admins}")
         print(f"  - Promoters: {promoters}")

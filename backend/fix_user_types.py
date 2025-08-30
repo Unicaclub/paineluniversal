@@ -8,7 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from sqlalchemy.orm import Session
 
 def fix_user_types():
@@ -21,7 +21,7 @@ def fix_user_types():
         # Buscar usuários sem tipo ou com tipo None
         usuarios_sem_tipo = db.query(Usuario).filter(
             (Usuario.tipo.is_(None)) | 
-            (Usuario.tipo == "")
+            (Usuario.tipo_usuario== "")
         ).all()
         
         print(f"🔍 Encontrados {len(usuarios_sem_tipo)} usuários sem tipo definido")
@@ -34,14 +34,14 @@ def fix_user_types():
             
             # Definir tipo baseado no usuário
             if usuario.id == 1 or usuario.nome.lower() in ['césar', 'cesar', 'admin']:
-                novo_tipo = TipoUsuario.ADMIN
+                novo_tipo = "admin"
                 print(f"   ✅ Definindo como ADMIN")
             else:
-                novo_tipo = TipoUsuario.PROMOTER
+                novo_tipo = "promoter"
                 print(f"   ✅ Definindo como PROMOTER")
             
             # Atualizar usuário
-            usuario.tipo = novo_tipo
+            usuario.tipo_usuario=novo_tipo
             
         # Salvar alterações
         db.commit()

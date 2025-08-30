@@ -92,7 +92,7 @@ async def listar_movimentacoes(
     )
     
     if tipo and tipo.strip():
-        query = query.filter(MovimentacaoFinanceira.tipo == tipo)
+        query = query.filter(MovimentacaoFinanceira.tipo_usuario== tipo)
     if categoria and categoria.strip():
         query = query.filter(MovimentacaoFinanceira.categoria.ilike(f"%{categoria}%"))
     if data_inicio and data_inicio.strip():
@@ -222,13 +222,13 @@ async def obter_dashboard_financeiro(
     
     total_entradas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
         MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "entrada",
+        MovimentacaoFinanceira.tipo_usuario== "entrada",
         MovimentacaoFinanceira.status == "aprovada"
     ).scalar() or Decimal('0.00')
     
     total_saidas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
         MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "saida",
+        MovimentacaoFinanceira.tipo_usuario== "saida",
         MovimentacaoFinanceira.status == "aprovada"
     ).scalar() or Decimal('0.00')
     
@@ -262,7 +262,7 @@ async def obter_dashboard_financeiro(
         func.sum(MovimentacaoFinanceira.valor).label('total')
     ).filter(
         MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "saida",
+        MovimentacaoFinanceira.tipo_usuario== "saida",
         MovimentacaoFinanceira.status == "aprovada"
     ).group_by(MovimentacaoFinanceira.categoria).all()
     
@@ -273,7 +273,7 @@ async def obter_dashboard_financeiro(
         MovimentacaoFinanceira, MovimentacaoFinanceira.promoter_id == Usuario.id
     ).filter(
         MovimentacaoFinanceira.evento_id == evento_id,
-        MovimentacaoFinanceira.tipo == "repasse_promoter",
+        MovimentacaoFinanceira.tipo_usuario== "repasse_promoter",
         MovimentacaoFinanceira.status == "aprovada"
     ).group_by(Usuario.id, Usuario.nome).all()
     
@@ -514,13 +514,13 @@ async def fechar_caixa_evento(
     
     total_entradas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
         MovimentacaoFinanceira.evento_id == caixa.evento_id,
-        MovimentacaoFinanceira.tipo == "entrada",
+        MovimentacaoFinanceira.tipo_usuario== "entrada",
         MovimentacaoFinanceira.status == "aprovada"
     ).scalar() or Decimal('0.00')
     
     total_saidas = db.query(func.sum(MovimentacaoFinanceira.valor)).filter(
         MovimentacaoFinanceira.evento_id == caixa.evento_id,
-        MovimentacaoFinanceira.tipo == "saida",
+        MovimentacaoFinanceira.tipo_usuario== "saida",
         MovimentacaoFinanceira.status == "aprovada"
     ).scalar() or Decimal('0.00')
     

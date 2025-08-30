@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from ..database import get_db
-from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, TipoUsuario, StatusTransacao
+from ..models import Evento, Usuario, PromoterEvento, Transacao, Checkin, Lista, StatusTransacao
 from ..schemas import (
     Evento as EventoSchema, 
     EventoCreate, 
@@ -44,8 +44,8 @@ async def criar_evento_teste(
     print("=" * 50)
     
     # Para teste, criar um usuário fake
-    from ..models import Usuario, TipoUsuario
-    usuario_teste = db.query(Usuario).filter(Usuario.tipo == TipoUsuario.ADMIN).first()
+    from ..models import Usuario
+    usuario_teste = db.query(Usuario).filter(Usuario.tipo_usuario== "admin").first()
     if not usuario_teste:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -447,7 +447,7 @@ async def vincular_promoter(
     
     promoter = db.query(Usuario).filter(
         Usuario.id == promoter_data.promoter_id,
-        Usuario.tipo == TipoUsuario.PROMOTER
+        Usuario.tipo_usuario== "promoter"
     ).first()
     if not promoter:
         raise HTTPException(

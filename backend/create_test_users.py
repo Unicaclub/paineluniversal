@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import get_db
-from app.models import Usuario, TipoUsuario
+from app.models import Usuario
 from app.auth import gerar_hash_senha
 
 def create_test_users():
@@ -27,7 +27,7 @@ def create_test_users():
                 email="promoter@teste.com",
                 telefone="(11) 99999-1111",
                 senha_hash=gerar_hash_senha("123456"),
-                tipo=TipoUsuario.PROMOTER,
+                tipo_usuario="promoter",
                 ativo=True
             )
             db.add(promoter)
@@ -46,7 +46,7 @@ def create_test_users():
                 email="cliente@teste.com",
                 telefone="(11) 99999-2222",
                 senha_hash=gerar_hash_senha("123456"),
-                tipo=TipoUsuario.CLIENTE,
+                tipo_usuario="cliente",
                 ativo=True
             )
             db.add(cliente)

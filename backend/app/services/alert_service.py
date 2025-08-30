@@ -72,7 +72,7 @@ Ação necessária: Verificar estratégia de vendas
         for evento in eventos_proximos:
             transacoes_vip = db.query(Transacao).join(Lista).filter(
                 Transacao.evento_id == evento.id,
-                Lista.tipo == TipoLista.VIP,
+                Lista.tipo_usuario== TipoLista.VIP,
                 Transacao.status == "aprovada"
             ).all()
             
@@ -84,7 +84,7 @@ Ação necessária: Verificar estratégia de vendas
             if aniversariantes:
                 admin_users = db.query(Usuario).filter(
                     # Usuario.empresa_id removido
-                    Usuario.tipo == "admin"
+                    Usuario.tipo_usuario== "admin"
                 ).all()
                 
                 for admin in admin_users:
@@ -160,7 +160,7 @@ Ação sugerida: Intensificar divulgação
             
             admin_users = db.query(Usuario).filter(
                 # Usuario.empresa_id removido
-                Usuario.tipo == "admin"
+                Usuario.tipo_usuario== "admin"
             ).all()
             
             for admin in admin_users:
@@ -189,7 +189,7 @@ Lembrete: Preparar equipe e materiais
         from ..models import Conquista, PromoterConquista, TipoConquista
         
         promoters_ativos = db.query(Usuario).filter(
-            Usuario.tipo == "promoter",
+            Usuario.tipo_usuario== "promoter",
             Usuario.ativo == True
         ).all()
         
@@ -200,7 +200,7 @@ Lembrete: Preparar equipe e materiais
             ).scalar() or 0
             
             conquistas_vendas = db.query(Conquista).filter(
-                Conquista.tipo == TipoConquista.VENDAS,
+                Conquista.tipo_usuario== TipoConquista.VENDAS,
                 Conquista.criterio_valor <= total_vendas,
                 Conquista.ativa == True
             ).all()

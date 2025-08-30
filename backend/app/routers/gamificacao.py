@@ -63,7 +63,7 @@ async def obter_ranking_gamificado(
             Transacao.evento_id == Checkin.evento_id
         )
     ).filter(
-        Usuario.tipo == "promoter",
+        Usuario.tipo_usuario== "promoter",
         Transacao.status == "aprovada",
         func.date(Transacao.criado_em).between(periodo_inicio, periodo_fim)
     )
@@ -234,7 +234,7 @@ async def verificar_conquistas_promoter(
     
     promoter = db.query(Usuario).filter(
         Usuario.id == promoter_id,
-        Usuario.tipo == "promoter"
+        Usuario.tipo_usuario== "promoter"
     ).first()
     
     if not promoter:
@@ -255,13 +255,13 @@ async def verificar_conquistas_promoter(
         
         valor_alcancado = 0
         
-        if conquista.tipo == TipoConquista.VENDAS:
+        if conquista.tipo_usuario== TipoConquista.VENDAS:
             valor_alcancado = db.query(func.count(Transacao.id)).join(Lista).filter(
                 Lista.promoter_id == promoter_id,
                 Transacao.status == "aprovada"
             ).scalar() or 0
         
-        elif conquista.tipo == TipoConquista.PRESENCA:
+        elif conquista.tipo_usuario== TipoConquista.PRESENCA:
             total_vendas = db.query(func.count(Transacao.id)).join(Lista).filter(
                 Lista.promoter_id == promoter_id,
                 Transacao.status == "aprovada"
