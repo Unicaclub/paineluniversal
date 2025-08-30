@@ -22,10 +22,8 @@ class StatusTransacao(enum.Enum):
     APROVADA = "aprovada"
     CANCELADA = "cancelada"
 
-class TipoUsuario(enum.Enum):
-    ADMIN = "admin"
-    PROMOTER = "promoter"
-    CLIENTE = "cliente"
+# Removido enum TipoUsuario - agora usando string com validação
+# Valores válidos: 'admin', 'promoter', 'cliente'
 
 class Empresa(Base):
     __tablename__ = "empresas"
@@ -51,7 +49,7 @@ class Usuario(Base):
     email = Column(String(255), unique=True, nullable=False)
     telefone = Column(String(20))
     senha_hash = Column(String(255), nullable=False)
-    tipo = Column(Enum(TipoUsuario), nullable=False)
+    tipo_usuario = Column(String(20), nullable=False)  # Valores válidos: 'admin', 'promoter', 'cliente'
     ativo = Column(Boolean, default=True)
     ultimo_login = Column(DateTime(timezone=True))
     criado_em = Column(DateTime(timezone=True), server_default=func.now())

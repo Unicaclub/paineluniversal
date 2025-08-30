@@ -257,8 +257,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         # Criar usuário com timeout de operação
         print(f"👤 Criando usuário no banco...")
         
-        # Converter tipo para enum correto
-        tipo_usuario = usuario_data.tipo  # Já é um enum TipoUsuario, não precisa de conversão
+        # Converter tipo para string correto
+        tipo_usuario = usuario_data.tipo_usuario  # Já é string no novo schema
         print(f"📋 Tipo de usuário: {tipo_usuario}")
         
         # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
@@ -269,7 +269,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 email=usuario_data.email.lower().strip(),
                 telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
                 senha_hash=senha_hash,
-                tipo=tipo_usuario,  # Usar tipo enum diretamente
+                tipo_usuario=usuario_data.tipo_usuario,  # Usar campo corrigido
                 ativo=True  # Usuários registrados publicamente ficam ativos por padrão
             )
             

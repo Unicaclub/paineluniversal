@@ -4,10 +4,10 @@ from typing import Optional, List
 from decimal import Decimal
 # Import absoluto para compatibilidade tanto em desenvolvimento quanto produção
 try:
-    from .models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, TipoFormaPagamento, StatusFormaPagamento
+    from .models import StatusEvento, TipoLista, StatusTransacao, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV, TipoFormaPagamento, StatusFormaPagamento
 except ImportError:
     # Fallback para execução direta ou testes
-    from backend.app.models import StatusEvento, TipoLista, StatusTransacao, TipoUsuario, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
+    from backend.app.models import StatusEvento, TipoLista, StatusTransacao, TipoProduto, StatusProduto, TipoComanda, StatusComanda, StatusVendaPDV, TipoPagamentoPDV
 import re
 
 
@@ -127,7 +127,7 @@ class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
     telefone: Optional[str] = None
-    tipo: TipoUsuario
+    tipo_usuario: str  # Valores válidos: 'admin', 'promoter', 'cliente'
 
 class UsuarioCreate(UsuarioBase):
     senha: str
@@ -146,7 +146,7 @@ class UsuarioRegister(BaseModel):
     email: EmailStr
     telefone: Optional[str] = None
     senha: str
-    tipo: TipoUsuario = TipoUsuario.CLIENTE
+    tipo_usuario: str = "cliente"  # Valores válidos: 'admin', 'promoter', 'cliente'
     
     @field_validator('cpf')
     @classmethod
@@ -171,6 +171,14 @@ class UsuarioRegister(BaseModel):
         if not v or len(v) < 3:
             raise ValueError('Senha deve ter pelo menos 3 caracteres')
         return v
+    
+    @field_validator('tipo_usuario')
+    @classmethod
+    def validar_tipo_usuario(cls, v):
+        tipos_validos = ['admin', 'promoter', 'cliente']
+        if v not in tipos_validos:
+            raise ValueError(f'Tipo de usuário deve ser um dos: {", ".join(tipos_validos)}')
+        return v
 
 class Usuario(BaseModel):
     # Campos básicos do usuário
@@ -179,7 +187,7 @@ class Usuario(BaseModel):
     nome: str
     email: EmailStr
     telefone: Optional[str] = None
-    tipo: TipoUsuario
+    tipo_usuario: str  # Valores válidos: 'admin', 'promoter', 'cliente'
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
