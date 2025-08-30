@@ -110,8 +110,15 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             "usuario": usuario_data
         }
         
-        print(f"Response data keys: {list(response_data.keys())}")
-        print(f"Response completo: {response_data}")
+        print(f"🔍 DEBUG - Response data keys: {list(response_data.keys())}")
+        print(f"🔍 DEBUG - Usuario data presente: {'usuario' in response_data}")
+        print(f"🔍 DEBUG - Response completo: {response_data}")
+        
+        # FORÇAR inclusão do usuario se não estiver presente
+        if "usuario" not in response_data:
+            print(f"❌ ERRO CRÍTICO: Campo usuario ausente! Forçando inclusão...")
+            response_data["usuario"] = usuario_data
+            
         return response_data
         
     except HTTPException:
