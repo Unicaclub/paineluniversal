@@ -10,7 +10,7 @@ start.command = "cd frontend && npm start"
 # Backend Service  
 [services.backend]
 build.dockerfile = "backend/Dockerfile"
-start.command = "cd backend && python migrations/deploy_with_migrations.py"
+start.command = "python railway_auto_deploy.py"
 
 # MEEP Service
 [services.meep-service]

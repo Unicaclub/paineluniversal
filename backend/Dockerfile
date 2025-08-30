@@ -29,8 +29,12 @@ RUN adduser --disabled-password --gecos '' appuser
 # Copy project
 COPY --chown=appuser:appuser . .
 
-# Make start script executable
-RUN chmod +x /app/start.sh
+# Copy migration scripts to app root
+COPY --chown=appuser:appuser ../migrate_production_railway.py /app/
+COPY --chown=appuser:appuser ../railway_auto_deploy.py /app/
+
+# Make scripts executable
+RUN chmod +x /app/migrate_production_railway.py /app/railway_auto_deploy.py /app/start.sh
 
 # Switch to non-root user
 USER appuser

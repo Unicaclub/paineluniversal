@@ -12,6 +12,7 @@ from datetime import datetime
 # Add backend to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -25,44 +26,77 @@ def main():
     logger.info("🔧 MANUAL MIGRATION EXECUTOR")
     logger.info("=" * 60)
     
-    # Check DATABASE_URL
+    # Check environment (PostgreSQL or SQLite)
     database_url = os.getenv('DATABASE_URL')
-    if not database_url:
-        logger.error("❌ DATABASE_URL environment variable not set")
-        logger.info("💡 Set DATABASE_URL and try again:")
-        logger.info("   export DATABASE_URL='postgresql://user:pass@host:port/dbname'")
-        sys.exit(1)
+    is_local = not database_url
     
-    # Execute the migration
-    try:
-        from remove_tipo_usuario_column import TipoUsuarioColumnRemoval
+    if is_local:
+        logger.info("🏠 Executando em ambiente local (SQLite)")
+        logger.info("💡 Para PostgreSQL, defina DATABASE_URL")
         
-        migration = TipoUsuarioColumnRemoval()
-        success = migration.execute_migration()
-        
-        if success:
-            logger.info("🎉 Migration executed successfully!")
+        # Executar correção definitiva para SQLite
+        try:
+            # Ir para diretório raiz do projeto
+            import os
+            os.chdir('..')  # Sair de backend/migrations para raiz
+            os.chdir('..')  # Sair de backend para raiz
             
-            # Run validation
-            logger.info("🔍 Running validation...")
-            from validate_migration import MigrationValidator
+            # Importar e executar correção definitiva
+            sys.path.append('.')
             
-            validator = MigrationValidator()
-            validation_success = validator.run_validation()
+            logger.info("� Executando correção definitiva para SQLite...")
             
-            if validation_success:
-                logger.info("✅ Migration and validation completed successfully!")
+            # Executar o script de correção principal
+            import subprocess
+            result = subprocess.run([
+                sys.executable, 'remove_tipo_usuario_definitivo.py'
+            ], capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                logger.info("✅ Correção executada com sucesso!")
+                logger.info(result.stdout)
                 sys.exit(0)
             else:
-                logger.error("❌ Migration completed but validation failed!")
+                logger.error("❌ Correção falhou!")
+                logger.error(result.stderr)
                 sys.exit(1)
-        else:
-            logger.error("❌ Migration failed!")
+                
+        except Exception as e:
+            logger.error(f"💥 Erro na correção local: {e}")
             sys.exit(1)
+    else:
+        logger.info("☁️ Executando em ambiente PostgreSQL")
+        
+        # Execute the PostgreSQL migration
+        try:
+            from remove_tipo_usuario_column import TipoUsuarioColumnRemoval
             
-    except Exception as e:
-        logger.error(f"💥 Fatal error: {e}")
-        sys.exit(1)
+            migration = TipoUsuarioColumnRemoval()
+            success = migration.execute_migration()
+            
+            if success:
+                logger.info("🎉 Migration executed successfully!")
+                
+                # Run validation
+                logger.info("🔍 Running validation...")
+                from validate_migration import MigrationValidator
+                
+                validator = MigrationValidator()
+                validation_success = validator.run_validation()
+                
+                if validation_success:
+                    logger.info("✅ Migration and validation completed successfully!")
+                    sys.exit(0)
+                else:
+                    logger.error("❌ Migration completed but validation failed!")
+                    sys.exit(1)
+            else:
+                logger.error("❌ Migration failed!")
+                sys.exit(1)
+                
+        except Exception as e:
+            logger.error(f"💥 Fatal error: {e}")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
