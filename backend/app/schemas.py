@@ -127,7 +127,7 @@ class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
     telefone: Optional[str] = None
-    tipo_usuario: str  # Valores válidos: 'admin', 'promoter', 'cliente'
+    tipo: str  # Campo principal: 'admin', 'promoter', 'cliente'
 
 class UsuarioCreate(UsuarioBase):
     senha: str
@@ -146,7 +146,7 @@ class UsuarioRegister(BaseModel):
     email: EmailStr
     telefone: Optional[str] = None
     senha: str
-    tipo_usuario: str = "cliente"  # Valores válidos: 'admin', 'promoter', 'cliente'
+    tipo: str = "cliente"  # Campo principal: 'admin', 'promoter', 'cliente'
     
     @field_validator('cpf')
     @classmethod
@@ -172,9 +172,9 @@ class UsuarioRegister(BaseModel):
             raise ValueError('Senha deve ter pelo menos 3 caracteres')
         return v
     
-    @field_validator('tipo_usuario')
+    @field_validator('tipo')
     @classmethod
-    def validar_tipo_usuario(cls, v):
+    def validar_tipo(cls, v):
         tipos_validos = ['admin', 'promoter', 'cliente']
         if v not in tipos_validos:
             raise ValueError(f'Tipo de usuário deve ser um dos: {", ".join(tipos_validos)}')
@@ -187,19 +187,22 @@ class Usuario(BaseModel):
     nome: str
     email: EmailStr
     telefone: Optional[str] = None
-    tipo_usuario: str  # Valores válidos: 'admin', 'promoter', 'cliente'
-    # COMPATIBILIDADE: Adicionar campo 'tipo' que mapeia para tipo_usuario
-    tipo: Optional[str] = None  # Para compatibilidade com frontend
+    tipo: str  # Campo principal: 'admin', 'promoter', 'cliente'
+    # COMPATIBILIDADE TEMPORÁRIA: manter tipo_usuario para transição
+    tipo_usuario: Optional[str] = None  # Para compatibilidade durante migração
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
-    atualizado_em: Optional[datetime] = None  # Campo que estava faltando
+    atualizado_em: Optional[datetime] = None
     
     def __init__(self, **data):
         super().__init__(**data)
-        # Garantir compatibilidade: tipo = tipo_usuario
-        if not self.tipo and self.tipo_usuario:
+        # Garantir que tipo seja sempre definido (priorizar campo 'tipo' do banco)
+        if hasattr(self, 'tipo_usuario') and self.tipo_usuario and not self.tipo:
             self.tipo = self.tipo_usuario
+        # Para compatibilidade reversa: se tipo_usuario não estiver definido, usar tipo
+        if not self.tipo_usuario and self.tipo:
+            self.tipo_usuario = self.tipo
     
     class Config:
         from_attributes = True

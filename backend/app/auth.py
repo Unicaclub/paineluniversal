@@ -136,8 +136,24 @@ def require_permission(permission: str):
     
     return permission_checker
 
+def get_user_tipo(usuario: Usuario) -> str:
+    """
+    Função helper para obter o tipo correto do usuário.
+    Prioriza campo 'tipo' sobre 'tipo_usuario' para compatibilidade durante migração.
+    """
+    if hasattr(usuario, 'tipo') and usuario.tipo:
+        # Se campo tipo existe e não é vazio, usar ele (normalizado)
+        return usuario.tipo.lower().strip()
+    elif hasattr(usuario, 'tipo_usuario') and usuario.tipo_usuario:
+        # Fallback para tipo_usuario se tipo não estiver disponível
+        return usuario.tipo_usuario.lower().strip()
+    else:
+        # Fallback final para cliente se nenhum campo estiver disponível
+        return "cliente"
+
 def verificar_permissao_admin(usuario_atual: Usuario = Depends(obter_usuario_atual)):
-    if usuario_atual.tipo_usuario != "admin":
+    tipo_usuario = get_user_tipo(usuario_atual)
+    if tipo_usuario != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: permissões de administrador necessárias"
@@ -145,7 +161,8 @@ def verificar_permissao_admin(usuario_atual: Usuario = Depends(obter_usuario_atu
     return usuario_atual
 
 def verificar_permissao_promoter(usuario_atual: Usuario = Depends(obter_usuario_atual)):
-    if usuario_atual.tipo_usuario not in ["admin", "promoter"]:
+    tipo_usuario = get_user_tipo(usuario_atual)
+    if tipo_usuario not in ["admin", "promoter"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: permissões de promoter necessárias"

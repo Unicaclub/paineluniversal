@@ -63,27 +63,13 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         # Debug detalhado
         print(f"Usuario ID: {usuario.id}")
-        print(f"Usuario tipo_usuario: {usuario.tipo_usuario}")
         
-        # CORREÇÃO CRÍTICA: Verificar se existe campo 'tipo' e usá-lo se for admin
-        tipo_final = usuario.tipo_usuario
+        # CORREÇÃO CRÍTICA: Usar função helper para obter tipo correto
+        from ..auth import get_user_tipo
+        tipo_final = get_user_tipo(usuario)
+        print(f"Tipo final determinado: {tipo_final}")
         
-        # Verificar se o modelo tem campo 'tipo' e se é ADMIN
-        if hasattr(usuario, 'tipo') and usuario.tipo:
-            print(f"Campo 'tipo' encontrado: {usuario.tipo}")
-            if usuario.tipo.upper() == 'ADMIN':
-                tipo_final = 'admin'
-                print(f"🔧 CORREÇÃO: Usuário tem tipo='ADMIN', alterando tipo_usuario para 'admin'")
-            elif usuario.tipo.lower() in ['admin', 'promoter', 'cliente', 'operador']:
-                tipo_final = usuario.tipo.lower()
-                print(f"🔧 CORREÇÃO: Usando campo 'tipo' como referência: {tipo_final}")
-        
-        # Normalizar tipo_usuario para minúsculas
-        if tipo_final:
-            tipo_final = tipo_final.lower().strip()
-            print(f"Tipo final normalizado: {tipo_final}")
-        
-        # Validar tipo_usuario e garantir que seja válido
+        # Validar se o tipo é válido
         valid_types = ['admin', 'promoter', 'cliente', 'operador']
         if tipo_final not in valid_types:
             print(f"⚠️ Tipo inválido detectado: '{tipo_final}', normalizando para 'cliente'")
@@ -302,7 +288,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         print(f"👤 Criando usuário no banco...")
         
         # Converter tipo para string correto
-        tipo_usuario = usuario_data.tipo_usuario  # Já é string no novo schema
+        tipo_usuario = usuario_data.tipo  # Usar campo 'tipo' como principal
         print(f"📋 Tipo de usuário: {tipo_usuario}")
         
         # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
@@ -313,7 +299,7 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
                 email=usuario_data.email.lower().strip(),
                 telefone=usuario_data.telefone.replace(" ", "").replace("(", "").replace(")", "").replace("-", "") if usuario_data.telefone else "",
                 senha_hash=senha_hash,
-                tipo_usuario=usuario_data.tipo_usuario,  # Usar campo corrigido
+                tipo=usuario_data.tipo,  # Usar campo 'tipo' como principal
                 ativo=True  # Usuários registrados publicamente ficam ativos por padrão
             )
             
@@ -370,7 +356,27 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
 @router.get("/me", response_model=UsuarioSchema)
 async def obter_perfil(usuario_atual: Usuario = Depends(obter_usuario_atual)):
     """Obter dados do usuário logado"""
-    return usuario_atual
+    from ..auth import get_user_tipo
+    
+    # Garantir que o tipo correto seja retornado
+    tipo_correto = get_user_tipo(usuario_atual)
+    
+    # Converter para dicionário e ajustar campos
+    user_dict = {
+        "id": usuario_atual.id,
+        "cpf": usuario_atual.cpf,
+        "nome": usuario_atual.nome,
+        "email": usuario_atual.email,
+        "telefone": usuario_atual.telefone,
+        "tipo": tipo_correto,  # Usar tipo correto determinado pela função helper
+        "tipo_usuario": tipo_correto,  # Para compatibilidade
+        "ativo": usuario_atual.ativo,
+        "ultimo_login": usuario_atual.ultimo_login,
+        "criado_em": usuario_atual.criado_em,
+        "atualizado_em": usuario_atual.atualizado_em
+    }
+    
+    return user_dict
 
 @router.post("/logout")
 async def logout(usuario_atual: Usuario = Depends(obter_usuario_atual)):
