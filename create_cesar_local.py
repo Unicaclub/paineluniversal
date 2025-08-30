@@ -22,13 +22,13 @@ def create_cesar_local():
         # Verificar se já existe
         existing_user = db.query(Usuario).filter(Usuario.cpf == '06601206156').first()
         if existing_user:
-            print(f'✅ Usuário já existe: {existing_user.nome} (Tipo: {existing_user.tipo_usuario})')
+            print(f'✅ Usuário já existe: {existing_user.nome} (Tipo: {existing_user.tipo})')
             
             # Atualizar para admin se não for
-            if existing_user.tipo_usuario != 'admin':
-                existing_user.tipo_usuario = 'admin'
+            if existing_user.tipo != 'admin':
+                existing_user.tipo = 'admin'
                 db.commit()
-                print(f'✅ Tipo atualizado para: {existing_user.tipo_usuario}')
+                print(f'✅ Tipo atualizado para: {existing_user.tipo}')
             else:
                 print('✅ Usuário já é admin')
             return
@@ -45,8 +45,7 @@ def create_cesar_local():
             email='rosemberg@gmail.com',
             telefone=None,
             senha_hash=senha_hash,
-            tipo='admin',  # Campo obrigatório antigo
-            tipo_usuario='admin',  # Campo novo
+            tipo='admin',  # Campo único para tipo de usuário
             ativo=True
         )
         
@@ -58,7 +57,7 @@ def create_cesar_local():
         print(f'   ID: {novo_usuario.id}')
         print(f'   Nome: {novo_usuario.nome}')
         print(f'   CPF: {novo_usuario.cpf}')
-        print(f'   Tipo: {novo_usuario.tipo_usuario}')
+        print(f'   Tipo: {novo_usuario.tipo}')
         print(f'   Email: {novo_usuario.email}')
         print(f'   Ativo: {novo_usuario.ativo}')
         

@@ -195,12 +195,9 @@ class Usuario(BaseModel):
     
     def __init__(self, **data):
         super().__init__(**data)
-        # Garantir que tipo seja sempre definido (priorizar campo 'tipo' do banco)
-        if hasattr(self, 'tipo_usuario') and self.tipo and not self.tipo:
-            self.tipo = self.tipo
-        # Para compatibilidade reversa: se tipo_usuario não estiver definido, usar tipo
-        if not self.tipo and self.tipo:
-            self.tipo = self.tipo
+        # Garantir que tipo seja sempre definido como 'cliente' se não especificado
+        if not hasattr(self, 'tipo') or not self.tipo:
+            self.tipo = 'cliente'
     
     class Config:
         from_attributes = True

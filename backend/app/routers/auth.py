@@ -288,8 +288,8 @@ async def registrar_usuario(usuario_data: UsuarioRegister, db: Session = Depends
         print(f"👤 Criando usuário no banco...")
         
         # Converter tipo para string correto
-        tipo_usuario = usuario_data.tipo  # Usar campo 'tipo' como principal
-        print(f"📋 Tipo de usuário: {tipo_usuario}")
+        tipo_user = usuario_data.tipo  # Usar campo 'tipo' como principal
+        print(f"📋 Tipo de usuário: {tipo_user}")
         
         # 🔧 SOLUÇÃO ROBUSTA: Verificar se há problemas específicos no ambiente
         try:
