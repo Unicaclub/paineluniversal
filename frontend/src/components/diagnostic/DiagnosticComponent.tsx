@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw, Zap } from 'lucide-react';
-import { diagnosticService, runQuickDiagnostic, autoFix } from '@/services/diagnostic';
+import { diagnosticService, runQuickDiagnostic, autoFix } from '../../services/diagnostic';
 
 interface DiagnosticComponentProps {
   onComplete?: (success: boolean) => void;
