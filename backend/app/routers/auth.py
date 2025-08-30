@@ -10,7 +10,7 @@ from ..auth import autenticar_usuario, criar_access_token, obter_usuario_atual, 
 router = APIRouter()
 security = HTTPBearer()
 
-@router.post("/login", response_model=Token)
+@router.post("/login")  # REMOVIDO response_model=Token para forçar resposta completa
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     """
     Autenticação simplificada:
@@ -118,7 +118,20 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         if "usuario" not in response_data:
             print(f"❌ ERRO CRÍTICO: Campo usuario ausente! Forçando inclusão...")
             response_data["usuario"] = usuario_data
-            
+        
+        # VALIDAÇÃO FINAL: Garantir que todos os campos obrigatórios estão presentes
+        required_fields = ["access_token", "token_type", "usuario"]
+        for field in required_fields:
+            if field not in response_data:
+                print(f"❌ CAMPO OBRIGATÓRIO AUSENTE: {field}")
+                if field == "usuario":
+                    response_data[field] = usuario_data
+                elif field == "access_token":
+                    response_data[field] = access_token
+                elif field == "token_type":
+                    response_data[field] = "bearer"
+        
+        print(f"✅ RESPOSTA FINAL: {response_data}")
         return response_data
         
     except HTTPException:
