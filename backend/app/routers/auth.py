@@ -63,19 +63,31 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         
         # Debug detalhado
         print(f"Usuario ID: {usuario.id}")
-        print(f"Usuario tipo: {usuario.tipo_usuario}")
-        print(f"Usuario tipo value: {usuario.tipo_usuario}")
+        print(f"Usuario tipo_usuario: {usuario.tipo_usuario}")
         
-        # CORREÇÃO CRÍTICA: Normalizar tipo_usuario para minúsculas
-        if usuario.tipo_usuario:
-            usuario.tipo_usuario = usuario.tipo_usuario.lower().strip()
-            print(f"Tipo normalizado: {usuario.tipo_usuario}")
+        # CORREÇÃO CRÍTICA: Verificar se existe campo 'tipo' e usá-lo se for admin
+        tipo_final = usuario.tipo_usuario
+        
+        # Verificar se o modelo tem campo 'tipo' e se é ADMIN
+        if hasattr(usuario, 'tipo') and usuario.tipo:
+            print(f"Campo 'tipo' encontrado: {usuario.tipo}")
+            if usuario.tipo.upper() == 'ADMIN':
+                tipo_final = 'admin'
+                print(f"🔧 CORREÇÃO: Usuário tem tipo='ADMIN', alterando tipo_usuario para 'admin'")
+            elif usuario.tipo.lower() in ['admin', 'promoter', 'cliente', 'operador']:
+                tipo_final = usuario.tipo.lower()
+                print(f"🔧 CORREÇÃO: Usando campo 'tipo' como referência: {tipo_final}")
+        
+        # Normalizar tipo_usuario para minúsculas
+        if tipo_final:
+            tipo_final = tipo_final.lower().strip()
+            print(f"Tipo final normalizado: {tipo_final}")
         
         # Validar tipo_usuario e garantir que seja válido
         valid_types = ['admin', 'promoter', 'cliente', 'operador']
-        if usuario.tipo_usuario not in valid_types:
-            print(f"⚠️ Tipo inválido detectado: '{usuario.tipo_usuario}', normalizando para 'cliente'")
-            usuario.tipo_usuario = 'cliente'
+        if tipo_final not in valid_types:
+            print(f"⚠️ Tipo inválido detectado: '{tipo_final}', normalizando para 'cliente'")
+            tipo_final = 'cliente'
         
         # Criar resposta manualmente para garantir compatibilidade
         try:
@@ -85,8 +97,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
                 "nome": usuario.nome,
                 "email": usuario.email,
                 "telefone": usuario.telefone,
-                "tipo": usuario.tipo_usuario,  # Sempre minúsculo e validado
-                "tipo_usuario": usuario.tipo_usuario,  # Para compatibilidade
+                "tipo": tipo_final,  # Usar tipo corrigido
+                "tipo_usuario": tipo_final,  # Para compatibilidade
                 "ativo": bool(usuario.ativo) if usuario.ativo is not None else True,
                 "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
                 "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None

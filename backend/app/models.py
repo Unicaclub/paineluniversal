@@ -49,6 +49,7 @@ class Usuario(Base):
     email = Column(String(255), unique=True, nullable=False)
     telefone = Column(String(20))
     senha_hash = Column(String(255), nullable=False)
+    tipo = Column(String(20))  # Campo legado para compatibilidade com dados existentes
     tipo_usuario = Column(String(20), nullable=False)  # Valores válidos: 'admin', 'promoter', 'cliente'
     ativo = Column(Boolean, default=True)
     ultimo_login = Column(DateTime(timezone=True))
