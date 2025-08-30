@@ -188,7 +188,8 @@ class Usuario(BaseModel):
     email: EmailStr
     telefone: Optional[str] = None
     tipo: str  # Campo principal: 'admin', 'promoter', 'cliente'
-    ativo: bool
+    # COMPATIBILIDADE TEMPORÁRIA: manter tipo_usuario para transição
+        ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
     atualizado_em: Optional[datetime] = None

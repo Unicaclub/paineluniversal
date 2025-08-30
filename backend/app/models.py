@@ -50,8 +50,6 @@ class Usuario(Base):
     telefone = Column(String(20))
     senha_hash = Column(String(255), nullable=False)
     tipo = Column(String(20), nullable=False, default="cliente")  # Campo principal para tipo de usuário
-    # NOTA: tipo_usuario será removido em migração futura - mantido temporariamente para compatibilidade
-    tipo_usuario = Column(String(20))  # Campo legado - será removido
     ativo = Column(Boolean, default=True)
     ultimo_login = Column(DateTime(timezone=True))
     criado_em = Column(DateTime(timezone=True), server_default=func.now())

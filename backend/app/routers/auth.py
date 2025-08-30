@@ -84,7 +84,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
                 "email": usuario.email,
                 "telefone": usuario.telefone,
                 "tipo": tipo_final,  # Usar tipo corrigido
-                "tipo_usuario": tipo_final,  # Para compatibilidade
+                "tipo": tipo_final,  # Para compatibilidade
                 "ativo": bool(usuario.ativo) if usuario.ativo is not None else True,
                 "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
                 "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
@@ -158,7 +158,7 @@ async def obter_usuario_atual_endpoint(
             "nome": current_user.nome,
             "email": current_user.email,
             "telefone": current_user.telefone,
-            "tipo": current_user.tipo_usuario,
+            "tipo": current_user.tipo,
             "ativo": current_user.ativo,
             "ultimo_login": current_user.ultimo_login,
             "criado_em": current_user.criado_em
@@ -181,7 +181,7 @@ async def obter_usuario_debug(
             "nome": current_user.nome,
             "email": current_user.email,
             "telefone": current_user.telefone,
-            "tipo": current_user.tipo_usuario,
+            "tipo": current_user.tipo,
             "ativo": current_user.ativo,
             "ultimo_login": current_user.ultimo_login.isoformat() if current_user.ultimo_login else None,
             "criado_em": current_user.criado_em.isoformat() if current_user.criado_em else None
@@ -369,7 +369,7 @@ async def obter_perfil(usuario_atual: Usuario = Depends(obter_usuario_atual)):
         "email": usuario_atual.email,
         "telefone": usuario_atual.telefone,
         "tipo": tipo_correto,  # Usar tipo correto determinado pela função helper
-        "tipo_usuario": tipo_correto,  # Para compatibilidade
+        "tipo": tipo_correto,  # Para compatibilidade
         "ativo": usuario_atual.ativo,
         "ultimo_login": usuario_atual.ultimo_login,
         "criado_em": usuario_atual.criado_em,
@@ -438,7 +438,7 @@ async def setup_inicial(db: Session = Depends(get_db)):
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
             senha_hash=senha_hash,
-            tipo_usuario="admin",
+            tipo="admin",
             ativo=True
         )
         db.add(admin)
@@ -451,7 +451,7 @@ async def setup_inicial(db: Session = Depends(get_db)):
             email="promoter@paineluniversal.com",
             telefone="(11) 99999-1111",
             senha_hash=senha_hash_promoter,
-            tipo_usuario="promoter",
+            tipo="promoter",
             ativo=True
         )
         db.add(promoter)

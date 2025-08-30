@@ -188,6 +188,8 @@ class Usuario(BaseModel):
     email: EmailStr
     telefone: Optional[str] = None
     tipo: str  # Campo principal: 'admin', 'promoter', 'cliente'
+    # COMPATIBILIDADE TEMPORÁRIA: manter tipo_usuario para transição
+    tipo_usuario: Optional[str] = None  # Para compatibilidade durante migração
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
@@ -196,11 +198,11 @@ class Usuario(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
         # Garantir que tipo seja sempre definido (priorizar campo 'tipo' do banco)
-        if hasattr(self, 'tipo_usuario') and self.tipo and not self.tipo:
-            self.tipo = self.tipo
+        if hasattr(self, 'tipo_usuario') and self.tipo_usuario and not self.tipo:
+            self.tipo = self.tipo_usuario
         # Para compatibilidade reversa: se tipo_usuario não estiver definido, usar tipo
-        if not self.tipo and self.tipo:
-            self.tipo = self.tipo
+        if not self.tipo_usuario and self.tipo:
+            self.tipo_usuario = self.tipo
     
     class Config:
         from_attributes = True

@@ -456,7 +456,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             email="admin@paineluniversal.com",
             telefone="(11) 99999-0000",
             senha_hash=gerar_hash_senha("admin123"),
-            tipo_usuario="admin"
+            tipo="admin"
         )
         db.add(admin)
         
@@ -467,7 +467,7 @@ async def setup_inicial_temp(db: Session = Depends(get_db)):
             email="promoter@paineluniversal.com",
             telefone="(11) 99999-1111",
             senha_hash=gerar_hash_senha("promoter123"),
-            tipo_usuario="promoter"
+            tipo="promoter"
         )
         db.add(promoter)
         
