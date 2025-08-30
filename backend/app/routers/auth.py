@@ -66,6 +66,17 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         print(f"Usuario tipo: {usuario.tipo_usuario}")
         print(f"Usuario tipo value: {usuario.tipo_usuario}")
         
+        # CORREÇÃO CRÍTICA: Normalizar tipo_usuario para minúsculas
+        if usuario.tipo_usuario:
+            usuario.tipo_usuario = usuario.tipo_usuario.lower().strip()
+            print(f"Tipo normalizado: {usuario.tipo_usuario}")
+        
+        # Validar tipo_usuario e garantir que seja válido
+        valid_types = ['admin', 'promoter', 'cliente', 'operador']
+        if usuario.tipo_usuario not in valid_types:
+            print(f"⚠️ Tipo inválido detectado: '{usuario.tipo_usuario}', normalizando para 'cliente'")
+            usuario.tipo_usuario = 'cliente'
+        
         # Criar resposta manualmente para garantir compatibilidade
         try:
             usuario_data = {
@@ -74,8 +85,9 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
                 "nome": usuario.nome,
                 "email": usuario.email,
                 "telefone": usuario.telefone,
-                "tipo": usuario.tipo_usuario,
-                "ativo": usuario.ativo,
+                "tipo": usuario.tipo_usuario,  # Sempre minúsculo e validado
+                "tipo_usuario": usuario.tipo_usuario,  # Para compatibilidade
+                "ativo": bool(usuario.ativo) if usuario.ativo is not None else True,
                 "ultimo_login": usuario.ultimo_login.isoformat() if usuario.ultimo_login else None,
                 "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
             }

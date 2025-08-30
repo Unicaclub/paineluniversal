@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/api';
-import type { Usuario } from '../types/database';
+import type { Usuario, UserRole } from '../types/database';
 
 interface AuthContextType {
   usuario: Usuario | null;
@@ -77,19 +77,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const userData = await authService.getProfile();
               if (userData) {
-                // COMPATIBILIDADE APRIMORADA: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+                // COMPATIBILIDADE APRIMORADA: Normalizar tipos para case-insensitive
+                if (userData.tipo_usuario) {
+                  userData.tipo_usuario = userData.tipo_usuario.toLowerCase().trim() as UserRole;
+                }
+                if (userData.tipo) {
+                  userData.tipo = userData.tipo.toLowerCase().trim() as UserRole;
+                }
+                
+                // Garantir compatibilidade entre campos
                 if (userData.tipo_usuario && !userData.tipo) {
                   userData.tipo = userData.tipo_usuario;
+                } else if (userData.tipo && !userData.tipo_usuario) {
+                  userData.tipo_usuario = userData.tipo;
                 }
-                // VALIDAÇÃO: Garantir que o tipo seja válido
-                const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
-                if (!validTypes.includes(userData.tipo || '') && !validTypes.includes(userData.tipo_usuario || '')) {
-                  userData.tipo = 'promoter'; // Fallback seguro
-                  console.warn('⚠️ AuthContext: Tipo de usuário inválido, usando fallback: promoter');
-                }
-                // CORREÇÃO ADICIONAL: Garantir mapeamento tipo = tipo_usuario
-                if (userData.tipo_usuario && !userData.tipo) {
-                  userData.tipo = userData.tipo_usuario;
+                
+                // VALIDAÇÃO: Garantir que o tipo seja válido (case-insensitive)
+                const validTypes: UserRole[] = ['admin', 'promoter', 'cliente', 'operador'];
+                const userType = userData.tipo || userData.tipo_usuario || '';
+                const normalizedType = userType.toLowerCase().trim() as UserRole;
+                
+                if (!validTypes.includes(normalizedType)) {
+                  console.warn(`⚠️ AuthContext: Tipo inválido detectado: '${userType}', usando fallback: 'cliente'`);
+                  userData.tipo = 'cliente';
+                  userData.tipo_usuario = 'cliente';
+                } else {
+                  userData.tipo = normalizedType;
+                  userData.tipo_usuario = normalizedType;
                 }
                 
                 setUsuario(userData);
@@ -139,14 +153,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.access_token && response.usuario) {
         // COMPATIBILIDADE: Normalizar dados do usuário
         const userData = { ...response.usuario };
-        if (userData.tipo_usuario && !userData.tipo) {
-          userData.tipo = userData.tipo_usuario;
+        
+        // Normalizar tipos para minúsculas (case-insensitive)
+        if (userData.tipo_usuario) {
+          userData.tipo_usuario = userData.tipo_usuario.toLowerCase().trim() as UserRole;
+        }
+        if (userData.tipo) {
+          userData.tipo = userData.tipo.toLowerCase().trim() as UserRole;
         }
         
-        // Validar tipo de usuário
-        const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
-        if (!validTypes.includes(userData.tipo || '')) {
-          userData.tipo = 'promoter'; // Fallback seguro
+        // Garantir compatibilidade entre campos
+        if (userData.tipo_usuario && !userData.tipo) {
+          userData.tipo = userData.tipo_usuario;
+        } else if (userData.tipo && !userData.tipo_usuario) {
+          userData.tipo_usuario = userData.tipo;
+        }
+        
+        // Validar tipo de usuário (agora case-insensitive)
+        const validTypes: UserRole[] = ['admin', 'promoter', 'cliente', 'operador'];
+        const userType = userData.tipo || userData.tipo_usuario || '';
+        const normalizedType = userType.toLowerCase().trim() as UserRole;
+        
+        if (!validTypes.includes(normalizedType)) {
+          console.warn(`⚠️ Tipo inválido detectado: '${userType}', usando fallback: 'cliente'`);
+          userData.tipo = 'cliente';
+          userData.tipo_usuario = 'cliente';
+        } else {
+          userData.tipo = normalizedType;
+          userData.tipo_usuario = normalizedType;
         }
 
         setToken(response.access_token);

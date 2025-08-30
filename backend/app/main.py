@@ -22,6 +22,44 @@ from .scheduler import start_scheduler
 from .websocket import manager
 from .migrations.auto_migrate import run_auto_migration, deploy_monitor
 
+# 🚀 MIGRAÇÃO AUTOMÁTICA NO STARTUP (Railway Deploy)
+def run_startup_migrations():
+    """Executa migrações automáticas no startup se for deployment Railway"""
+    try:
+        deploy_monitor.log_startup_info()
+        
+        # Verificar se é ambiente Railway
+        is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None
+        database_url = os.getenv("DATABASE_URL")
+        
+        if is_railway and database_url:
+            logger.info("🔄 Ambiente Railway detectado - Executando migrações automáticas...")
+            start_time = time.time()
+            
+            # Executar migração automática
+            migration_success = run_auto_migration()
+            
+            duration = time.time() - start_time
+            deploy_monitor.log_migration_status(migration_success, duration)
+            
+            if migration_success:
+                logger.info("✅ Migrações automáticas concluídas com sucesso")
+            else:
+                logger.warning("⚠️ Algumas migrações falharam, mas aplicação continuará")
+        
+        elif not database_url:
+            logger.info("📝 DATABASE_URL não configurada - Pulando migrações automáticas")
+        else:
+            logger.info("🏠 Ambiente local detectado - Pulando migrações automáticas")
+            
+    except Exception as e:
+        logger.error(f"❌ Erro nas migrações automáticas: {e}")
+        # Não falhar o startup por causa de migrações
+        logger.info("🔄 Continuando startup da aplicação...")
+
+# Executar migrações antes de criar tabelas
+run_startup_migrations()
+
 Base.metadata.create_all(bind=engine)
 
 # Configurar logging

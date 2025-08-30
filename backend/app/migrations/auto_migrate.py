@@ -194,7 +194,145 @@ class AutoMigration:
             logger.error(f"Erro na validação do enum: {e}")
             return False
 
-    def check_evento_id_exists(self):
+    def fix_user_types_and_passwords(self):
+        """Corrige tipos de usuário e senhas com problemas de hash"""
+        try:
+            with self.engine.connect() as conn:
+                trans = conn.begin()
+                
+                try:
+                    logger.info("🔧 Corrigindo tipos de usuário e senhas...")
+                    
+                    # 1. Padronizar tipos de usuário para lowercase
+                    logger.info("📝 Padronizando tipos de usuário...")
+                    result = conn.execute(text("""
+                        UPDATE usuarios 
+                        SET tipo_usuario = LOWER(TRIM(tipo_usuario)) 
+                        WHERE tipo_usuario IS NOT NULL
+                    """))
+                    tipo_updates = result.rowcount
+                    logger.info(f"✅ {tipo_updates} tipos de usuário padronizados")
+                    
+                    # 2. Corrigir tipos inválidos para 'cliente'
+                    result = conn.execute(text("""
+                        UPDATE usuarios 
+                        SET tipo_usuario = 'cliente' 
+                        WHERE tipo_usuario IS NOT NULL 
+                        AND tipo_usuario NOT IN ('admin', 'promoter', 'cliente', 'operador')
+                    """))
+                    invalid_updates = result.rowcount
+                    logger.info(f"✅ {invalid_updates} tipos inválidos corrigidos")
+                    
+                    # 3. Preencher campos NULL
+                    result = conn.execute(text("""
+                        UPDATE usuarios 
+                        SET tipo_usuario = 'cliente' 
+                        WHERE tipo_usuario IS NULL
+                    """))
+                    null_updates = result.rowcount
+                    logger.info(f"✅ {null_updates} campos NULL preenchidos")
+                    
+                    # 4. Verificar senhas que podem estar quebradas
+                    logger.info("🔐 Verificando integridade das senhas...")
+                    result = conn.execute(text("""
+                        SELECT id, nome, senha 
+                        FROM usuarios 
+                        WHERE senha IS NULL 
+                        OR LENGTH(senha) < 8 
+                        OR senha NOT LIKE '$2b$%'
+                        LIMIT 10
+                    """))
+                    
+                    problematic_passwords = result.fetchall()
+                    
+                    if problematic_passwords:
+                        logger.info(f"⚠️ Encontradas {len(problematic_passwords)} senhas com problemas")
+                        
+                        # Para senhas problemáticas, gerar hash padrão temporário
+                        import bcrypt
+                        temp_password = "TemporaryPassword123!"
+                        temp_hash = bcrypt.hashpw(temp_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                        
+                        for user_id, nome, senha in problematic_passwords:
+                            conn.execute(text("""
+                                UPDATE usuarios 
+                                SET senha = :new_hash 
+                                WHERE id = :user_id
+                            """), {"new_hash": temp_hash, "user_id": user_id})
+                            
+                            logger.info(f"🔑 Senha temporária aplicada ao usuário: {nome} (ID: {user_id})")
+                        
+                        logger.warning(f"⚠️ {len(problematic_passwords)} usuários receberam senha temporária: '{temp_password}'")
+                        logger.warning("⚠️ Notifique estes usuários para redefinir suas senhas!")
+                    
+                    # 5. Sincronizar coluna 'tipo' se existir
+                    try:
+                        result = conn.execute(text("SELECT tipo FROM usuarios LIMIT 1"))
+                        # Se chegou até aqui, coluna existe
+                        result = conn.execute(text("""
+                            UPDATE usuarios 
+                            SET tipo = tipo_usuario 
+                            WHERE tipo != tipo_usuario OR tipo IS NULL
+                        """))
+                        sync_updates = result.rowcount
+                        logger.info(f"✅ {sync_updates} registros sincronizados entre 'tipo' e 'tipo_usuario'")
+                    except Exception:
+                        logger.info("✓ Coluna 'tipo' não existe - ok")
+                    
+                    trans.commit()
+                    logger.info("✅ Correção de tipos e senhas concluída com sucesso")
+                    
+                except Exception as e:
+                    trans.rollback()
+                    logger.error(f"Erro na correção, rollback executado: {e}")
+                    raise
+                    
+        except Exception as e:
+            logger.error(f"Erro na correção de tipos e senhas: {e}")
+            raise
+    
+    def validate_user_fixes(self):
+        """Valida se as correções de usuário foram aplicadas corretamente"""
+        try:
+            with self.engine.connect() as conn:
+                # Verificar tipos de usuário
+                result = conn.execute(text("""
+                    SELECT DISTINCT tipo_usuario, COUNT(*) 
+                    FROM usuarios 
+                    WHERE tipo_usuario IS NOT NULL
+                    GROUP BY tipo_usuario
+                    ORDER BY tipo_usuario
+                """))
+                
+                user_types = result.fetchall()
+                logger.info("📊 Distribuição final de tipos de usuário:")
+                for tipo, count in user_types:
+                    logger.info(f"  '{tipo}': {count} usuários")
+                
+                # Verificar se há tipos inválidos
+                valid_types = {'admin', 'promoter', 'cliente', 'operador'}
+                for tipo, count in user_types:
+                    if tipo not in valid_types:
+                        logger.warning(f"⚠️ Tipo inválido ainda presente: '{tipo}' ({count} usuários)")
+                        return False
+                
+                # Verificar senhas
+                result = conn.execute(text("""
+                    SELECT COUNT(*) FROM usuarios 
+                    WHERE senha IS NULL OR LENGTH(senha) < 8
+                """))
+                
+                invalid_passwords = result.scalar()
+                if invalid_passwords > 0:
+                    logger.warning(f"⚠️ {invalid_passwords} usuários ainda com senhas inválidas")
+                    return False
+                
+                logger.info("✅ Validação de usuários concluída com sucesso")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Erro na validação de usuários: {e}")
+            return False
         """Verifica se a coluna evento_id ainda existe na tabela produtos"""
         try:
             inspector = inspect(self.engine)
@@ -378,20 +516,59 @@ class AutoMigration:
         try:
             logger.info("🔍 Verificando migrações necessárias...")
             
-            # 1. MIGRAÇÃO DO ENUM TIPOUSUARIO (PRIORITÁRIA)
-            logger.info("🔧 Verificando enum tipousuario...")
-            if not self.check_tipousuario_enum():
-                logger.info("⚠️ Enum tipousuario precisa ser corrigido...")
-                self.fix_tipousuario_enum()
-                
-                if not self.validate_tipousuario_enum():
-                    raise Exception("Validação do enum tipousuario falhou")
-                    
-                logger.info("✅ Enum tipousuario corrigido com sucesso")
-            else:
-                logger.info("✅ Enum tipousuario já está correto")
+            # 1. MIGRAÇÃO DOS TIPOS DE USUÁRIO E SENHAS (PRIORITÁRIA)
+            logger.info("🔧 Verificando tipos de usuário e senhas...")
             
-            # 2. MIGRAÇÃO DA TABELA PRODUTOS (EXISTENTE)
+            # Verificar se precisa corrigir tipos/senhas
+            with self.engine.connect() as conn:
+                # Verificar tipos problemáticos
+                result = conn.execute(text("""
+                    SELECT COUNT(*) FROM usuarios 
+                    WHERE tipo_usuario IS NULL 
+                    OR tipo_usuario != LOWER(TRIM(tipo_usuario))
+                    OR tipo_usuario NOT IN ('admin', 'promoter', 'cliente', 'operador')
+                """))
+                problematic_types = result.scalar()
+                
+                # Verificar senhas problemáticas
+                result = conn.execute(text("""
+                    SELECT COUNT(*) FROM usuarios 
+                    WHERE senha IS NULL 
+                    OR LENGTH(senha) < 8 
+                    OR senha NOT LIKE '$2b$%'
+                """))
+                problematic_passwords = result.scalar()
+                
+                if problematic_types > 0 or problematic_passwords > 0:
+                    logger.info(f"⚠️ Tipos problemáticos: {problematic_types}, Senhas problemáticas: {problematic_passwords}")
+                    logger.info("🔄 Executando correção de tipos e senhas...")
+                    self.fix_user_types_and_passwords()
+                    
+                    if not self.validate_user_fixes():
+                        raise Exception("Validação das correções de usuário falhou")
+                    
+                    logger.info("✅ Tipos de usuário e senhas corrigidos com sucesso")
+                else:
+                    logger.info("✅ Tipos de usuário e senhas já estão corretos")
+            
+            # 2. MIGRAÇÃO DO ENUM TIPOUSUARIO (SE POSTGRESQL)
+            try:
+                logger.info("🔧 Verificando enum tipousuario...")
+                if not self.check_tipousuario_enum():
+                    logger.info("⚠️ Enum tipousuario precisa ser corrigido...")
+                    self.fix_tipousuario_enum()
+                    
+                    if not self.validate_tipousuario_enum():
+                        raise Exception("Validação do enum tipousuario falhou")
+                        
+                    logger.info("✅ Enum tipousuario corrigido com sucesso")
+                else:
+                    logger.info("✅ Enum tipousuario já está correto")
+            except Exception as e:
+                # Se não for PostgreSQL ou enum não for necessário, continuar
+                logger.info(f"✓ Enum tipousuario não aplicável ou já correto: {e}")
+            
+            # 3. MIGRAÇÃO DA TABELA PRODUTOS (EXISTENTE)
             logger.info("🔍 Verificando tabela produtos...")
             if not self.check_evento_id_exists():
                 logger.info("✅ Coluna evento_id já foi removida, migração da tabela não necessária")

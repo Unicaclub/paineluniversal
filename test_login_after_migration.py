@@ -11,7 +11,7 @@ import os
 
 # Configuração da API
 BASE_URL = "http://localhost:8000"
-LOGIN_ENDPOINT = f"{BASE_URL}/auth/login"
+LOGIN_ENDPOINT = f"{BASE_URL}/api/auth/login"
 
 def test_login_response_structure():
     """Testar estrutura da resposta de login"""
