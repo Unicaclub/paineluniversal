@@ -297,74 +297,101 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const filteredMenuItems = (() => {
-    // MELHORIA: Adicionar verificação de estado mais robusta
-    if (!usuario && loading) {
-      console.log('⏳ Layout: Aguardando carregamento do usuário...');
+    // 🔧 CORREÇÃO CRÍTICA: Priorizar verificação do token sobre estado do usuário
+    const hasToken = !!localStorage.getItem('token');
+    
+    console.log('🔍 Layout: Estado de autenticação:', {
+      hasToken,
+      hasUsuario: !!usuario,
+      loading,
+      userType: usuario?.tipo || usuario?.tipo_usuario || 'não detectado'
+    });
+    
+    // Se está carregando, mostrar loading state
+    if (loading && hasToken) {
+      console.log('⏳ Layout: Carregando dados do usuário...');
       return []; // Mostra loading enquanto carrega
     }
     
-    if (!usuario && !loading && !localStorage.getItem('token')) {
-      console.log('👤 Layout: Usuário não autenticado, mostrando itens públicos');
-      // Mostrar funcionalidades básicas + MEEP para demonstração
+    // Se não tem token, é definitivamente usuário não autenticado
+    if (!hasToken) {
+      console.log('👤 Layout: Usuário não autenticado (sem token)');
+      // Mostrar apenas funcionalidades básicas para demonstração
       const publicItems = [
         'Dashboard', 
         'Eventos', 
         'Vendas', 
-        'Check-in Inteligente',
-        'Check-in Mobile',
-        'PDV', 
-        'Listas & Convidados',
-        'Produtos',
-        'Estoque',
-        'MEEP Integration',
-        'Relatórios'
+        'Check-in Mobile'
       ];
       return menuItems.filter(item => publicItems.includes(item.label));
     }
     
-    // Se usuário está autenticado, filtrar por roles
-    // CORREÇÃO: Garantir detecção robusta do tipo de usuário
-    const userType = (() => {
-      // Primeiro, tentar campo 'tipo'
-      if (usuario?.tipo) return usuario.tipo.toLowerCase().trim();
-      // Fallback para 'tipo_usuario'
-      if (usuario?.tipo_usuario) return usuario.tipo_usuario.toLowerCase().trim();
-      // Fallback final baseado em outras propriedades do usuário
-      if (usuario?.email?.includes('admin')) return 'admin';
-      // 🔧 CORREÇÃO CRÍTICA: Fallback mais inteligente para usuários autenticados
-      console.log('⚠️ Layout: Tipo de usuário não detectado, usando fallback cliente para usuário autenticado');
-      return 'cliente';
-    })();
-    
-    console.log('🔍 Layout: Tipo de usuário detectado:', userType, {
-      tipo: usuario?.tipo,
-      tipo_usuario: usuario?.tipo_usuario,
-      usuario: usuario,
-      fallbackUsed: !usuario?.tipo && !usuario?.tipo_usuario
-    });
-    
-    // 🔧 CORREÇÃO CRÍTICA: Garantir que pelo menos items básicos sejam mostrados
-    const filtered = menuItems.filter(item => {
-      if (!item.roles || item.roles.length === 0) return true; // Items sem restrição de role
-      return item.roles.includes(userType);
-    });
-    
-    console.log('🔍 Layout: UserType Detection Detalhado:', { 
-      usuario, 
-      userType, 
-      filteredCount: filtered.length,
-      totalMenuItems: menuItems.length,
-      menuItemsWithRoles: menuItems.map(item => ({ label: item.label, roles: item.roles }))
-    });
-    
-    // 🔧 SEGURANÇA: Se a filtragem falhou completamente, mostrar pelo menos items básicos
-    if (filtered.length === 0) {
-      console.log('⚠️ Layout: Filtragem resultou em 0 items, forçando items básicos para usuário autenticado');
-      const basicItemsForAuth = ['Dashboard', 'Eventos', 'Vendas', 'Check-in Inteligente', 'Check-in Mobile', 'PDV', 'Listas & Convidados'];
-      return menuItems.filter(item => basicItemsForAuth.includes(item.label));
+    // 🔧 CORREÇÃO CRÍTICA: Se tem token, tratar como usuário autenticado
+    // mesmo que os dados do usuário ainda não tenham carregado completamente
+    if (hasToken) {
+      // Detectar tipo do usuário de forma robusta
+      const userType = (() => {
+        // Se temos dados do usuário, usar eles
+        if (usuario?.tipo) return usuario.tipo.toLowerCase().trim();
+        if (usuario?.tipo_usuario) return usuario.tipo_usuario.toLowerCase().trim();
+        if (usuario?.email?.includes('admin')) return 'admin';
+        
+        // 🔧 FALLBACK INTELIGENTE: Se tem token mas não tem dados do usuário ainda,
+        // usar dados do localStorage temporariamente
+        try {
+          const storedUsuario = localStorage.getItem('usuario');
+          if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
+            const parsedUsuario = JSON.parse(storedUsuario);
+            if (parsedUsuario?.tipo) return parsedUsuario.tipo.toLowerCase().trim();
+            if (parsedUsuario?.tipo_usuario) return parsedUsuario.tipo_usuario.toLowerCase().trim();
+          }
+        } catch (error) {
+          console.warn('⚠️ Layout: Erro ao acessar dados do localStorage:', error);
+        }
+        
+        // Fallback final: se tem token, assumir pelo menos cliente
+        console.log('⚠️ Layout: Tipo de usuário não detectado, usando fallback cliente para usuário com token');
+        return 'cliente';
+      })();
+      
+      console.log('🔍 Layout: Tipo de usuário detectado:', userType, {
+        fonte: usuario ? 'AuthContext' : 'localStorage fallback',
+        tipo: usuario?.tipo,
+        tipo_usuario: usuario?.tipo_usuario
+      });
+      
+      // Filtrar menu por roles
+      const filtered = menuItems.filter(item => {
+        if (!item.roles || item.roles.length === 0) return true; // Items sem restrição
+        return item.roles.includes(userType);
+      });
+      
+      console.log('🔍 Layout: Filtro aplicado:', { 
+        userType, 
+        filteredCount: filtered.length,
+        totalMenuItems: menuItems.length,
+        filteredItems: filtered.map(item => item.label)
+      });
+      
+      // 🔧 SEGURANÇA: Se filtro resulta em poucos items, garantir pelo menos itens básicos
+      if (filtered.length < 5) {
+        console.log('⚠️ Layout: Filtro resultou em poucos items, aplicando fallback expandido');
+        const expandedItems = ['Dashboard', 'Eventos', 'Vendas', 'Check-in Inteligente', 'Check-in Mobile', 'PDV', 'Listas & Convidados'];
+        const fallbackFiltered = menuItems.filter(item => 
+          expandedItems.includes(item.label) || 
+          !item.roles || 
+          item.roles.length === 0 ||
+          item.roles.includes(userType)
+        );
+        return fallbackFiltered;
+      }
+      
+      return filtered;
     }
     
-    return filtered;
+    // Fallback final (não deveria chegar aqui)
+    console.warn('⚠️ Layout: Fallback final ativado - condição inesperada');
+    return menuItems.filter(item => ['Dashboard', 'Eventos'].includes(item.label));
   })();
 
   const getInitials = (name: string) => {
