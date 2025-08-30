@@ -195,19 +195,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           tipo: userData.tipo
         });
         
-        return response;
+        // 🔧 FIX: Retornar objeto padronizado com success: true
+        return { 
+          success: true, 
+          access_token: response.access_token,
+          token_type: response.token_type,
+          usuario: userData
+        };
       } else {
-        throw new Error('Resposta de login inválida');
+        console.error('❌ AuthContext: Resposta de login inválida - campos obrigatórios ausentes');
+        return { error: 'Resposta de login inválida - dados incompletos' };
       }
     } catch (error: any) {
       console.error('❌ AuthContext: Erro no login:', error);
       
       // Se erro é relacionado a código de verificação
       if (error.response?.status === 202) {
-        return { needsVerification: true, ...error.response.data };
+        return { needsVerification: true, message: error.response.data?.message || 'Código de verificação necessário' };
       }
       
-      throw error;
+      // 🔧 FIX: Não lançar exceções, sempre retornar objeto com error
+      const errorMessage = error.message || error.response?.data?.detail || error.response?.data?.message || 'Erro ao fazer login';
+      return { error: errorMessage };
     } finally {
       setLoading(false);
     }
