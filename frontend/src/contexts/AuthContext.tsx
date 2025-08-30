@@ -1,25 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } f              const userData = await authService.getProfile();
-              if (userData) {
-                // COMPATIBILIDADE APRIMORADA: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
-                if (userData.tipo_usuario && !userData.tipo) {
-                  userData.tipo = userData.tipo_usuario;
-                }
-                // VALIDAÇÃO: Garantir que o tipo seja válido
-                const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
-                if (!validTypes.includes(userData.tipo) && !validTypes.includes(userData.tipo_usuario)) {
-                  userData.tipo = 'promoter'; // Fallback seguro
-                  console.warn('⚠️ AuthContext: Tipo de usuário inválido, usando fallback: promoter');
-                }
-                
-                setUsuario(userData);
-                localStorage.setItem('usuario', JSON.stringify(userData));
-                console.log('✅ AuthContext: Dados do usuário atualizados do backend', {
-                  id: userData.id,
-                  nome: userData.nome,
-                  tipo: userData.tipo,
-                  tipo_usuario: userData.tipo_usuario
-                });
-              }mport { authService } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authService } from '../services/api';
 import type { Usuario } from '../types/database';
 
 interface AuthContextType {
@@ -97,46 +77,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const userData = await authService.getProfile();
               if (userData) {
-                // COMPATIBILIDADE: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+                // COMPATIBILIDADE APRIMORADA: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
                 if (userData.tipo_usuario && !userData.tipo) {
                   userData.tipo = userData.tipo_usuario;
                 }
+                // VALIDAÇÃO: Garantir que o tipo seja válido
+                const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
+                if (!validTypes.includes(userData.tipo || '') && !validTypes.includes(userData.tipo_usuario || '')) {
+                  userData.tipo = 'promoter'; // Fallback seguro
+                  console.warn('⚠️ AuthContext: Tipo de usuário inválido, usando fallback: promoter');
+                }
+                
                 setUsuario(userData);
                 localStorage.setItem('usuario', JSON.stringify(userData));
-                console.log('✅ AuthContext: Dados do usuário obtidos do backend', {
+                console.log('✅ AuthContext: Dados do usuário atualizados do backend', {
                   id: userData.id,
                   nome: userData.nome,
                   tipo: userData.tipo,
                   tipo_usuario: userData.tipo_usuario
                 });
               }
-            } catch (error: any) {
+            } catch (error) {
               console.error('❌ AuthContext: Erro ao buscar dados do usuário:', error);
-              // Se token é inválido (401), limpar tudo
-              if (error.response?.status === 401) {
-                console.log('🔑 AuthContext: Token inválido, limpando dados...');
-                localStorage.removeItem('token');
-                localStorage.removeItem('usuario');
-                setToken(null);
-                setUsuario(null);
-              }
+              // Token pode estar inválido, limpar
+              localStorage.removeItem('token');
+              localStorage.removeItem('usuario');
+              setToken(null);
+              setUsuario(null);
             }
           }
         } else {
-          console.log('⚠️ AuthContext: Nenhum token encontrado');
-          // Limpar dados órfãos
-          if (storedUsuario) {
-            localStorage.removeItem('usuario');
-          }
+          console.log('ℹ️ AuthContext: Nenhum token encontrado');
         }
       } catch (error) {
-        console.error('❌ AuthContext: Erro crítico ao inicializar autenticação:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        setToken(null);
-        setUsuario(null);
+        console.error('❌ AuthContext: Erro na inicialização:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initializeAuth();
@@ -144,148 +121,120 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (cpf: string, senha: string, codigoVerificacao?: string) => {
     try {
-      console.log('🔐 AuthContext: Iniciando login...');
+      setLoading(true);
+      console.log('🔐 AuthContext: Iniciando login...', { cpf: cpf.substring(0, 3) + '***' });
+
+      const loginData: any = { cpf, senha };
+      if (codigoVerificacao) {
+        loginData.codigo_verificacao = codigoVerificacao;
+      }
+
+      const response = await authService.login(loginData);
       
-      const response = await authService.login({
-        cpf,
-        senha,
-        codigo_verificacao: codigoVerificacao
-      });
-
-      console.log('📊 AuthContext: Resposta recebida:', {
-        hasToken: !!response.access_token,
-        hasUsuario: !!response.usuario,
-        usuarioNome: response.usuario?.nome,
-        responseKeys: Object.keys(response)
-      });
-
-      if (response.access_token) {
-        try {
-          setToken(response.access_token);
-          
-          // Verificar se tem usuário na resposta
-          if (response.usuario) {
-            // COMPATIBILIDADE: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
-            if (response.usuario.tipo_usuario && !response.usuario.tipo) {
-              response.usuario.tipo = response.usuario.tipo_usuario;
-            }
-            setUsuario(response.usuario);
-            localStorage.setItem('usuario', JSON.stringify(response.usuario));
-            console.log('✅ AuthContext: Login completo com usuário', {
-              id: response.usuario.id,
-              nome: response.usuario.nome,
-              tipo: response.usuario.tipo,
-              tipo_usuario: response.usuario.tipo_usuario
-            });
-          } else {
-            console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário');
-            // Buscar dados do usuário separadamente se necessário
-            // Por enquanto, continuar sem dados do usuário
-            setUsuario(null);
-            localStorage.removeItem('usuario');
-          }
-          
-          localStorage.setItem('token', response.access_token);
-          console.log('✅ AuthContext: Login bem-sucedido e dados salvos');
-          return { success: true };
-        } catch (storageError) {
-          console.error('❌ Erro ao salvar no localStorage:', storageError);
-          return { success: false, error: 'Erro ao salvar dados de login' };
+      if (response.access_token && response.usuario) {
+        // COMPATIBILIDADE: Normalizar dados do usuário
+        const userData = { ...response.usuario };
+        if (userData.tipo_usuario && !userData.tipo) {
+          userData.tipo = userData.tipo_usuario;
         }
-      }
+        
+        // Validar tipo de usuário
+        const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
+        if (!validTypes.includes(userData.tipo || '')) {
+          userData.tipo = 'promoter'; // Fallback seguro
+        }
 
-      // Verificar se precisa de verificação
-      if ((response as any).detail && (response as any).detail.includes('Código de verificação enviado')) {
-        console.log('📱 AuthContext: Verificação necessária');
-        return {
-          success: false,
-          needsVerification: true,
-          message: (response as any).detail
-        };
+        setToken(response.access_token);
+        setUsuario(userData);
+        
+        localStorage.setItem('token', response.access_token);
+        localStorage.setItem('usuario', JSON.stringify(userData));
+        
+        console.log('✅ AuthContext: Login realizado com sucesso', {
+          id: userData.id,
+          nome: userData.nome,
+          tipo: userData.tipo
+        });
+        
+        return response;
+      } else {
+        throw new Error('Resposta de login inválida');
       }
-
-      console.error('❌ AuthContext: Resposta inválida:', response);
-      return { success: false, error: 'Resposta inválida do servidor' };
-      
     } catch (error: any) {
       console.error('❌ AuthContext: Erro no login:', error);
       
+      // Se erro é relacionado a código de verificação
       if (error.response?.status === 202) {
-        console.log('📱 AuthContext: Status 202 - Verificação necessária');
-        return {
-          success: false,
-          needsVerification: true,
-          message: error.response.data?.detail || 'Código de verificação enviado'
-        };
+        return { needsVerification: true, ...error.response.data };
       }
       
-      // Re-throw o erro para ser tratado no componente
       throw error;
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const logout = () => {
+    console.log('🚪 AuthContext: Fazendo logout...');
+    setUsuario(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    
+    // Chamar logout no serviço se disponível
+    try {
+      authService.logout();
+    } catch (error) {
+      console.error('❌ AuthContext: Erro ao fazer logout no serviço:', error);
+    }
+    
+    console.log('✅ AuthContext: Logout concluído');
   };
 
   const revalidateUser = async () => {
     try {
       if (!token) {
-        console.log('🔍 revalidateUser: Sem token, saindo...');
+        console.log('ℹ️ AuthContext: Não há token para revalidar');
         return;
       }
+
+      console.log('🔄 AuthContext: Revalidando dados do usuário...');
+      const userData = await authService.getProfile();
       
-      console.log('🔄 revalidateUser: Buscando dados atualizados do usuário...');
-      
-      try {
-        const userData = await authService.getProfile();
-        if (userData) {
-          setUsuario(userData);
-          localStorage.setItem('usuario', JSON.stringify(userData));
-          console.log('✅ revalidateUser: Dados do usuário atualizados');
-        }
-      } catch (error: any) {
-        console.error('❌ revalidateUser: Erro ao buscar dados do usuário:', error);
-        
-        // Se token é inválido, limpar tudo
-        if (error.response?.status === 401) {
-          console.log('🔑 revalidateUser: Token inválido, fazendo logout...');
-          logout();
-          return;
+      if (userData) {
+        // COMPATIBILIDADE: Normalizar dados do usuário
+        if (userData.tipo_usuario && !userData.tipo) {
+          userData.tipo = userData.tipo_usuario;
         }
         
-        // Para outros erros, tentar dados do localStorage como fallback
-        const storedUsuario = localStorage.getItem('usuario');
-        if (storedUsuario && storedUsuario !== 'undefined' && storedUsuario !== 'null') {
-          try {
-            const parsedUsuario = JSON.parse(storedUsuario);
-            if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
-              setUsuario(parsedUsuario);
-              console.log('⚠️ revalidateUser: Usando dados do localStorage como fallback');
-            } else {
-              setUsuario(null);
-            }
-          } catch (parseError) {
-            console.error('❌ revalidateUser: Erro ao fazer parse do fallback:', parseError);
-            setUsuario(null);
-          }
-        }
+        setUsuario(userData);
+        localStorage.setItem('usuario', JSON.stringify(userData));
+        
+        console.log('✅ AuthContext: Dados do usuário revalidados', {
+          id: userData.id,
+          nome: userData.nome,
+          tipo: userData.tipo
+        });
       }
     } catch (error) {
-      console.error('❌ revalidateUser: Erro crítico:', error);
+      console.error('❌ AuthContext: Erro ao revalidar usuário:', error);
+      // Se erro 401, token pode estar inválido
+      if ((error as any)?.response?.status === 401) {
+        logout();
+      }
     }
   };
 
-  const logout = () => {
-    authService.logout();
-    setToken(null);
-    setUsuario(null);
-  };
+  const isAuthenticated = !!token && !!usuario;
 
-  const value = {
+  const value: AuthContextType = {
     usuario,
     token,
     login,
     logout,
     revalidateUser,
     loading,
-    isAuthenticated: !!token // Autenticado se tem token, usuário é opcional
+    isAuthenticated,
   };
 
   return (
