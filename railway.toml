@@ -10,7 +10,7 @@ start.command = "cd frontend && npm start"
 # Backend Service  
 [services.backend]
 build.dockerfile = "backend/Dockerfile"
-start.command = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+start.command = "cd backend && python migrations/deploy_with_migrations.py"
 
 # MEEP Service
 [services.meep-service]

@@ -27,12 +27,4 @@ sleep 2
 
 # Executar migração crítica tipo_usuario
 echo "🔧 Executando migração crítica tipo_usuario..."
-python auto_migrate_railway.py || echo "⚠️ Migração tipo_usuario falhou, continuando..."
-
-# Executar migrações se necessário (opcional)
-# python -c "from app.database import engine; from app.models import Base; Base.metadata.create_all(bind=engine)" || echo "⚠️ Falha nas migrações, continuando..."
-
-echo "🌟 Iniciando servidor FastAPI na porta $PORT..."
-
-# Executar uvicorn com porta dinâmica
-exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --access-log --log-level info
+python migrations/deploy_with_migrations.py
