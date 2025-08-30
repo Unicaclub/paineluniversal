@@ -28,19 +28,29 @@ def test_auth_endpoint():
             print(f"   Health: {health_response.status_code}")
             
             # 2. Testar login com usuário demo
-            login_data = {
-                "cpf": "00000000000",
-                "senha": "0000"
-            }
+            test_users = [
+                {"cpf": "00000000000", "senha": "admin123"},  # Admin padrão
+                {"cpf": "00000000000", "senha": "0000"},      # Admin alternativo
+                {"cpf": "11111111111", "senha": "promoter123"},  # Promoter padrão
+                {"cpf": "12345678901", "senha": "123456"},    # Usuário genérico
+            ]
             
-            print("   🔐 Testando login...")
-            login_response = requests.post(
-                f"{base_url}/auth/login",
-                json=login_data,
-                timeout=10
-            )
+            success = False
+            for user_data in test_users:
+                print(f"   🔐 Testando login: {user_data['cpf'][:3]}***{user_data['cpf'][-3:]}")
+                login_response = requests.post(
+                    f"{base_url}/api/auth/login",
+                    json=user_data,
+                    timeout=10
+                )
+                
+                if login_response.status_code == 200:
+                    success = True
+                    break
+                else:
+                    print(f"     ❌ {login_response.status_code}: {login_response.text[:100]}")
             
-            if login_response.status_code == 200:
+            if success:
                 login_result = login_response.json()
                 token = login_result.get("access_token")
                 
@@ -51,7 +61,7 @@ def test_auth_endpoint():
                     # 3. Testar endpoint /me
                     headers = {"Authorization": f"Bearer {token}"}
                     me_response = requests.get(
-                        f"{base_url}/auth/me",
+                        f"{base_url}/api/auth/me",
                         headers=headers,
                         timeout=10
                     )

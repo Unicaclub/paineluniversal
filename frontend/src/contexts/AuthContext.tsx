@@ -1,5 +1,25 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, ReactNode } f              const userData = await authService.getProfile();
+              if (userData) {
+                // COMPATIBILIDADE APRIMORADA: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+                if (userData.tipo_usuario && !userData.tipo) {
+                  userData.tipo = userData.tipo_usuario;
+                }
+                // VALIDAÇÃO: Garantir que o tipo seja válido
+                const validTypes = ['admin', 'promoter', 'cliente', 'operador'];
+                if (!validTypes.includes(userData.tipo) && !validTypes.includes(userData.tipo_usuario)) {
+                  userData.tipo = 'promoter'; // Fallback seguro
+                  console.warn('⚠️ AuthContext: Tipo de usuário inválido, usando fallback: promoter');
+                }
+                
+                setUsuario(userData);
+                localStorage.setItem('usuario', JSON.stringify(userData));
+                console.log('✅ AuthContext: Dados do usuário atualizados do backend', {
+                  id: userData.id,
+                  nome: userData.nome,
+                  tipo: userData.tipo,
+                  tipo_usuario: userData.tipo_usuario
+                });
+              }mport { authService } from '../services/api';
 import type { Usuario } from '../types/database';
 
 interface AuthContextType {

@@ -317,12 +317,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     
     // Se usuário está autenticado, filtrar por roles
-    // Se não tem tipo definido, assumir 'promoter' como fallback para mostrar mais funcionalidades
-    const userType = usuario.tipo || usuario.tipo_usuario || 'promoter';
+    // CORREÇÃO: Garantir detecção robusta do tipo de usuário
+    const userType = (() => {
+      // Primeiro, tentar campo 'tipo'
+      if (usuario.tipo) return usuario.tipo;
+      // Fallback para 'tipo_usuario'
+      if (usuario.tipo_usuario) return usuario.tipo_usuario;
+      // Fallback final baseado em outras propriedades do usuário
+      if (usuario.email?.includes('admin')) return 'admin';
+      // Fallback padrão
+      return 'promoter';
+    })();
+    
     console.log('🔍 Layout: Tipo de usuário detectado:', userType, {
       tipo: usuario.tipo,
       tipo_usuario: usuario.tipo_usuario,
-      usuario: usuario
+      usuario: usuario,
+      fallbackUsed: !usuario.tipo && !usuario.tipo_usuario
     });
     return menuItems.filter(item => item.roles.includes(userType));
   })();
