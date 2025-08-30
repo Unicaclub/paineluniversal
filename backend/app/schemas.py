@@ -188,10 +188,18 @@ class Usuario(BaseModel):
     email: EmailStr
     telefone: Optional[str] = None
     tipo_usuario: str  # Valores válidos: 'admin', 'promoter', 'cliente'
+    # COMPATIBILIDADE: Adicionar campo 'tipo' que mapeia para tipo_usuario
+    tipo: Optional[str] = None  # Para compatibilidade com frontend
     ativo: bool
     ultimo_login: Optional[datetime] = None
     criado_em: datetime
     atualizado_em: Optional[datetime] = None  # Campo que estava faltando
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Garantir compatibilidade: tipo = tipo_usuario
+        if not self.tipo and self.tipo_usuario:
+            self.tipo = self.tipo_usuario
     
     class Config:
         from_attributes = True

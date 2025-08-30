@@ -23,6 +23,8 @@ export interface Usuario {
   email: string;
   telefone?: string;
   tipo: UserRole;
+  // COMPATIBILIDADE: Aceitar também tipo_usuario do backend
+  tipo_usuario?: UserRole;
   ativo?: boolean;
   ultimo_login?: string;
   criado_em?: string;

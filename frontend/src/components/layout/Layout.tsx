@@ -318,7 +318,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     
     // Se usuário está autenticado, filtrar por roles
     // Se não tem tipo definido, assumir 'promoter' como fallback para mostrar mais funcionalidades
-    const userType = usuario.tipo || 'promoter';
+    const userType = usuario.tipo || usuario.tipo_usuario || 'promoter';
+    console.log('🔍 Layout: Tipo de usuário detectado:', userType, {
+      tipo: usuario.tipo,
+      tipo_usuario: usuario.tipo_usuario,
+      usuario: usuario
+    });
     return menuItems.filter(item => item.roles.includes(userType));
   })();
 

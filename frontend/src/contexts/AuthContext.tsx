@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Usuario, authService } from '../services/api';
+import { authService } from '../services/api';
+import type { Usuario } from '../types/database';
 
 interface AuthContextType {
   usuario: Usuario | null;
@@ -52,9 +53,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const parsedUsuario = JSON.parse(storedUsuario);
               if (parsedUsuario && typeof parsedUsuario === 'object' && parsedUsuario.nome) {
+                // COMPATIBILIDADE: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+                if (parsedUsuario.tipo_usuario && !parsedUsuario.tipo) {
+                  parsedUsuario.tipo = parsedUsuario.tipo_usuario;
+                }
                 setUsuario(parsedUsuario);
                 usuarioValido = true;
-                console.log('✅ AuthContext: Dados do usuário restaurados com sucesso');
+                console.log('✅ AuthContext: Dados do usuário restaurados com sucesso', {
+                  id: parsedUsuario.id,
+                  nome: parsedUsuario.nome,
+                  tipo: parsedUsuario.tipo,
+                  tipo_usuario: parsedUsuario.tipo_usuario
+                });
               }
             } catch (error) {
               console.error('❌ AuthContext: Erro ao fazer parse do usuário armazenado:', error);
@@ -67,9 +77,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const userData = await authService.getProfile();
               if (userData) {
+                // COMPATIBILIDADE: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+                if (userData.tipo_usuario && !userData.tipo) {
+                  userData.tipo = userData.tipo_usuario;
+                }
                 setUsuario(userData);
                 localStorage.setItem('usuario', JSON.stringify(userData));
-                console.log('✅ AuthContext: Dados do usuário obtidos do backend');
+                console.log('✅ AuthContext: Dados do usuário obtidos do backend', {
+                  id: userData.id,
+                  nome: userData.nome,
+                  tipo: userData.tipo,
+                  tipo_usuario: userData.tipo_usuario
+                });
               }
             } catch (error: any) {
               console.error('❌ AuthContext: Erro ao buscar dados do usuário:', error);
@@ -126,9 +145,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // Verificar se tem usuário na resposta
           if (response.usuario) {
+            // COMPATIBILIDADE: Garantir que tanto 'tipo' quanto 'tipo_usuario' funcionem
+            if (response.usuario.tipo_usuario && !response.usuario.tipo) {
+              response.usuario.tipo = response.usuario.tipo_usuario;
+            }
             setUsuario(response.usuario);
             localStorage.setItem('usuario', JSON.stringify(response.usuario));
-            console.log('✅ AuthContext: Login completo com usuário');
+            console.log('✅ AuthContext: Login completo com usuário', {
+              id: response.usuario.id,
+              nome: response.usuario.nome,
+              tipo: response.usuario.tipo,
+              tipo_usuario: response.usuario.tipo_usuario
+            });
           } else {
             console.warn('⚠️ AuthContext: Token válido, mas sem dados de usuário');
             // Buscar dados do usuário separadamente se necessário
